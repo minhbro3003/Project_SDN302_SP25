@@ -1,0 +1,53 @@
+* docker 
+- Cấu hình container cho mongoDb (đã có sẵn image do docker hỗ trợ)
+- cau hinh container cho BE - Express (Chưa có image cần cấu hình image trước khi cấu hình container)
+- cau hinh container cho FE - Express (Chưa có image cần cấu hình image trước khi cấu hình container)
+- Làm sao để nó giao tiếp với nhau
+
+
+-Key word research docker:
++ Docker image cấu hình dựa trên DockerFile
++ Docker compose
++ Docker hub
++ Set up docker deskstop trên window (nhớ cài WSL2)
+
+
+* Chuẩn bị thẻ visa (để hướng dẫn tạo acc AWS)
+
+
+=========================
+Tích hợp paypal: 
+
+	Sandbox URL: https://sandbox.paypal.com
+	Email: sb-pas8y35638743@personal.example.com
+	Password: #<7:=Mxh
+
+==========================
+1-  scp -i "D:/key/he173072.pem" -r "D:/Ecommerce" ec2-user@ec2-52-91-174-143.compute-1.amazonaws.com:/home/ec2-user/
+
+2-  ssh -i "he173072.pem" ec2-user@ec2-52-91-174-143.compute-1.amazonaws.com
+
+= docker-compose up --build
+
+= cd /home/ec2-user/Ecommerce/ecommerce
+
+
+
+================Docker bug==========
+ +/+    bootstrapping in the main distro: listing WSL distros: running WSL command wsl.exe C:\Windows\System32\wsl.exe -l -v --all: context deadline exceeded  +/+
+
+
+	+ Run PowerShell
+- wsl --shutdown
+- wsl --list --verbose
+- wsl --version
+- wsl --update
+- wsl --list --all
+- wsl --unregister docker-desktop
+
+=============Bug github==========================
+( fatal: unable to access 'https://github.com/minhbro3003/Ecommerce.git/': Recv failure: Connection was reset )
+	- check: git remote -v
+	- add: ssh-keygen -t ed25519 -C "minhtiencool03@gmail.com" -> Enter.... (C:\Users\PC/.ssh/id_ed25519.pub)
+	- Login git add "New key SSH" 'https://github.com/settings/keys' -> Done 
+
