@@ -16,6 +16,7 @@
     "bootstrap": "^5.3.3",
     "bootstrap-icons": "^1.11.3",
     "cra-template": "1.2.0",
+    "dotenv": "^16.4.7",
     "jwt-decode": "^4.0.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
@@ -28,7 +29,8 @@
     "react-slick": "^0.30.3",
     "redux-persist": "^6.0.0",
     "slick-carousel": "^1.8.1",
-    "styled-components": "^6.1.14"
+    "styled-components": "^6.1.14",
+    "uninstall": "^0.0.0"
   },
   "scripts": {
     "start": "react-scripts start",

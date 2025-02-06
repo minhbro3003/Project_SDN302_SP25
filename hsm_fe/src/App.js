@@ -9,6 +9,7 @@ import BookingLogsPage from './pages/BookingPage/BookingPage';
 import ProfilePage from './pages/ProfilePage/ProfilePage';
 import RoomPage from './pages/RoomPage/RoomPage';
 import HomePage from './pages/HomePage/HomePage';
+import AccountPage from './pages/AccountPage/AccountPage';
 
 
 const { Sider, Content, Header } = Layout;
@@ -92,6 +93,9 @@ const App = () => {
                             <Menu.Item key="home" icon={<HomeOutlined style={{ color: '#00363D' }} />}>
                                 <Link to="/home">Home</Link>
                             </Menu.Item>
+                            <Menu.Item key="account" icon={<HomeOutlined style={{ color: '#00363D' }} />}>
+                                <Link to="/account">Account</Link>
+                            </Menu.Item>
                         </Menu>
                     </Sider>
                     <Layout>
@@ -104,6 +108,7 @@ const App = () => {
                                 <Route path="/room-list" element={<RoomPage />} />
                                 <Route path="/profile" element={<ProfilePage />} />
                                 <Route path="/home" element={<HomePage />} />
+                                <Route path="/account" element={<AccountPage/>} />
                                 <Route path="/" element={<div>Select an option from the menu</div>} />
                             </Routes>
                         </Content>
