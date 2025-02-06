@@ -9,6 +9,8 @@ import BookingLogsPage from './pages/BookingPage/BookingPage';
 import ProfilePage from './pages/ProfilePage/ProfilePage';
 import RoomPage from './pages/RoomPage/RoomPage';
 import HomePage from './pages/HomePage/HomePage';
+import SubMenu from 'antd/es/menu/SubMenu';
+import AddEmployees from './pages/EmployeesPage/AddEmployees/AddEmployee';
 import AccountPage from './pages/AccountPage/AccountPage';
 
 
@@ -72,9 +74,18 @@ const App = () => {
                             <Menu.Item key="dashboard" icon={<HomeOutlined style={{ color: '#00363D' }} />}>
                                 <Link to="/dashboard">Dashboard</Link>
                             </Menu.Item>
-                            <Menu.Item key="employees" icon={<UserOutlined style={{ color: '#00363D' }} />}>
-                                <Link to="/employees">Employees</Link>
-                            </Menu.Item>
+                            <SubMenu
+                                key="employees"
+                                icon={<UserOutlined style={{ color: '#00363D' }} />}
+                                title="Employees"
+                            >
+                                <Menu.Item key="add-employee">
+                                    <Link to="/employees/add">Add Employee</Link>
+                                </Menu.Item>
+                                <Menu.Item key="employee-detail">
+                                    <Link to="/employees/detail">Employee Detail</Link>
+                                </Menu.Item>
+                            </SubMenu>
                             <Menu.Item key="revenue" icon={<BarChartOutlined style={{ color: '#00363D' }} />}>
                                 <Link to="/revenue">Revenue</Link>
                             </Menu.Item>
@@ -102,7 +113,7 @@ const App = () => {
                         <Content style={{ padding: '17px', background: '#fff' }}>
                             <Routes>
                                 <Route path="/dashboard" element={<DashboardOverview />} />
-                                <Route path="/employees" element={<EmployeesPage />} />
+                                <Route path="/employees/add" element={<AddEmployees />} />
                                 <Route path="/revenue" element={<RevenuePage />} />
                                 <Route path="/booking-log" element={<BookingLogsPage />} />
                                 <Route path="/room-list" element={<RoomPage />} />

@@ -7,6 +7,8 @@ const cors = require("cors");
 const cookieParser = require("cookie-parser");
 const connectDb = require("../dbConnect/db");
 dotenv.config();
+const connectDB = require('../dbConnect/db');
+
 
 const app = express();
 const port = process.env.PORT || 9999;
@@ -21,6 +23,8 @@ app.use(cookieParser()); // Lưu trữ cookie
 routes(app);
 
 app.listen(port, () => {
-    console.log(`Server is running on port: ${port}`);
-    connectDb();
-});
+    console.log(`Server is running on port ${port}`);
+     //Connect database 
+     connectDB();
+  });
+
