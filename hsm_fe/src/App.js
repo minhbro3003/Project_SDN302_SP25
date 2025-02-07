@@ -1,7 +1,7 @@
 import React, { useState, useEffect, Fragment } from 'react';
 import { Layout, Menu, Avatar, Button } from 'antd';
 import { HomeOutlined, UserOutlined, BarChartOutlined, ProfileOutlined, LockOutlined, TableOutlined, FileTextOutlined } from '@ant-design/icons';
-import { BrowserRouter as Router, Route, Routes, Link, useNavigate, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes, Link, useNavigate, useLocation, Navigate } from 'react-router-dom';
 import DashboardOverview from './pages/Dashboard/Dashboard';
 import EmployeesPage from './pages/EmployeesPage/EmployeesPage';
 import RevenuePage from './pages/RevenuePage/RevenuePage';
@@ -56,21 +56,21 @@ const App = () => {
     useEffect(() => {
         if (publicRoutes.includes(location.pathname)) return; // Skip check on login page
         if (account?.id) return; // 
-    
+
         const handleAuthCheck = async () => {
             const { storageData, decoded } = handleDecoded();
-    
+
             if (!storageData || !decoded?.id) {
                 console.warn("No valid token found, redirecting to login...");
                 dispatch(resetAccount());
                 navigate("/login");
                 return;
             }
-    
+
             console.log("User authenticated. Fetching account details...");
             await handleGetDetailsAccount(decoded.id, storageData);
         };
-    
+
         handleAuthCheck();
     }, [account?.id, dispatch, navigate]);
 
@@ -144,93 +144,71 @@ const App = () => {
             <Routes>
                 {routes.map((route) => {
                     const Page = route.page;
-                    const showLayout = route.isShowHeader; // Check if we should show header/sidebar
+                    const showLayout = route.isShowHeader;
 
                     return (
                         <Route
                             key={route.path}
                             path={route.path}
                             element={
-                                showLayout ? (
-                                    <Layout>
-                                        {/* HEADER */}
-                                        <Header
-                                            style={{
-                                                background: "#79D7BE",
-                                                display: "flex",
-                                                justifyContent: "space-between",
-                                                padding: "0 27px",
-                                            }}
-                                        >
-                                            <div
-                                                style={{
-                                                    fontSize: "20px",
-                                                    fontWeight: "bold",
-                                                    color: "#00363D",
-                                                }}
-                                            >
-                                                PHM System
-                                            </div>
-                                            <div
-                                                style={{
-                                                    display: "flex",
-                                                    alignItems: "center",
-                                                    gap: "16px",
-                                                }}
-                                            >
-                                                <Button
-                                                    type="text"
-                                                    style={{ color: "#00363D" }}
-                                                    onClick={() => {
-                                                        dispatch(resetAccount());  // Clear user data
-                                                        localStorage.removeItem("access_token"); // Remove token
-                                                        localStorage.removeItem("refresh_token"); // Remove refresh token
-                                                        persistStore(store).flush().then(() => {
-                                                            return persistStore(store).purge();})
-                                                        
-                                                        navigate("/login"); // Redirect to login page
-                                                    }}
-                                                >
-                                                    Logout
-                                                </Button>
-
-                                                <Avatar
-                                                    style={{ backgroundColor: "#00363D" }}
-                                                    icon={<UserOutlined />}
-                                                />
-                                            </div>
-                                        </Header>
-
-                                        {/* SIDEBAR */}
-                                        <Layout>
-                                            <Sider width={190} style={{ background: "#79D7BE", borderRadius: "5px" }}>
-                                                <Menu mode="inline" defaultSelectedKeys={["dashboard"]} style={{ background: "#79D7BE", color: "#00363D", fontSize: "16px" }}>
-                                                    {routes
-                                                        .filter(route => route.isShowHeader && (!route.permissions || route.permissions.some(p => userPermissions.includes(p))))
-                                                        .map(route => (
-                                                            <Menu.Item key={route.path || route.name} icon={<HomeOutlined style={{ color: "#00363D" }} />}>
-                                                                <Link to={route.path}>{route.name}</Link>
-                                                            </Menu.Item>
-                                                        ))}
-                                                </Menu>
-                                            </Sider>
-
-                                            {/* MAIN CONTENT */}
+                                <ProtectedRoute
+                                    element={
+                                        showLayout ? (
                                             <Layout>
-                                                <Content style={{ padding: "17px", background: "#fff" }}>
-                                                    <Page />
-                                                </Content>
+                                                {/* HEADER */}
+                                                <Header style={{ background: "#79D7BE", display: "flex", justifyContent: "space-between", padding: "0 27px" }}>
+                                                    <div style={{ fontSize: "20px", fontWeight: "bold", color: "#00363D" }}>PHM System</div>
+                                                    <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+                                                        <Button
+                                                            type="text"
+                                                            style={{ color: "#00363D" }}
+                                                            onClick={() => {
+                                                                dispatch(resetAccount());
+                                                                localStorage.removeItem("access_token");
+                                                                localStorage.removeItem("refresh_token");
+                                                                persistStore(store).flush().then(() => persistStore(store).purge());
+                                                                navigate("/login");
+                                                            }}
+                                                        >
+                                                            Logout
+                                                        </Button>
+                                                        <Avatar style={{ backgroundColor: "#00363D" }} icon={<UserOutlined />} />
+                                                    </div>
+                                                </Header>
+
+                                                {/* SIDEBAR */}
+                                                <Layout>
+                                                    <Sider width={190} style={{ background: "#79D7BE", borderRadius: "5px" }}>
+                                                        <Menu mode="inline" defaultSelectedKeys={["dashboard"]} style={{ background: "#79D7BE", color: "#00363D", fontSize: "16px" }}>
+                                                            {routes
+                                                                .filter(route => route.isShowHeader && (!route.permissions || route.permissions.some(p => userPermissions.includes(p))))
+                                                                .map(route => (
+                                                                    <Menu.Item key={route.path || route.name} icon={<HomeOutlined style={{ color: "#00363D" }} />}>
+                                                                        <Link to={route.path}>{route.name}</Link>
+                                                                    </Menu.Item>
+                                                                ))}
+                                                        </Menu>
+                                                    </Sider>
+
+                                                    {/* MAIN CONTENT */}
+                                                    <Layout>
+                                                        <Content style={{ padding: "17px", background: "#fff" }}>
+                                                            <Page />
+                                                        </Content>
+                                                    </Layout>
+                                                </Layout>
                                             </Layout>
-                                        </Layout>
-                                    </Layout>
-                                ) : (
-                                    // No Header or Sidebar if `isShowHeader` is false
-                                    <Page />
-                                )
+                                        ) : (
+                                            <Page />
+                                        )
+                                    }
+                                    requiredPermissions={route.permissions} // Add this check
+                                />
                             }
                         />
                     );
                 })}
+
                 {/* Fallback for unknown routes */}
                 <Route path="*" element={<NotFoundPage />} />
             </Routes>
@@ -239,3 +217,21 @@ const App = () => {
 };
 
 export default App;
+
+
+
+const ProtectedRoute = ({ element, requiredPermissions }) => {
+    const account = useSelector((state) => state.account);
+    const userPermissions = account?.permissions || [];
+
+    if (!account?.id) {
+        return <Navigate to="/login" />;
+    }
+
+    // Check if user has required permissions
+    if (requiredPermissions && !requiredPermissions.some(p => userPermissions.includes(p))) {
+        return <Navigate to="/dashboard" />;
+    }
+
+    return element;
+};
