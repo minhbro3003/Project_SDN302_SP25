@@ -2,7 +2,7 @@ const jwt = require("jsonwebtoken");
 const dotenv = require("dotenv");
 dotenv.config();
 
-const genneralAccessToken = async (payload) => {
+const generateAccessToken = async (payload) => {
     // console.log("payload", payload);
     const access_token = jwt.sign(
         {
@@ -14,7 +14,7 @@ const genneralAccessToken = async (payload) => {
     return access_token;
 };
 
-const genneralFefreshToken = async (payload) => {
+const generateFefreshToken = async (payload) => {
     const refresh_token = jwt.sign(
         {
             ...payload,
@@ -26,39 +26,60 @@ const genneralFefreshToken = async (payload) => {
 };
 
 const refreshTokenJwtService = async (token) => {
-    return new Promise(async (resolve, reject) => {
+    return new Promise((resolve, reject) => {
         try {
-            // console.log("token", token);
-            jwt.verify(token, process.env.REFESH_TOKEN, async (err, user) => {
+            if (!token) {
+                return resolve({
+                    status: "ERR",
+                    message: "No token provided",
+                });
+            }
+
+            jwt.verify(token, process.env.REFRESH_TOKEN, async (err, user) => {
                 if (err) {
-                    console.log("err", err);
-                    resolve({
+                    console.error("Token verification error:", err);
+                    return resolve({
                         status: "ERR",
-                        message: "The authentication",
+                        message: "Authentication failed. Invalid token.",
                     });
                 }
-                // console.log("Authenticated user:", user);
 
-                const access_token = await genneralAccessToken({
-                    id: user?.id,
-                    isAdmin: user?.isAdmin,
-                });
-                // console.log("access_token", access_token);
-                resolve({
-                    status: "OK",
-                    message: "Token refreshed successfully",
-                    access_token,
-                });
+                if (!user?.id) {
+                    return resolve({
+                        status: "ERR",
+                        message: "Invalid token payload",
+                    });
+                }
+
+                try {
+                    const access_token = await generateAccessToken({
+                        id: user.id,
+                        isAdmin: user.isAdmin || false, 
+                    });
+
+                    return resolve({
+                        status: "OK",
+                        message: "Token refreshed successfully",
+                        access_token,
+                    });
+                } catch (tokenError) {
+                    console.error("Error generating new access token:", tokenError);
+                    return resolve({
+                        status: "ERR",
+                        message: "Failed to generate new access token",
+                    });
+                }
             });
         } catch (e) {
-            reject(e);
+            console.error("Unexpected error in refreshTokenJwtService:", e);
+            return reject(e);
         }
     });
 };
 
 //export const genneral
 module.exports = {
-    genneralAccessToken,
-    genneralFefreshToken,
+    generateAccessToken,
+    generateFefreshToken,
     refreshTokenJwtService,
 };
