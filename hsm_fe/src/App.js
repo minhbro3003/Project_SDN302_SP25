@@ -175,7 +175,7 @@ const AppPerm_Session = () => {
 
     useEffect(() => {
         if (publicRoutes.includes(location.pathname)) return; // Skip check on login page
-        if (account?.id) return; // ✅ Prevents unnecessary re-fetching
+        if (account?.id) return; // 
     
         const handleAuthCheck = async () => {
             const { storageData, decoded } = handleDecoded();
