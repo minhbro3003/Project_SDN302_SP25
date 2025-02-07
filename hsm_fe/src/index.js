@@ -1,6 +1,6 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import App, { AppPerm_Session } from "./App";
+import App from "./App";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Provider } from "react-redux";  // Import Redux Provider
 import { store, persistor } from "./redux/store";  // Import store
@@ -16,7 +16,7 @@ root.render(
             <PersistGate loading={null} persistor={persistor}>
                 <React.StrictMode>
                     <BrowserRouter>
-                    <AppPerm_Session />
+                    <App/>
                     </BrowserRouter>
                 </React.StrictMode>
             </PersistGate>
