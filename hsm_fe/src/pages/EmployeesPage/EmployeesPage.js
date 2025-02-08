@@ -1,5 +1,5 @@
 import React from "react";
-import { FaEdit, FaTrash, FaPlus, FaEllipsisH } from "react-icons/fa";  
+import { FaTrash, FaPlus, FaEllipsisH, FaEdit } from "react-icons/fa";  
 import { useNavigate } from "react-router";
 import {
   DashboardContainer,
