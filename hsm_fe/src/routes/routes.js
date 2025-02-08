@@ -7,7 +7,7 @@ import HomePage from "../pages/HomePage/HomePage";
 import NotFoundPage from "../pages/NotFoundPage/NotFoundPage";
 import ProfilePage from "../pages/ProfilePage/ProfilePage";
 import RevenuePage from "../pages/RevenuePage/RevenuePage";
-import RoomPage from "../pages/RoomPage/RoomPage";
+import RoomDashboard from "../pages/RoomPage/RoomDashboard";
 
 
 
@@ -47,11 +47,11 @@ export const routes = [
         permissions: ["Admin", "Receptionist"],
     },
     {
-        path: "/room-list",
-        name: "Room Page",
-        page: RoomPage,
+        path: "/room-dashboard",
+        name: "Room dashboard",
+        page: RoomDashboard,
         isShowHeader: true,
-        permissions: ["Admin", "Janitor"],
+        permissions: ["Admin"],
     },
     {
         path: "/profile",
