@@ -3,13 +3,13 @@ import LoginPage from "../pages/AccountPage/LoginPage";
 import BookingPage from "../pages/BookingPage/BookingPage";
 import Dashboard from "../pages/Dashboard/Dashboard";
 import AddEmployees from "../pages/EmployeesPage/AddEmployees/AddEmployee";
-import EmployeesPage from "../pages/EmployeesPage/EmployeesPage";
 import HomePage from "../pages/HomePage/HomePage";
 import NotFoundPage from "../pages/NotFoundPage/NotFoundPage";
 import ProfilePage from "../pages/ProfilePage/ProfilePage";
 import RevenuePage from "../pages/RevenuePage/RevenuePage";
 import RoomForm from "../pages/RoomPage/AddRoom";
 import RoomDashboard from "../pages/RoomPage/RoomDashboard";
+import EmployeesPage from "../pages/EmployeesPage/EmployeesPage";
 import {SettingOutlined, AppstoreAddOutlined, HomeOutlined } from '@ant-design/icons';
 
 
@@ -33,7 +33,6 @@ export const routes = [
         path: "/employees",
         name: "Employee",
         isShowHeader: true,
-        icon: <SettingOutlined />,
         permissions: ["Admin"],
         children: [
             {
