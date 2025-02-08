@@ -2,17 +2,6 @@ import React, { useState, useEffect, Fragment } from 'react';
 import { Layout, Menu, Avatar, Button } from 'antd';
 import { HomeOutlined, UserOutlined, BarChartOutlined, ProfileOutlined, LockOutlined, TableOutlined, FileTextOutlined } from '@ant-design/icons';
 import { BrowserRouter as Router, Route, Routes, Link, useNavigate, useLocation, Navigate } from 'react-router-dom';
-import DashboardOverview from './pages/Dashboard/Dashboard';
-import EmployeesPage from './pages/EmployeesPage/EmployeesPage';
-import RevenuePage from './pages/RevenuePage/RevenuePage';
-import BookingLogsPage from './pages/BookingPage/BookingPage';
-import ProfilePage from './pages/ProfilePage/ProfilePage';
-import RoomPage from './pages/RoomPage/RoomPage';
-import HomePage from './pages/HomePage/HomePage';
-import SubMenu from 'antd/es/menu/SubMenu';
-import AddEmployees from './pages/EmployeesPage/AddEmployees/AddEmployee';
-import AccountPage from './pages/AccountPage/AccountPage';
-
 import * as AccountService from "./services/accountService";
 import { isJsonString } from "./utils";
 import { jwtDecode } from "jwt-decode";
