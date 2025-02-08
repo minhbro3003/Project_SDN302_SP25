@@ -166,16 +166,16 @@ const App = () => {
 
                                                     {/* SIDEBAR */}
                                                     <Layout>
-                                                    <Sider
-    width={190}
-    style={{
-        background: "#79D7BE",
-        height: "100vh", // Full height
-        overflowY: "auto", // Scroll inside sidebar if needed
-        position: "sticky",
-        top: 0
-    }}
->
+                                                        <Sider
+                                                            width={190}
+                                                            style={{
+                                                                background: "#79D7BE",
+                                                                height: "100vh", // Full height
+                                                                overflowY: "auto", // Scroll inside sidebar if needed
+                                                                position: "sticky",
+                                                                top: 0
+                                                            }}
+                                                        >
 
                                                             <Menu mode="inline" defaultSelectedKeys={["dashboard"]} style={{ background: "#79D7BE", color: "#00363D", fontSize: "16px" }}>
                                                                 {routes
@@ -204,7 +204,7 @@ const App = () => {
                                                         {/* MAIN CONTENT */}
                                                         <Layout style={{ minHeight: "100vh", display: "flex" }}>
 
-                                                        <Content style={{ padding: "17px", background: "#fff", flex: 1, overflow: "auto" }}>
+                                                            <Content style={{ padding: "17px", background: "#fff", flex: 1, overflow: "auto" }}>
 
                                                                 <subRoute.page />
                                                             </Content>
