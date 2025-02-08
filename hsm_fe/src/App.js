@@ -223,12 +223,14 @@ export default App;
 const ProtectedRoute = ({ element, requiredPermissions }) => {
     const account = useSelector((state) => state.account);
     const userPermissions = account?.permissions || [];
+    const location = useLocation();
+
+    if (location.pathname === "/login") return element; // Allow login page
 
     if (!account?.id) {
         return <Navigate to="/login" />;
     }
 
-    // Check if user has required permissions
     if (requiredPermissions && !requiredPermissions.some(p => userPermissions.includes(p))) {
         return <Navigate to="/dashboard" />;
     }
