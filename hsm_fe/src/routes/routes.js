@@ -8,7 +8,7 @@ import NotFoundPage from "../pages/NotFoundPage/NotFoundPage";
 import ProfilePage from "../pages/ProfilePage/ProfilePage";
 import RevenuePage from "../pages/RevenuePage/RevenuePage";
 import RoomDashboard from "../pages/RoomPage/RoomDashboard";
-
+import EmployeesPage from "../pages/EmployeesPage/EmployeesPage";
 
 
 export const routes = [
@@ -29,6 +29,14 @@ export const routes = [
         path: "/employees/add",
         name: "Employee",
         page: AddEmployees,
+        isShowHeader: true,
+        parentPath: '/employees',
+        permissions: ["Admin"],
+    },
+    {
+        path: "/employees",
+        name: "Employee",
+        page: EmployeesPage,
         isShowHeader: true,
         permissions: ["Admin"],
     },
