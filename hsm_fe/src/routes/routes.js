@@ -15,6 +15,13 @@ import {SettingOutlined, AppstoreAddOutlined, HomeOutlined } from '@ant-design/i
 
 export const routes = [
     {
+        path: "/",
+        name: "Login",
+        page: LoginPage,
+        icon: <SettingOutlined />,
+        isShowHeader: false,
+    },
+    {
         path: "/dashboard",
         name: "Dashboard",
         page: Dashboard,
