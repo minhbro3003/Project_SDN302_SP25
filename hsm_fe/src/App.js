@@ -96,42 +96,26 @@ const App = () => {
 
     AccountService.axiosJWT.interceptors.request.use(
         async (config) => {
-            try {
-                const currentTime = new Date().getTime() / 1000;
-                const { decoded } = handleDecoded();
-                const refreshToken = localStorage.getItem("refresh_token");
-    
-                if (decoded?.exp < currentTime) {
-                    if (!refreshToken) {
-                        dispatch(resetAccount());
-                        return Promise.reject("No refresh token available.");
-                    }
-    
-                    const decodedRefreshToken = jwtDecode(refreshToken);
-                    if (decodedRefreshToken?.exp > currentTime) {
-                        const data = await AccountService.refreshToken(refreshToken);
-                        localStorage.setItem("access_token", data.access_token);
-                        config.headers["token"] = `Bearer ${data.access_token}`;
-                    } else {
-                        dispatch(resetAccount());
-                        navigate("/login");
-                        return Promise.reject("Refresh token expired.");
-                    }
+            const currentTime = new Date().getTime() / 1000;
+            const { decoded } = handleDecoded();
+            let storageRefreshToken = localStorage.getItem("refresh_token");
+
+            const refreshToken = storageRefreshToken;
+            const decodedRefreshToken = jwtDecode(refreshToken);
+            if (decoded?.exp < currentTime) {
+                if (decodedRefreshToken?.exp > currentTime) {
+                    const data = await AccountService.refreshToken(refreshToken);
+                    config.headers["token"] = `Bearer ${data?.access_token}`;
+                } else {
+                    dispatch(resetAccount());
                 }
-            } catch (error) {
-                console.error("Error refreshing token:", error);
-                dispatch(resetAccount());
-                navigate("/login");
-                return Promise.reject(error);
             }
-    
             return config;
         },
         (err) => {
             return Promise.reject(err);
         }
     );
-    
 
     const handleGetDetailsAccount = async (id, token) => {
         try {
@@ -237,7 +221,22 @@ export default App;
 
 
 const ProtectedRoute = ({ element, requiredPermissions }) => {
-    
+    const account = useSelector((state) => state.account);
+    const userPermissions = account?.permissions || [];
+    const location = useLocation();
+
+    if (location.pathname === "/login") return element; // Allow login page
+
+    // If account.id is not set, show a loading screen
+    if (!account?.id) {
+        console.log("Waiting for account to load...");
+        return <div>Loading...</div>; // Prevents immediate redirect to login
+    }
+
+    if (requiredPermissions && !requiredPermissions.some(p => userPermissions.includes(p))) {
+        console.log("You don't have the permission to view this");
+        return <Navigate to="/dashboard" />;
+    }
 
     return element;
 };
