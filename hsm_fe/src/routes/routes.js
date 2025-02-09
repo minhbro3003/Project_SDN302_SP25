@@ -3,7 +3,6 @@ import LoginPage from "../pages/AccountPage/LoginPage";
 import BookingPage from "../pages/BookingPage/BookingPage";
 import Dashboard from "../pages/Dashboard/Dashboard";
 import AddEmployees from "../pages/EmployeesPage/AddEmployees/AddEmployee";
-import EmployeesPage from "../pages/EmployeesPage/EmployeesPage";
 import HomePage from "../pages/HomePage/HomePage";
 import NotFoundPage from "../pages/NotFoundPage/NotFoundPage";
 import ProfilePage from "../pages/ProfilePage/ProfilePage";
@@ -20,8 +19,18 @@ import {
     TableOutlined,
 } from "@ant-design/icons";
 import RoomList from "../pages/RoomPage/RoomList";
+import EmployeesPage from "../pages/EmployeesPage/EmployeesPage";
+import EmployeeDetail from "../pages/EmployeesPage/EmployeeDetail/EmployeeDetail";
+
 
 export const routes = [
+    {
+        path: "/",
+        name: "Login",
+        page: LoginPage,
+        icon: <SettingOutlined />,
+        isShowHeader: false,
+    },
     {
         path: "/dashboard",
         name: "Dashboard",
@@ -41,7 +50,6 @@ export const routes = [
         path: "/employees",
         name: "Employee",
         isShowHeader: true,
-        icon: <SettingOutlined />,
         permissions: ["Admin"],
         children: [
             {
@@ -59,6 +67,14 @@ export const routes = [
                 page: EmployeesPage,
                 icon: <AppstoreAddOutlined />,
                 permissions: ["Admin"],
+            },
+            {
+                path: "/employee-detail",
+                name: "Employee Detail",
+                page: EmployeeDetail,
+                isShowHeader: true,
+                icon: <SettingOutlined />,
+                permissions: ["Admin", "Receptionist"],
             },
         ],
     },

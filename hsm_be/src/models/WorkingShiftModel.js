@@ -6,6 +6,6 @@ const workingShiftSchema = new mongoose.Schema(
     }
 );
 
-const WorkingShift = mongoose.model("WorkingShift", workingShiftSchema);
+const WorkingShift = mongoose.model("working_shifts", workingShiftSchema);
 
 module.exports = WorkingShift;

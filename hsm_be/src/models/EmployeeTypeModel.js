@@ -6,6 +6,6 @@ const employeeTypeSchema = new mongoose.Schema(
     }
 );
 
-const EmployeeType = mongoose.model("EmployeeType", employeeTypeSchema);
+const EmployeeType = mongoose.model("employee_types", employeeTypeSchema);
 
 module.exports = EmployeeType;
