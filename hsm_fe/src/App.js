@@ -3,13 +3,14 @@ import { Layout, Menu, Avatar, Button } from 'antd';
 import { HomeOutlined, UserOutlined, BarChartOutlined, ProfileOutlined, LockOutlined, TableOutlined, FileTextOutlined } from '@ant-design/icons';
 import { BrowserRouter as Router, Route, Routes, Link } from 'react-router-dom';
 import DashboardOverview from './pages/Dashboard/Dashboard';
-import EmployeesPage from './pages/EmployeesPage/EmployeesPage';
 import RevenuePage from './pages/RevenuePage/RevenuePage';
 import BookingLogsPage from './pages/BookingPage/BookingPage';
 import ProfilePage from './pages/ProfilePage/ProfilePage';
 import RoomPage from './pages/RoomPage/RoomPage';
 import HomePage from './pages/HomePage/HomePage';
-import AccountPage from './pages/AccountPage/AccountPage';
+import SubMenu from 'antd/es/menu/SubMenu';
+import AddEmployees from './pages/EmployeesPage/AddEmployees/AddEmployee';
+import EmployeeDetail from './pages/EmployeesPage/EmployeeDetail/EmployeeDetail';
 
 
 const { Sider, Content, Header } = Layout;
@@ -72,9 +73,18 @@ const App = () => {
                             <Menu.Item key="dashboard" icon={<HomeOutlined style={{ color: '#00363D' }} />}>
                                 <Link to="/dashboard">Dashboard</Link>
                             </Menu.Item>
-                            <Menu.Item key="employees" icon={<UserOutlined style={{ color: '#00363D' }} />}>
-                                <Link to="/employees">Employees</Link>
-                            </Menu.Item>
+                            <SubMenu
+                                key="employees"
+                                icon={<UserOutlined style={{ color: '#00363D' }} />}
+                                title="Employees"
+                            >
+                                <Menu.Item key="add-employee">
+                                    <Link to="/employees/add">Add Employee</Link>
+                                </Menu.Item>
+                                <Menu.Item key="employee-detail">
+                                    <Link to="/employee-detail/:id">Employee Detail</Link>
+                                </Menu.Item>
+                            </SubMenu>
                             <Menu.Item key="revenue" icon={<BarChartOutlined style={{ color: '#00363D' }} />}>
                                 <Link to="/revenue">Revenue</Link>
                             </Menu.Item>
@@ -93,22 +103,19 @@ const App = () => {
                             <Menu.Item key="home" icon={<HomeOutlined style={{ color: '#00363D' }} />}>
                                 <Link to="/home">Home</Link>
                             </Menu.Item>
-                            <Menu.Item key="account" icon={<HomeOutlined style={{ color: '#00363D' }} />}>
-                                <Link to="/account">Account</Link>
-                            </Menu.Item>
                         </Menu>
                     </Sider>
                     <Layout>
                         <Content style={{ padding: '17px', background: '#fff' }}>
                             <Routes>
                                 <Route path="/dashboard" element={<DashboardOverview />} />
-                                <Route path="/employees" element={<EmployeesPage />} />
+                                <Route path="/employees/add" element={<AddEmployees />} />
+                                <Route path="/employee-detail/:id" element={<EmployeeDetail />} />
                                 <Route path="/revenue" element={<RevenuePage />} />
                                 <Route path="/booking-log" element={<BookingLogsPage />} />
                                 <Route path="/room-list" element={<RoomPage />} />
                                 <Route path="/profile" element={<ProfilePage />} />
                                 <Route path="/home" element={<HomePage />} />
-                                <Route path="/account" element={<AccountPage/>} />
                                 <Route path="/" element={<div>Select an option from the menu</div>} />
                             </Routes>
                         </Content>
