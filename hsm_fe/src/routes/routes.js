@@ -7,10 +7,13 @@ import HomePage from "../pages/HomePage/HomePage";
 import NotFoundPage from "../pages/NotFoundPage/NotFoundPage";
 import ProfilePage from "../pages/ProfilePage/ProfilePage";
 import RevenuePage from "../pages/RevenuePage/RevenuePage";
-import RoomForm from "../pages/RoomPage/AddRoom";
+import AddRoom from "../pages/RoomPage/AddRoom";
 import RoomDashboard from "../pages/RoomPage/RoomDashboard";
+import {SettingOutlined, AppstoreAddOutlined, HomeOutlined, BarChartOutlined, LineChartOutlined, PlusCircleOutlined, TableOutlined } from '@ant-design/icons';
+import RoomList from "../pages/RoomPage/RoomList";
 import EmployeesPage from "../pages/EmployeesPage/EmployeesPage";
-import {SettingOutlined, AppstoreAddOutlined, HomeOutlined } from '@ant-design/icons';
+import EmployeeDetail from "../pages/EmployeesPage/EmployeeDetail/EmployeeDetail";
+
 
 
 export const routes = [
@@ -58,6 +61,14 @@ export const routes = [
                 icon: <AppstoreAddOutlined />,
                 permissions: ["Admin"],
             },
+            {
+                path: "/employee-detail",
+                name: "Employee Detail",
+                page: EmployeeDetail,
+                isShowHeader: true,
+                icon: <SettingOutlined />,
+                permissions: ["Admin", "Receptionist"],
+            },
         ],
     },
     {
@@ -77,26 +88,34 @@ export const routes = [
         permissions: ["Admin", "Receptionist"],
     },
     {
-        path: "/room-dashboard",
-        name: "Room Dashboard",
+        path: "/rooms",
+        name: "Rooms",
         isShowHeader: true,
         permissions: ["Admin"],
-        icon: <SettingOutlined />,
+        icon: <BarChartOutlined />,
         children: [
             {
-                path: "/room-dashboard/add-room",
-                name: "Add Room",
+                path: "/rooms/room-dashboard",
+                name: "Room Dashboard",
                 isShowHeader: true,
-                icon: <AppstoreAddOutlined />,
-                page: RoomForm,
+                page: RoomDashboard,
+                icon: <LineChartOutlined />,
                 permissions: ["Admin"],
             },
             {
-                path: "/room-dashboard/room-list",
+                path: "/rooms/add-room",
+                name: "Add Room",
+                isShowHeader: true,
+                icon: <PlusCircleOutlined />,
+                page: RoomList,
+                permissions: ["Admin"],
+            },
+            {
+                path: "/rooms/room-list",
                 name: "Room List",
                 isShowHeader: true,
-                page: RoomDashboard,
-                icon: <AppstoreAddOutlined />,
+                page: AddRoom,
+                icon: <TableOutlined />,
                 permissions: ["Admin"],
             },
         ],
