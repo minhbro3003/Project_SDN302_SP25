@@ -3,7 +3,6 @@ import { Layout, Menu, Avatar, Button } from 'antd';
 import { HomeOutlined, UserOutlined, BarChartOutlined, ProfileOutlined, LockOutlined, TableOutlined, FileTextOutlined } from '@ant-design/icons';
 import { BrowserRouter as Router, Route, Routes, Link } from 'react-router-dom';
 import DashboardOverview from './pages/Dashboard/Dashboard';
-import EmployeesPage from './pages/EmployeesPage/EmployeesPage';
 import RevenuePage from './pages/RevenuePage/RevenuePage';
 import BookingLogsPage from './pages/BookingPage/BookingPage';
 import ProfilePage from './pages/ProfilePage/ProfilePage';
@@ -11,6 +10,7 @@ import RoomPage from './pages/RoomPage/RoomPage';
 import HomePage from './pages/HomePage/HomePage';
 import SubMenu from 'antd/es/menu/SubMenu';
 import AddEmployees from './pages/EmployeesPage/AddEmployees/AddEmployee';
+import EmployeeDetail from './pages/EmployeesPage/EmployeeDetail/EmployeeDetail';
 
 
 const { Sider, Content, Header } = Layout;
@@ -82,7 +82,7 @@ const App = () => {
                                     <Link to="/employees/add">Add Employee</Link>
                                 </Menu.Item>
                                 <Menu.Item key="employee-detail">
-                                    <Link to="/employees/detail">Employee Detail</Link>
+                                    <Link to="/employee-detail/:id">Employee Detail</Link>
                                 </Menu.Item>
                             </SubMenu>
                             <Menu.Item key="revenue" icon={<BarChartOutlined style={{ color: '#00363D' }} />}>
@@ -110,6 +110,7 @@ const App = () => {
                             <Routes>
                                 <Route path="/dashboard" element={<DashboardOverview />} />
                                 <Route path="/employees/add" element={<AddEmployees />} />
+                                <Route path="/employee-detail/:id" element={<EmployeeDetail />} />
                                 <Route path="/revenue" element={<RevenuePage />} />
                                 <Route path="/booking-log" element={<BookingLogsPage />} />
                                 <Route path="/room-list" element={<RoomPage />} />
