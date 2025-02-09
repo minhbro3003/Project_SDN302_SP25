@@ -183,10 +183,10 @@ const App = () => {
                                                                     .map(route => {
                                                                         if (route.children) {
                                                                             return (
-                                                                                <Menu.SubMenu key={route.name} title={route.name} icon={route.icon}> {/* 🔥 Dynamic Icon */}
+                                                                                <Menu.SubMenu key={route.name} title={route.name} icon={route.icon} > {/* 🔥 Dynamic Icon */}
                                                                                     {route.children.map(subRoute => (
-                                                                                        <Menu.Item key={subRoute.path} icon={subRoute.icon}> {/* 🔥 Dynamic Icon */}
-                                                                                            <Link to={subRoute.path}>{subRoute.name}</Link>
+                                                                                        <Menu.Item key={subRoute.path} icon={subRoute.icon} > {/* 🔥 Dynamic Icon */}
+                                                                                            <Link style={{textDecoration:"none"}}  to={subRoute.path}>{subRoute.name}</Link>
                                                                                         </Menu.Item>
                                                                                     ))}
                                                                                 </Menu.SubMenu>
@@ -194,7 +194,7 @@ const App = () => {
                                                                         }
                                                                         return (
                                                                             <Menu.Item key={route.path} icon={route.icon}> {/* 🔥 Dynamic Icon */}
-                                                                                <Link to={route.path}>{route.name}</Link>
+                                                                                <Link style={{textDecoration:"none"}} to={route.path}>{route.name}</Link>
                                                                             </Menu.Item>
                                                                         );
                                                                     })}
