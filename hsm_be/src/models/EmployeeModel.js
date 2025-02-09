@@ -16,15 +16,16 @@ const employeeSchema = new mongoose.Schema(
             },
         },
         Email: { type: String, required: true, trim: true },
-        Address: { type: String, required: true, trim: true },
-        Gender: { type: String, enum: ["Male", "Female", "Other"], trim: true },
+        Gender: { type: String, trim: true },
         Image: { type: String, trim: true },
+        Address: { type: String, required: true, trim: true },
+
     },
     {
         timestamps: true,
     }
 );
 
-const Employee = mongoose.model("Employee", employeeSchema);
+const Employee = mongoose.model("employees", employeeSchema);
 
 module.exports = Employee;
