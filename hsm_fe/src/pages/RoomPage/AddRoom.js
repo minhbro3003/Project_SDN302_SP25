@@ -15,7 +15,7 @@ import "./AddRoom.css";
 const { Option } = Select;
 
 
-const RoomForm = ({
+const AddRoom = ({
     initialValues,
     onSubmit,
     roomTypes,
@@ -205,4 +205,4 @@ const RoomForm = ({
     );
 };
 
-export default RoomForm;
+export default AddRoom;
