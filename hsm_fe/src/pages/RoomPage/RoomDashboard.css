@@ -1,0 +1,72 @@
+.room-dashboard-container {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+}
+
+/* --- GRID ROOM LIST --- */
+.room-grid {
+    display: flex;
+    justify-content: center;
+}
+
+.rooms {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr); /* 5 cột */
+    gap: 20px;
+    padding: 20px;
+    background: #f5f5f5;
+    border-radius: 10px;
+}
+
+/* Mỗi phòng */
+.room {
+    text-align: center;
+    padding: 15px;
+    font-size: 14px;
+    font-weight: bold;
+    color: white;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+/* Màu trạng thái phòng */
+.available {
+    background-color: rgb(41, 207, 41);
+}
+.taken {
+    background-color: rgb(240, 98, 98);
+}
+.booked {
+    background-color: rgb(168, 168, 168);
+}
+.other {
+    background-color: rgb(49, 49, 49);
+}
+
+/* --- CALENDAR & FILTER SECTION --- */
+.calendar-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.date-picker {
+    width: 100%;
+    margin-bottom: 15px;
+}
+
+/* --- LEGEND STYLES --- */
+.legend {
+    margin-top: 20px;
+    padding: 10px;
+    background: #fff;
+    border-radius: 8px;
+    width: 100%;
+}
+
+.legend .ant-badge {
+    display: flex;
+    align-items: center;
+    margin-bottom: 8px;
+}
