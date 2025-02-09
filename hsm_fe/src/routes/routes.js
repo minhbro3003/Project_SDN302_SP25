@@ -10,9 +10,16 @@ import ProfilePage from "../pages/ProfilePage/ProfilePage";
 import RevenuePage from "../pages/RevenuePage/RevenuePage";
 import AddRoom from "../pages/RoomPage/AddRoom";
 import RoomDashboard from "../pages/RoomPage/RoomDashboard";
-import {SettingOutlined, AppstoreAddOutlined, HomeOutlined, BarChartOutlined, LineChartOutlined, PlusCircleOutlined, TableOutlined } from '@ant-design/icons';
+import {
+    SettingOutlined,
+    AppstoreAddOutlined,
+    HomeOutlined,
+    BarChartOutlined,
+    LineChartOutlined,
+    PlusCircleOutlined,
+    TableOutlined,
+} from "@ant-design/icons";
 import RoomList from "../pages/RoomPage/RoomList";
-
 
 export const routes = [
     {
@@ -87,16 +94,16 @@ export const routes = [
                 permissions: ["Admin"],
             },
             {
-                path: "/rooms/add-room",
-                name: "Add Room",
+                path: "/rooms/room-list",
+                name: "Room List",
                 isShowHeader: true,
                 icon: <PlusCircleOutlined />,
                 page: RoomList,
                 permissions: ["Admin"],
             },
             {
-                path: "/rooms/room-list",
-                name: "Room List",
+                path: "/rooms/add-room",
+                name: "Add Room",
                 isShowHeader: true,
                 page: AddRoom,
                 icon: <TableOutlined />,
@@ -133,4 +140,3 @@ export const routes = [
         page: NotFoundPage,
     },
 ];
-
