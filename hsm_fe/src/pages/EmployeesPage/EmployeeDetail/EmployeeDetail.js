@@ -1,5 +1,5 @@
 import React from "react";
-import { Pencil } from "lucide-react";
+// import { Pencil } from "lucide-react";
 
 import {
     EmployeesDetailPage,
@@ -61,7 +61,7 @@ const InformationCard = ({ title, children }) => {
                 </div>
                 <div>
                     <button className="text-gray-500 hover:text-gray-700 p-1">
-                        <Pencil size={20} />
+                        {/* <Pencil size={20} /> */}
                     </button>
                 </div>
             </div>
