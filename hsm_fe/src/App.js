@@ -184,7 +184,7 @@ const App = () => {
                                                                                 <Menu.SubMenu key={route.name} title={route.name} icon={route.icon} > 
                                                                                     {route.children.map(subRoute => (
                                                                                         <Menu.Item key={subRoute.path} icon={subRoute.icon} > 
-                                                                                            <Link className="menu-link" style={{color:"red"}} to={subRoute.path}>{subRoute.name}</Link>
+                                                                                            <Link style={{ textDecoration: "none"}}  to={subRoute.path}>{subRoute.name}</Link>
                                                                                         </Menu.Item>
                                                                                     ))}
                                                                                 </Menu.SubMenu>
@@ -192,7 +192,7 @@ const App = () => {
                                                                         }
                                                                         return (
                                                                             <Menu.Item key={route.path} icon={route.icon}> 
-                                                                                <Link className="menu-link" to={route.path}>{route.name}</Link>
+                                                                                <Link style={{ textDecoration: "none"}} to={route.path}>{route.name}</Link>
                                                                             </Menu.Item>
                                                                         );
                                                                     })}
