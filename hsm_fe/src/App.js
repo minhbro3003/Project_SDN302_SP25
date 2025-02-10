@@ -13,8 +13,6 @@ import NotFoundPage from './pages/NotFoundPage/NotFoundPage';
 import { resetAccount, updateAccount } from './redux/accountSlice';
 import { persistStore } from 'redux-persist';
 import { store } from './redux/store';
-
-
 const { Sider, Content, Header } = Layout;
 
 
@@ -29,7 +27,7 @@ const App = () => {
 
 
     useEffect(() => {
-        if (publicRoutes.includes(location.pathname)) return; // Skip check on login page
+        if (publicRoutes.includes(location.pathname)) return; 
 
         const checkToken = () => {
             const token = localStorage.getItem("access_token");
@@ -40,11 +38,11 @@ const App = () => {
             }
         };
         const interval = setInterval(checkToken, 2000);
-        return () => clearInterval(interval); // Cleanup on unmount
+        return () => clearInterval(interval); 
     }, [dispatch, navigate, location]);
 
     useEffect(() => {
-        if (publicRoutes.includes(location.pathname)) return; // Skip check on login page
+        if (publicRoutes.includes(location.pathname)) return;
         if (account?.id) return; // 
 
         const handleAuthCheck = async () => {
@@ -183,18 +181,18 @@ const App = () => {
                                                                     .map(route => {
                                                                         if (route.children) {
                                                                             return (
-                                                                                <Menu.SubMenu key={route.name} title={route.name} icon={route.icon} > {/* 🔥 Dynamic Icon */}
+                                                                                <Menu.SubMenu key={route.name} title={route.name} icon={route.icon} > 
                                                                                     {route.children.map(subRoute => (
-                                                                                        <Menu.Item key={subRoute.path} icon={subRoute.icon} > {/* 🔥 Dynamic Icon */}
-                                                                                            <Link style={{textDecoration:"none"}}  to={subRoute.path}>{subRoute.name}</Link>
+                                                                                        <Menu.Item key={subRoute.path} icon={subRoute.icon} > 
+                                                                                            <Link className="menu-link" style={{color:"red"}} to={subRoute.path}>{subRoute.name}</Link>
                                                                                         </Menu.Item>
                                                                                     ))}
                                                                                 </Menu.SubMenu>
                                                                             );
                                                                         }
                                                                         return (
-                                                                            <Menu.Item key={route.path} icon={route.icon}> {/* 🔥 Dynamic Icon */}
-                                                                                <Link style={{textDecoration:"none"}} to={route.path}>{route.name}</Link>
+                                                                            <Menu.Item key={route.path} icon={route.icon}> 
+                                                                                <Link className="menu-link" to={route.path}>{route.name}</Link>
                                                                             </Menu.Item>
                                                                         );
                                                                     })}
@@ -264,7 +262,7 @@ const App = () => {
                                                                             <Menu.SubMenu key={route.name} title={route.name} icon={route.icon}>
                                                                                 {route.children.map(subRoute => (
                                                                                     <Menu.Item key={subRoute.path} icon={subRoute.icon}>
-                                                                                        <Link to={subRoute.path}>{subRoute.name}</Link>
+                                                                                        <Link style={{ textDecoration: 'none' }} to={subRoute.path}>{subRoute.name}</Link>
                                                                                     </Menu.Item>
                                                                                 ))}
                                                                             </Menu.SubMenu>
@@ -272,7 +270,7 @@ const App = () => {
                                                                     }
                                                                     return (
                                                                         <Menu.Item key={route.path} icon={route.icon}>
-                                                                            <Link to={route.path}>{route.name}</Link>
+                                                                            <Link style={{ textDecoration: 'none' }} to={route.path}>{route.name}</Link>
                                                                         </Menu.Item>
                                                                     );
                                                                 })}
