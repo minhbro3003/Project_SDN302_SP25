@@ -19,7 +19,7 @@ const generateFefreshToken = async (payload) => {
         {
             ...payload,
         },
-        process.env.REFESH_TOKEN,
+        process.env.REFRESH_TOKEN,
         { expiresIn: "365d" }
     );
     return refresh_token;
