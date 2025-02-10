@@ -95,10 +95,10 @@ const getAllAccounts = async () => {
         const allAccounts = await Account.aggregate([
             {
                 $lookup: {
-                    from: "permissions",
-                    localField: "permissions",
+                    from: "roles",
+                    localField: "roles",
                     foreignField: "_id",
-                    as: "permissionDetails",
+                    as: "roleDetails",
                 },
             },
             {
@@ -108,7 +108,7 @@ const getAllAccounts = async () => {
                     Email: 1,
                     Username: 1,
                     // Password: 1, // ❌ Remove this for security
-                    permissionDetails: 1,
+                    roleDetails: 1,
                     IsDelete: 1,
                 },
             },
@@ -140,17 +140,17 @@ const getDetailsAccount = async (id) => {
 
         const objectId = new mongoose.Types.ObjectId(id);
 
-        // Aggregate query to get user details with permissions
+        // Aggregate query to get user details with role
         const account = await Account.aggregate([
             {
                 $match: { _id: objectId },
             },
             {
                 $lookup: {
-                    from: "permissions",
-                    localField: "permissions",
+                    from: "roles",
+                    localField: "roles",
                     foreignField: "_id",
-                    as: "permissionDetails",
+                    as: "roleDetails",
                 },
             },
             {
@@ -159,7 +159,7 @@ const getDetailsAccount = async (id) => {
                     FullName: 1,
                     Email: 1,
                     Username: 1,
-                    permissionDetails: 1,
+                    roleDetails: 1,
                     IsDelete: 1,
                 },
             },

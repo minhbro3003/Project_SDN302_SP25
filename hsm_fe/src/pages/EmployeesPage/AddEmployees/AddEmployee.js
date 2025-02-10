@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from "react";
 import * as getAllEmployeeType from "../../../services/EmployeeService";
 import * as getAllHotel from "../../../services/HotelService";
 import * as getAllEmployeeSchedule from "../../../services/EmployeeScheduleService";
@@ -14,7 +14,6 @@ import {
 } from "./style";
 // Main component
 const AddEmployees = () => {
-
     const [employeeTypes, setEmployeeTypes] = useState([]);
     const [loading, setLoading] = useState(true);
     const [hotels, setHotels] = useState([]);
@@ -34,32 +33,46 @@ const AddEmployees = () => {
 
     const handleScheduleChange = (e) => {
         const { name, value } = e.target;
-    
+
         // Kiểm tra nếu giá trị giờ hợp lệ (trong khoảng 01:00 - 23:59)
         const isValidTime = (time) => {
             const regex = /^(0[1-9]|1\d|2[0-3]):([0-5]\d)$/; // Hỗ trợ 01:00 - 23:59
             return regex.test(time);
         };
-    
+
         if (name === "start_time" || name === "end_time") {
             if (!isValidTime(value)) {
-                alert("Giờ không hợp lệ! Vui lòng nhập giá trị từ 01:00 đến 23:59.");
+                alert(
+                    "Giờ không hợp lệ! Vui lòng nhập giá trị từ 01:00 đến 23:59."
+                );
                 return;
             }
         }
-    
+
         // Lấy ngày hiện tại theo múi giờ Việt Nam
         const today = getVietnamDate();
-    
+
         setFormDataES((prev) => ({
             ...prev,
-            schedule: prev.schedule.length > 0
-                ? [{ ...prev.schedule[0], date: prev.schedule[0].date || today, [name]: value }]
-                : [{ date: today, start_time: "", end_time: "", [name]: value }],
+            schedule:
+                prev.schedule.length > 0
+                    ? [
+                          {
+                              ...prev.schedule[0],
+                              date: prev.schedule[0].date || today,
+                              [name]: value,
+                          },
+                      ]
+                    : [
+                          {
+                              date: today,
+                              start_time: "",
+                              end_time: "",
+                              [name]: value,
+                          },
+                      ],
         }));
     };
-    
-    
 
     const [formData, setFormData] = useState({
         FullName: "",
@@ -80,7 +93,7 @@ const AddEmployees = () => {
                 date: getVietnamDate(),
                 start_time: "",
                 end_time: "",
-            }
+            },
         ],
     });
 
@@ -91,7 +104,6 @@ const AddEmployees = () => {
             employee_types: e.target.value,
         }));
     };
-
 
     // Fetch employee types
     useEffect(() => {
@@ -192,8 +204,6 @@ const AddEmployees = () => {
             return;
         }
 
-
-
         // **1. Tạo Employee trước**
         const employeeData = {
             hotels: [selectedHotel],
@@ -224,9 +234,15 @@ const AddEmployees = () => {
                     schedule: formDataES.schedule,
                 };
 
-                console.log("Submitting employee schedule data:", employeeScheduleData);
+                console.log(
+                    "Submitting employee schedule data:",
+                    employeeScheduleData
+                );
 
-                const scheduleRes = await getAllEmployeeSchedule.createEmployeeSchedule(employeeScheduleData);
+                const scheduleRes =
+                    await getAllEmployeeSchedule.createEmployeeSchedule(
+                        employeeScheduleData
+                    );
 
                 if (scheduleRes?.status === "OK") {
                     alert("Thêm nhân viên và lịch làm việc thành công!");
@@ -247,7 +263,7 @@ const AddEmployees = () => {
                                 date: getVietnamDate(), // Đặt lại giá trị mặc định
                                 start_time: "",
                                 end_time: "",
-                            }
+                            },
                         ],
                     });
                     setSelectedHotel("");
@@ -258,14 +274,20 @@ const AddEmployees = () => {
                 } else {
                     alert("Lỗi khi thêm lịch làm việc.");
                 }
-            } else if (res?.status === "error" && res?.message === "The email of employee already exists") {
+            } else if (
+                res?.status === "error" &&
+                res?.message === "The email of employee already exists"
+            ) {
                 alert("Email đã tồn tại. Vui lòng thử lại với email khác.");
             } else {
                 alert("Lỗi khi thêm nhân viên.");
             }
         } catch (error) {
             console.error("Lỗi từ API: ", error);
-            if (error?.code === 400 && error?.message === "The email of employee already exists") {
+            if (
+                error?.code === 400 &&
+                error?.message === "The email of employee already exists"
+            ) {
                 alert("Email đã tồn tại. Vui lòng thử lại với email khác.");
             } else {
                 alert("Đã có lỗi xảy ra, vui lòng thử lại.");
@@ -273,41 +295,145 @@ const AddEmployees = () => {
         }
     };
 
-
     return (
         <AddEmployeesPage>
             <Card>
                 <form ref={formRef} onSubmit={handleSubmit}>
-                    <div style={{ marginTop: "30px", display: "flex", gap: "20px" }}>
-                        <div style={{ display: "flex", flexDirection: "column", flex: 1 }}>
-                            <Label style={{ fontSize: "20px" }} htmlFor="FullName">Employee Name</Label>
-                            <Input id="FullName" value={formData.FullName} onChange={handleInputChange} placeholder="Input" />
-                            {errors.fullName && <span style={{ color: "red" }}>{errors.fullName}</span>}
+                    <div
+                        style={{
+                            marginTop: "30px",
+                            display: "flex",
+                            gap: "20px",
+                        }}
+                    >
+                        <div
+                            style={{
+                                display: "flex",
+                                flexDirection: "column",
+                                flex: 1,
+                            }}
+                        >
+                            <Label
+                                style={{ fontSize: "20px" }}
+                                htmlFor="FullName"
+                            >
+                                Employee Name
+                            </Label>
+                            <Input
+                                id="FullName"
+                                value={formData.FullName}
+                                onChange={handleInputChange}
+                                placeholder="Input"
+                            />
+                            {errors.fullName && (
+                                <span style={{ color: "red" }}>
+                                    {errors.fullName}
+                                </span>
+                            )}
                         </div>
 
-                        <div style={{ display: "flex", flexDirection: "column", flex: 1 }}>
-                            <Label style={{ fontSize: "20px" }} htmlFor="Address">Address</Label>
-                            <Input id="Address" value={formData.Address} onChange={handleInputChange} placeholder="Input" />
-                            {errors.address && <span style={{ color: "red" }}>{errors.address}</span>}
+                        <div
+                            style={{
+                                display: "flex",
+                                flexDirection: "column",
+                                flex: 1,
+                            }}
+                        >
+                            <Label
+                                style={{ fontSize: "20px" }}
+                                htmlFor="Address"
+                            >
+                                Address
+                            </Label>
+                            <Input
+                                id="Address"
+                                value={formData.Address}
+                                onChange={handleInputChange}
+                                placeholder="Input"
+                            />
+                            {errors.address && (
+                                <span style={{ color: "red" }}>
+                                    {errors.address}
+                                </span>
+                            )}
                         </div>
                     </div>
-                    <div style={{ marginTop: "30px", display: "flex", gap: "20px" }}>
-                        <div style={{ display: "flex", flexDirection: "column", flex: 1 }}>
-                            <Label style={{ fontSize: "20px" }} htmlFor="Email">Email</Label>
-                            <Input id="Email" value={formData.Email} onChange={handleInputChange} placeholder="Input" />
-                            {errors.email && <span style={{ color: "red" }}>{errors.email}</span>}
+                    <div
+                        style={{
+                            marginTop: "30px",
+                            display: "flex",
+                            gap: "20px",
+                        }}
+                    >
+                        <div
+                            style={{
+                                display: "flex",
+                                flexDirection: "column",
+                                flex: 1,
+                            }}
+                        >
+                            <Label style={{ fontSize: "20px" }} htmlFor="Email">
+                                Email
+                            </Label>
+                            <Input
+                                id="Email"
+                                value={formData.Email}
+                                onChange={handleInputChange}
+                                placeholder="Input"
+                            />
+                            {errors.email && (
+                                <span style={{ color: "red" }}>
+                                    {errors.email}
+                                </span>
+                            )}
                         </div>
-                        <div style={{ display: "flex", flexDirection: "column", flex: 1 }}>
-                            <Label style={{ fontSize: "20px" }} htmlFor="Phone">Phone</Label>
-                            <Input id="Phone" value={formData.Phone} onChange={handleInputChange} placeholder="Input" />
-                            {errors.phone && <span style={{ color: "red" }}>{errors.phone}</span>}
+                        <div
+                            style={{
+                                display: "flex",
+                                flexDirection: "column",
+                                flex: 1,
+                            }}
+                        >
+                            <Label style={{ fontSize: "20px" }} htmlFor="Phone">
+                                Phone
+                            </Label>
+                            <Input
+                                id="Phone"
+                                value={formData.Phone}
+                                onChange={handleInputChange}
+                                placeholder="Input"
+                            />
+                            {errors.phone && (
+                                <span style={{ color: "red" }}>
+                                    {errors.phone}
+                                </span>
+                            )}
                         </div>
                     </div>
 
-                    <div style={{ marginTop: "30px", display: "flex", gap: "20px" }}>
+                    <div
+                        style={{
+                            marginTop: "30px",
+                            display: "flex",
+                            gap: "20px",
+                        }}
+                    >
                         <div style={{ flex: 1 }}>
-                            <Label style={{ fontSize: "20px", marginBottom: "10px" }}>Hotel Name</Label>
-                            <select className="form-select" value={selectedHotel} onChange={(e) => setSelectedHotel(e.target.value)}>
+                            <Label
+                                style={{
+                                    fontSize: "20px",
+                                    marginBottom: "10px",
+                                }}
+                            >
+                                Hotel Name
+                            </Label>
+                            <select
+                                className="form-select"
+                                value={selectedHotel}
+                                onChange={(e) =>
+                                    setSelectedHotel(e.target.value)
+                                }
+                            >
                                 {hotels.map((hotel) => (
                                     <option key={hotel._id} value={hotel._id}>
                                         {hotel.NameHotel}
@@ -316,8 +442,21 @@ const AddEmployees = () => {
                             </select>
                         </div>
                         <div style={{ flex: 1 }}>
-                            <Label style={{ fontSize: "20px", marginBottom: "10px" }}>Permission</Label>
-                            <select className="form-select" value={selectedPermissions} onChange={(e) => setSelectedPermissions(e.target.value)}>
+                            <Label
+                                style={{
+                                    fontSize: "20px",
+                                    marginBottom: "10px",
+                                }}
+                            >
+                                Permission
+                            </Label>
+                            <select
+                                className="form-select"
+                                value={selectedPermissions}
+                                onChange={(e) =>
+                                    setSelectedPermissions(e.target.value)
+                                }
+                            >
                                 {permissions.map((perm) => (
                                     <option key={perm._id} value={perm._id}>
                                         {perm.Note}
@@ -330,22 +469,65 @@ const AddEmployees = () => {
                     <div style={{ marginTop: "30px" }}>
                         <Label style={{ fontSize: "20px" }}>Gender</Label>
                         <RadioGroup>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                <RadioGroupItem id="female" type="radio" value="female" name="gender" onChange={handleGenderChange} />
+                            <div
+                                style={{
+                                    display: "flex",
+                                    alignItems: "center",
+                                    gap: "8px",
+                                }}
+                            >
+                                <RadioGroupItem
+                                    id="female"
+                                    type="radio"
+                                    value="female"
+                                    name="gender"
+                                    onChange={handleGenderChange}
+                                />
                                 <Label htmlFor="female">Female</Label>
                             </div>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                <RadioGroupItem id="male" type="radio" value="male" name="gender" onChange={handleGenderChange} />
+                            <div
+                                style={{
+                                    display: "flex",
+                                    alignItems: "center",
+                                    gap: "8px",
+                                }}
+                            >
+                                <RadioGroupItem
+                                    id="male"
+                                    type="radio"
+                                    value="male"
+                                    name="gender"
+                                    onChange={handleGenderChange}
+                                />
                                 <Label htmlFor="male">Male</Label>
                             </div>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                <RadioGroupItem id="notSay" type="radio" value="notSay" name="gender" onChange={handleGenderChange} />
+                            <div
+                                style={{
+                                    display: "flex",
+                                    alignItems: "center",
+                                    gap: "8px",
+                                }}
+                            >
+                                <RadioGroupItem
+                                    id="notSay"
+                                    type="radio"
+                                    value="notSay"
+                                    name="gender"
+                                    onChange={handleGenderChange}
+                                />
                                 <Label htmlFor="notSay">Rather not say</Label>
                             </div>
                         </RadioGroup>
                     </div>
                     <div style={{ marginTop: "30px" }}>
-                        <div className="form-check form-switch" style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                        <div
+                            className="form-check form-switch"
+                            style={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "10px",
+                            }}
+                        >
                             <input
                                 className="form-check-input"
                                 type="checkbox"
@@ -359,14 +541,20 @@ const AddEmployees = () => {
                             >
                                 Additional Information
                             </Label>
-
                         </div>
                         {/* Nếu checkbox bật thì hiển thị phần chọn thời gian làm việc */}
                         {isChecked && (
                             <div style={{ marginTop: "20px" }}>
                                 {/* Employment Type */}
                                 <div style={{ marginTop: "30px" }}>
-                                    <Label style={{ fontSize: "20px", marginBottom: "10px" }}>Employment Type</Label>
+                                    <Label
+                                        style={{
+                                            fontSize: "20px",
+                                            marginBottom: "10px",
+                                        }}
+                                    >
+                                        Employment Type
+                                    </Label>
                                     {loading ? (
                                         <p>Loading...</p>
                                     ) : (
@@ -374,17 +562,28 @@ const AddEmployees = () => {
                                             {employeeTypes.map((item) => (
                                                 <div
                                                     key={item._id}
-                                                    style={{ display: "flex", alignItems: "center", gap: "8px" }}
+                                                    style={{
+                                                        display: "flex",
+                                                        alignItems: "center",
+                                                        gap: "8px",
+                                                    }}
                                                 >
                                                     <input
                                                         id={item._id}
                                                         type="radio"
                                                         value={item._id}
                                                         name="job"
-                                                        checked={formDataES.employee_types === item._id}
-                                                        onChange={handleRadioChange}
+                                                        checked={
+                                                            formDataES.employee_types ===
+                                                            item._id
+                                                        }
+                                                        onChange={
+                                                            handleRadioChange
+                                                        }
                                                     />
-                                                    <label htmlFor={item._id}>{item.employeeType}</label>
+                                                    <label htmlFor={item._id}>
+                                                        {item.EmployeeType}
+                                                    </label>
                                                 </div>
                                             ))}
                                         </div>
@@ -392,30 +591,55 @@ const AddEmployees = () => {
                                 </div>
 
                                 {/* Date Picker */}
-                                <div style={{ marginTop: "20px", display: "flex", alignItems: "center" }}>
-                                    <Label style={{ fontSize: "20px", marginRight: "10px" }}>
+                                <div
+                                    style={{
+                                        marginTop: "20px",
+                                        display: "flex",
+                                        alignItems: "center",
+                                    }}
+                                >
+                                    <Label
+                                        style={{
+                                            fontSize: "20px",
+                                            marginRight: "10px",
+                                        }}
+                                    >
                                         Date of Job:
                                     </Label>
                                     <input
                                         type="date"
                                         name="date"
-                                        value={formDataES.schedule[0]?.date || getVietnamDate()}
+                                        value={
+                                            formDataES.schedule[0]?.date ||
+                                            getVietnamDate()
+                                        }
                                         onChange={handleScheduleChange}
                                         min={getVietnamDate()}
                                     />
                                 </div>
 
-
                                 {/* Time Picker */}
-                                <div style={{ marginTop: "20px", display: "flex", alignItems: "center" }}>
-                                    <Label style={{ fontSize: "20px" }} htmlFor="start_time">
+                                <div
+                                    style={{
+                                        marginTop: "20px",
+                                        display: "flex",
+                                        alignItems: "center",
+                                    }}
+                                >
+                                    <Label
+                                        style={{ fontSize: "20px" }}
+                                        htmlFor="start_time"
+                                    >
                                         Select Working Hours:
                                     </Label>
                                     <input
                                         type="time"
                                         id="start_time"
                                         name="start_time"
-                                        value={formDataES.schedule[0]?.start_time || ""}
+                                        value={
+                                            formDataES.schedule[0]
+                                                ?.start_time || ""
+                                        }
                                         onChange={handleScheduleChange}
                                         step="60"
                                         min="00:00"
@@ -427,19 +651,27 @@ const AddEmployees = () => {
                                         type="time"
                                         id="end_time"
                                         name="end_time"
-                                        value={formDataES.schedule[0]?.end_time || ""}
+                                        value={
+                                            formDataES.schedule[0]?.end_time ||
+                                            ""
+                                        }
                                         onChange={handleScheduleChange}
                                         step="60"
                                         min="00:00"
                                         max="23:59"
                                     />
                                 </div>
-
                             </div>
                         )}
                     </div>
 
-                    <div style={{ display: "flex", justifyContent: "center", marginTop: "20px" }}>
+                    <div
+                        style={{
+                            display: "flex",
+                            justifyContent: "center",
+                            marginTop: "20px",
+                        }}
+                    >
                         <button
                             type="submit"
                             style={{
@@ -450,10 +682,14 @@ const AddEmployees = () => {
                                 borderRadius: "5px",
                                 cursor: "pointer",
                                 boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)",
-                                transition: "background-color 0.3s"
+                                transition: "background-color 0.3s",
                             }}
-                            onMouseEnter={(e) => e.target.style.backgroundColor = "#66C6A1"} // Hover effect
-                            onMouseLeave={(e) => e.target.style.backgroundColor = "#79D7BE"} // Hover effect
+                            onMouseEnter={(e) =>
+                                (e.target.style.backgroundColor = "#66C6A1")
+                            } // Hover effect
+                            onMouseLeave={(e) =>
+                                (e.target.style.backgroundColor = "#79D7BE")
+                            } // Hover effect
                         >
                             Submit
                         </button>
@@ -465,4 +701,3 @@ const AddEmployees = () => {
 };
 
 export default AddEmployees;
-

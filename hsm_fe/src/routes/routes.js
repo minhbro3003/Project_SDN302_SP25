@@ -17,11 +17,15 @@ import {
     LineChartOutlined,
     PlusCircleOutlined,
     TableOutlined,
+    BankOutlined,
+    ProfileOutlined,
+    BorderOuterOutlined,
 } from "@ant-design/icons";
 import RoomList from "../pages/RoomPage/RoomList";
 import EmployeesPage from "../pages/EmployeesPage/EmployeesPage";
 import EmployeeDetail from "../pages/EmployeesPage/EmployeeDetail/EmployeeDetail";
-
+import HotelList from "../pages/HotelPage/HotelList";
+import AddHotel from "../pages/HotelPage/AddHotel";
 
 export const routes = [
     {
@@ -37,7 +41,7 @@ export const routes = [
         page: Dashboard,
         isShowHeader: true,
         icon: <HomeOutlined />,
-        permissions: ["Admin", "Receptionist", "Janitor"], // Accessible by all
+        roles: ["Admin", "Employee", "Janitor"], // Accessible by all
     },
     {
         path: "/login",
@@ -50,7 +54,7 @@ export const routes = [
         path: "/employees",
         name: "Employee",
         isShowHeader: true,
-        permissions: ["Admin"],
+        roles: ["Admin"],
         children: [
             {
                 path: "/employees/add",
@@ -58,7 +62,7 @@ export const routes = [
                 isShowHeader: true,
                 icon: <AppstoreAddOutlined />,
                 page: AddEmployees,
-                permissions: ["Admin"],
+                roles: ["Admin"],
             },
             {
                 path: "/employees/details",
@@ -66,7 +70,7 @@ export const routes = [
                 isShowHeader: true,
                 page: EmployeesPage,
                 icon: <AppstoreAddOutlined />,
-                permissions: ["Admin"],
+                roles: ["Admin"],
             },
             {
                 path: "/employee-detail",
@@ -74,7 +78,7 @@ export const routes = [
                 page: EmployeeDetail,
                 isShowHeader: true,
                 icon: <SettingOutlined />,
-                permissions: ["Admin", "Receptionist"],
+                roles: ["Admin", "Employee"],
             },
         ],
     },
@@ -84,7 +88,7 @@ export const routes = [
         page: RevenuePage,
         isShowHeader: true,
         icon: <SettingOutlined />,
-        permissions: ["Admin"],
+        roles: ["Admin"],
     },
     {
         path: "/booking-log",
@@ -92,13 +96,38 @@ export const routes = [
         page: BookingPage,
         isShowHeader: true,
         icon: <SettingOutlined />,
-        permissions: ["Admin", "Receptionist"],
+        roles: ["Admin", "Employee"],
+    },
+    {
+        path: "/hotel",
+        name: "Hotel",
+        isShowHeader: true,
+        roles: ["Admin"],
+        icon: <BankOutlined  />,
+        children: [
+            {
+                path: "/hotel/room-list",
+                name: "Hotel List",
+                isShowHeader: true,
+                icon: <ProfileOutlined />,
+                page: HotelList,
+                roles: ["Admin"],
+            },
+            {
+                path: "/hotel/add-room",
+                name: "Add Hotel",
+                isShowHeader: true,
+                page: AddHotel,
+                icon: <BorderOuterOutlined />,
+                roles: ["Admin"],
+            },
+        ],
     },
     {
         path: "/rooms",
         name: "Rooms",
         isShowHeader: true,
-        permissions: ["Admin"],
+        roles: ["Admin"],
         icon: <BarChartOutlined />,
         children: [
             {
@@ -107,7 +136,7 @@ export const routes = [
                 isShowHeader: true,
                 page: RoomDashboard,
                 icon: <LineChartOutlined />,
-                permissions: ["Admin"],
+                roles: ["Admin"],
             },
             {
                 path: "/rooms/room-list",
@@ -115,7 +144,7 @@ export const routes = [
                 isShowHeader: true,
                 icon: <PlusCircleOutlined />,
                 page: RoomList,
-                permissions: ["Admin"],
+                roles: ["Admin"],
             },
             {
                 path: "/rooms/add-room",
@@ -123,7 +152,7 @@ export const routes = [
                 isShowHeader: true,
                 page: AddRoom,
                 icon: <TableOutlined />,
-                permissions: ["Admin"],
+                roles: ["Admin"],
             },
         ],
     },
@@ -133,7 +162,7 @@ export const routes = [
         page: ProfilePage,
         isShowHeader: true,
         icon: <HomeOutlined />,
-        permissions: ["Admin", "Receptionist", "Janitor"],
+        roles: ["Admin", "Employee", "Janitor"],
     },
     {
         path: "/home",
@@ -141,7 +170,7 @@ export const routes = [
         page: HomePage,
         isShowHeader: true,
         icon: <HomeOutlined />,
-        permissions: ["Admin", "Receptionist", "Janitor"],
+        roles: ["Admin", "Employee", "Janitor"],
     },
     {
         path: "/account",
@@ -149,7 +178,7 @@ export const routes = [
         page: AccountPage,
         isShowHeader: true,
         icon: <HomeOutlined />,
-        permissions: ["Admin"],
+        roles: ["Admin"],
     },
     {
         path: "*",

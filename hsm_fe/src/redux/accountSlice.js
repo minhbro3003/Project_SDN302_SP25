@@ -5,38 +5,45 @@ const initialState = {
     fullName: "",
     email: "",
     username: "",
-    permissions: [],
+    roles: [],
     isDeleted: false,
     access_token: "",
     refreshToken: "",
 };
 
 export const accountSlice = createSlice({
-    name: "account",  
+    name: "account",
     initialState,
     reducers: {
         updateAccount: (state, action) => {
+            console.log("Payload received in Redux:", action.payload);
             const {
                 _id = "",
                 FullName = "",
                 Email = "",
                 Username = "",
-                permissionDetails = [],  
+                roleDetails = [],
                 IsDelete = false,
                 access_token = "",
                 refreshToken = "",
             } = action.payload;
-        
+
             state.id = _id;
             state.fullName = FullName;
             state.email = Email;
             state.username = Username;
-            state.permissions = permissionDetails.map(p => p.PermissionName); 
+            // Kiểm tra roleDetails trước khi map
+            if (Array.isArray(roleDetails)) {
+                state.roles = roleDetails.map((p) => p?.RoleName || "Unknown");
+            } else {
+                console.error("roleDetails is not an array:", roleDetails);
+                state.roles = [];
+            }
             state.isDeleted = IsDelete;
             state.access_token = access_token;
             state.refreshToken = refreshToken;
         },
-        resetAccount: () => initialState,  
+        resetAccount: () => initialState,
     },
 });
 
