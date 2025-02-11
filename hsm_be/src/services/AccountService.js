@@ -140,7 +140,7 @@ const getDetailsAccount = async (id) => {
 
         const objectId = new mongoose.Types.ObjectId(id);
 
-        // Aggregate query to get user details with permissions
+        // Aggregate query to get user details with role
         const account = await Account.aggregate([
             {
                 $match: { _id: objectId },

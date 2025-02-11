@@ -9,10 +9,12 @@ import ProfilePage from "../pages/ProfilePage/ProfilePage";
 import RevenuePage from "../pages/RevenuePage/RevenuePage";
 import AddRoom from "../pages/RoomPage/AddRoom";
 import RoomDashboard from "../pages/RoomPage/RoomDashboard";
-import {SettingOutlined, AppstoreAddOutlined, HomeOutlined, BarChartOutlined, LineChartOutlined, PlusCircleOutlined, TableOutlined } from '@ant-design/icons';
+import {SettingOutlined, AppstoreAddOutlined, HomeOutlined, BarChartOutlined, LineChartOutlined, PlusCircleOutlined, TableOutlined, BorderOuterOutlined, ProfileOutlined, BankOutlined } from '@ant-design/icons';
 import RoomList from "../pages/RoomPage/RoomList";
 import EmployeesPage from "../pages/EmployeesPage/EmployeesPage";
 import EmployeeDetail from "../pages/EmployeesPage/EmployeeDetail/EmployeeDetail";
+import AddHotel from "../pages/HotelPage/AddHotel";
+import HotelList from "../pages/HotelPage/HotelList";
 
 
 
@@ -86,6 +88,31 @@ export const routes = [
         isShowHeader: true,
         icon: <SettingOutlined />,
         permissions: ["Admin", "Receptionist", "Janitor"], 
+    },
+    {
+        path: "/hotel",
+        name: "Hotel",
+        isShowHeader: true,
+        roles: ["Admin"],
+        icon: <BankOutlined  />,
+        children: [
+            {
+                path: "/hotel/room-list",
+                name: "Hotel List",
+                isShowHeader: true,
+                icon: <ProfileOutlined />,
+                page: HotelList,
+                roles: ["Admin"],
+            },
+            {
+                path: "/hotel/add-room",
+                name: "Add Hotel",
+                isShowHeader: true,
+                page: AddHotel,
+                icon: <BorderOuterOutlined />,
+                roles: ["Admin"],
+            },
+        ],
     },
     {
         path: "/rooms",
