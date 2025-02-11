@@ -1,37 +1,20 @@
-import React, { useState, useEffect, Fragment } from "react";
-import { Layout, Menu, Avatar, Button } from "antd";
-import {
-    HomeOutlined,
-    UserOutlined,
-    BarChartOutlined,
-    ProfileOutlined,
-    LockOutlined,
-    TableOutlined,
-    FileTextOutlined,
-    DownOutlined,
-} from "@ant-design/icons";
+import React, { useState, useEffect, Fragment } from 'react';
+import { Layout, Menu, Avatar, Button } from 'antd';
+import { HomeOutlined, UserOutlined, BarChartOutlined, ProfileOutlined, LockOutlined, TableOutlined, FileTextOutlined, DownOutlined } from '@ant-design/icons';
 
-import {
-    BrowserRouter as Router,
-    Route,
-    Routes,
-    Link,
-    useNavigate,
-    useLocation,
-    Navigate,
-} from "react-router-dom";
+import { BrowserRouter as Router, Route, Routes, Link, useNavigate, useLocation, Navigate } from 'react-router-dom';
 import * as AccountService from "./services/accountService";
 import { isJsonString } from "./utils";
 import { jwtDecode } from "jwt-decode";
 import * as UserService from "./services/UserSevice";
 import { useDispatch, useSelector } from "react-redux";
-import { routes } from "./routes/routes";
-import NotFoundPage from "./pages/NotFoundPage/NotFoundPage";
-import { resetAccount, updateAccount } from "./redux/accountSlice";
-import { persistStore } from "redux-persist";
-import { store } from "./redux/store";
-
+import { routes } from './routes/routes';
+import NotFoundPage from './pages/NotFoundPage/NotFoundPage';
+import { resetAccount, updateAccount } from './redux/accountSlice';
+import { persistStore } from 'redux-persist';
+import { store } from './redux/store';
 const { Sider, Content, Header } = Layout;
+
 
 const App = () => {
     const dispatch = useDispatch();
@@ -40,10 +23,11 @@ const App = () => {
     const [isLoading, setIsLoading] = useState(false);
     const account = useSelector((state) => state.account);
     const publicRoutes = ["/login", "/"];
-    const userRoles = account?.roles || [];
+    const userPermissions = account?.permissions || [];
+
 
     useEffect(() => {
-        if (publicRoutes.includes(location.pathname)) return; // Skip check on login page
+        if (publicRoutes.includes(location.pathname)) return; 
 
         const checkToken = () => {
             const token = localStorage.getItem("access_token");
@@ -54,12 +38,12 @@ const App = () => {
             }
         };
         const interval = setInterval(checkToken, 2000);
-        return () => clearInterval(interval); // Cleanup on unmount
+        return () => clearInterval(interval); 
     }, [dispatch, navigate, location]);
 
     useEffect(() => {
-        if (publicRoutes.includes(location.pathname)) return; // Skip check on login page
-        if (account?.id) return; //
+        if (publicRoutes.includes(location.pathname)) return;
+        if (account?.id) return; // 
 
         const handleAuthCheck = async () => {
             const { storageData, decoded } = handleDecoded();
@@ -79,8 +63,7 @@ const App = () => {
     }, [account?.id, dispatch, navigate]);
 
     const handleDecoded = () => {
-        let storageData =
-            account?.access_token || localStorage.getItem("access_token");
+        let storageData = account?.access_token || localStorage.getItem("access_token");
         let decoded = {};
 
         try {
@@ -109,9 +92,7 @@ const App = () => {
             const decodedRefreshToken = jwtDecode(refreshToken);
             if (decoded?.exp < currentTime) {
                 if (decodedRefreshToken?.exp > currentTime) {
-                    const data = await AccountService.refreshToken(
-                        refreshToken
-                    );
+                    const data = await AccountService.refreshToken(refreshToken);
                     config.headers["token"] = `Bearer ${data?.access_token}`;
                 } else {
                     dispatch(resetAccount());
@@ -149,89 +130,35 @@ const App = () => {
     return (
         <Layout style={{ minHeight: "100vh" }}>
             <Routes>
-                {routes.map((route) => {
+                {routes.map(route => {
                     if (route.children) {
-                        return route.children.map((subRoute) => (
+                        return route.children.map(subRoute => (
                             <Route
                                 key={subRoute.path}
                                 path={subRoute.path}
                                 element={
                                     <ProtectedRoute
                                         element={
-                                            subRoute.isShowHeader ??
-                                            route.isShowHeader ? ( // 🔥 Inherit from parent
+                                            subRoute.isShowHeader ?? route.isShowHeader ? ( // 🔥 Inherit from parent
                                                 <Layout>
                                                     {/* HEADER */}
-                                                    <Header
-                                                        style={{
-                                                            background:
-                                                                "#79D7BE",
-                                                            display: "flex",
-                                                            justifyContent:
-                                                                "space-between",
-                                                            padding: "0 27px",
-                                                        }}
-                                                    >
-                                                        <div
-                                                            style={{
-                                                                fontSize:
-                                                                    "20px",
-                                                                fontWeight:
-                                                                    "bold",
-                                                                color: "#00363D",
-                                                            }}
-                                                        >
-                                                            PHM System
-                                                        </div>
-                                                        <div
-                                                            style={{
-                                                                display: "flex",
-                                                                alignItems:
-                                                                    "center",
-                                                                gap: "16px",
-                                                            }}
-                                                        >
+                                                    <Header style={{ background: "#79D7BE", display: "flex", justifyContent: "space-between", padding: "0 27px" }}>
+                                                        <div style={{ fontSize: "20px", fontWeight: "bold", color: "#00363D" }}>PHM System</div>
+                                                        <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
                                                             <Button
                                                                 type="text"
-                                                                style={{
-                                                                    color: "#00363D",
-                                                                }}
+                                                                style={{ color: "#00363D" }}
                                                                 onClick={() => {
-                                                                    dispatch(
-                                                                        resetAccount()
-                                                                    );
-                                                                    localStorage.removeItem(
-                                                                        "access_token"
-                                                                    );
-                                                                    localStorage.removeItem(
-                                                                        "refresh_token"
-                                                                    );
-                                                                    persistStore(
-                                                                        store
-                                                                    )
-                                                                        .flush()
-                                                                        .then(
-                                                                            () =>
-                                                                                persistStore(
-                                                                                    store
-                                                                                ).purge()
-                                                                        );
-                                                                    navigate(
-                                                                        "/login"
-                                                                    );
+                                                                    dispatch(resetAccount());
+                                                                    localStorage.removeItem("access_token");
+                                                                    localStorage.removeItem("refresh_token");
+                                                                    persistStore(store).flush().then(() => persistStore(store).purge());
+                                                                    navigate("/login");
                                                                 }}
                                                             >
                                                                 Logout
                                                             </Button>
-                                                            <Avatar
-                                                                style={{
-                                                                    backgroundColor:
-                                                                        "#00363D",
-                                                                }}
-                                                                icon={
-                                                                    <UserOutlined />
-                                                                }
-                                                            />
+                                                            <Avatar style={{ backgroundColor: "#00363D" }} icon={<UserOutlined />} />
                                                         </div>
                                                     </Header>
 
@@ -240,149 +167,43 @@ const App = () => {
                                                         <Sider
                                                             width={190}
                                                             style={{
-                                                                background:
-                                                                    "#79D7BE",
+                                                                background: "#79D7BE",
                                                                 height: "100vh", // Full height
-                                                                overflowY:
-                                                                    "auto", // Scroll inside sidebar if needed
-                                                                position:
-                                                                    "sticky",
-                                                                top: 0,
+                                                                overflowY: "auto", // Scroll inside sidebar if needed
+                                                                position: "sticky",
+                                                                top: 0
                                                             }}
                                                         >
-                                                            <Menu
-                                                                mode="inline"
-                                                                defaultSelectedKeys={[
-                                                                    "dashboard",
-                                                                ]}
-                                                                style={{
-                                                                    background:
-                                                                        "#79D7BE",
-                                                                    color: "#00363D",
-                                                                    fontSize:
-                                                                        "16px",
-                                                                }}
-                                                            >
+
+                                                            <Menu mode="inline" defaultSelectedKeys={["dashboard"]} style={{ background: "#79D7BE", color: "#00363D", fontSize: "16px" }}>
                                                                 {routes
-                                                                    .filter(
-                                                                        (
-                                                                            route
-                                                                        ) =>
-                                                                            route.isShowHeader &&
-                                                                            (!route.roles ||
-                                                                                route.roles.some(
-                                                                                    (
-                                                                                        p
-                                                                                    ) =>
-                                                                                        userRoles.includes(
-                                                                                            p
-                                                                                        )
-                                                                                ))
-                                                                    )
-                                                                    .map(
-                                                                        (
-                                                                            route
-                                                                        ) => {
-                                                                            if (
-                                                                                route.children
-                                                                            ) {
-                                                                                return (
-                                                                                    <Menu.SubMenu
-                                                                                        key={
-                                                                                            route.name
-                                                                                        }
-                                                                                        title={
-                                                                                            route.name
-                                                                                        }
-                                                                                        icon={
-                                                                                            route.icon
-                                                                                        }
-                                                                                    >
-                                                                                        {" "}
-                                                                                        {/* 🔥 Dynamic Icon */}
-                                                                                        {route.children.map(
-                                                                                            (
-                                                                                                subRoute
-                                                                                            ) => (
-                                                                                                <Menu.Item
-                                                                                                    key={
-                                                                                                        subRoute.path
-                                                                                                    }
-                                                                                                    icon={
-                                                                                                        subRoute.icon
-                                                                                                    }
-                                                                                                >
-                                                                                                    {" "}
-                                                                                                    {/* 🔥 Dynamic Icon */}
-                                                                                                    <Link
-                                                                                                        style={{
-                                                                                                            textDecoration:
-                                                                                                                "none",
-                                                                                                        }}
-                                                                                                        to={
-                                                                                                            subRoute.path
-                                                                                                        }
-                                                                                                    >
-                                                                                                        {
-                                                                                                            subRoute.name
-                                                                                                        }
-                                                                                                    </Link>
-                                                                                                </Menu.Item>
-                                                                                            )
-                                                                                        )}
-                                                                                    </Menu.SubMenu>
-                                                                                );
-                                                                            }
+                                                                    .filter(route => route.isShowHeader && (!route.permissions || route.permissions.some(p => userPermissions.includes(p))))
+                                                                    .map(route => {
+                                                                        if (route.children) {
                                                                             return (
-                                                                                <Menu.Item
-                                                                                    key={
-                                                                                        route.path
-                                                                                    }
-                                                                                    icon={
-                                                                                        route.icon
-                                                                                    }
-                                                                                >
-                                                                                    {" "}
-                                                                                    {/* 🔥 Dynamic Icon */}
-                                                                                    <Link
-                                                                                        style={{
-                                                                                            textDecoration:
-                                                                                                "none",
-                                                                                        }}
-                                                                                        to={
-                                                                                            route.path
-                                                                                        }
-                                                                                    >
-                                                                                        {
-                                                                                            route.name
-                                                                                        }
-                                                                                    </Link>
-                                                                                </Menu.Item>
+                                                                                <Menu.SubMenu key={route.name} title={route.name} icon={route.icon} > 
+                                                                                    {route.children.map(subRoute => (
+                                                                                        <Menu.Item key={subRoute.path} icon={subRoute.icon} > 
+                                                                                            <Link style={{ textDecoration: "none"}}  to={subRoute.path}>{subRoute.name}</Link>
+                                                                                        </Menu.Item>
+                                                                                    ))}
+                                                                                </Menu.SubMenu>
                                                                             );
                                                                         }
-                                                                    )}
+                                                                        return (
+                                                                            <Menu.Item key={route.path} icon={route.icon}> 
+                                                                                <Link style={{ textDecoration: "none"}} to={route.path}>{route.name}</Link>
+                                                                            </Menu.Item>
+                                                                        );
+                                                                    })}
                                                             </Menu>
                                                         </Sider>
 
                                                         {/* MAIN CONTENT */}
-                                                        <Layout
-                                                            style={{
-                                                                minHeight:
-                                                                    "100vh",
-                                                                display: "flex",
-                                                            }}
-                                                        >
-                                                            <Content
-                                                                style={{
-                                                                    padding:
-                                                                        "17px",
-                                                                    background:
-                                                                        "#fff",
-                                                                    flex: 1,
-                                                                    overflow:
-                                                                        "auto",
-                                                                }}
-                                                            >
+                                                        <Layout style={{ minHeight: "100vh", display: "flex" }}>
+
+                                                            <Content style={{ padding: "17px", background: "#fff", flex: 1, overflow: "auto" }}>
+
                                                                 <subRoute.page />
                                                             </Content>
                                                         </Layout>
@@ -392,7 +213,7 @@ const App = () => {
                                                 <subRoute.page />
                                             )
                                         }
-                                        requiredRoles={subRoute.roles}
+                                        requiredPermissions={subRoute.permissions}
                                     />
                                 }
                             />
@@ -409,190 +230,56 @@ const App = () => {
                                         route.isShowHeader ? (
                                             <Layout>
                                                 {/* HEADER */}
-                                                <Header
-                                                    style={{
-                                                        background: "#79D7BE",
-                                                        display: "flex",
-                                                        justifyContent:
-                                                            "space-between",
-                                                        padding: "0 27px",
-                                                    }}
-                                                >
-                                                    <div
-                                                        style={{
-                                                            fontSize: "20px",
-                                                            fontWeight: "bold",
-                                                            color: "#00363D",
-                                                        }}
-                                                    >
-                                                        PHM System
-                                                    </div>
-                                                    <div
-                                                        style={{
-                                                            display: "flex",
-                                                            alignItems:
-                                                                "center",
-                                                            gap: "16px",
-                                                        }}
-                                                    >
+                                                <Header style={{ background: "#79D7BE", display: "flex", justifyContent: "space-between", padding: "0 27px" }}>
+                                                    <div style={{ fontSize: "20px", fontWeight: "bold", color: "#00363D" }}>PHM System</div>
+                                                    <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
                                                         <Button
                                                             type="text"
-                                                            style={{
-                                                                color: "#00363D",
-                                                            }}
+                                                            style={{ color: "#00363D" }}
                                                             onClick={() => {
-                                                                dispatch(
-                                                                    resetAccount()
-                                                                );
-                                                                localStorage.removeItem(
-                                                                    "access_token"
-                                                                );
-                                                                localStorage.removeItem(
-                                                                    "refresh_token"
-                                                                );
-                                                                persistStore(
-                                                                    store
-                                                                )
-                                                                    .flush()
-                                                                    .then(() =>
-                                                                        persistStore(
-                                                                            store
-                                                                        ).purge()
-                                                                    );
-                                                                navigate(
-                                                                    "/login"
-                                                                );
+                                                                dispatch(resetAccount());
+                                                                localStorage.removeItem("access_token");
+                                                                localStorage.removeItem("refresh_token");
+                                                                persistStore(store).flush().then(() => persistStore(store).purge());
+                                                                navigate("/login");
                                                             }}
                                                         >
                                                             Logout
                                                         </Button>
-                                                        <Avatar
-                                                            style={{
-                                                                backgroundColor:
-                                                                    "#00363D",
-                                                            }}
-                                                            icon={
-                                                                <UserOutlined />
-                                                            }
-                                                        />
+                                                        <Avatar style={{ backgroundColor: "#00363D" }} icon={<UserOutlined />} />
                                                     </div>
                                                 </Header>
 
                                                 {/* SIDEBAR */}
                                                 <Layout>
-                                                    <Sider
-                                                        width={190}
-                                                        style={{
-                                                            background:
-                                                                "#79D7BE",
-                                                            borderRadius: "5px",
-                                                        }}
-                                                    >
-                                                        <Menu
-                                                            mode="inline"
-                                                            defaultSelectedKeys={[
-                                                                "dashboard",
-                                                            ]}
-                                                            style={{
-                                                                background:
-                                                                    "#79D7BE",
-                                                                color: "#00363D",
-                                                                fontSize:
-                                                                    "16px",
-                                                            }}
-                                                        >
+                                                    <Sider width={190} style={{ background: "#79D7BE", borderRadius: "5px" }}>
+                                                        <Menu mode="inline" defaultSelectedKeys={["dashboard"]} style={{ background: "#79D7BE", color: "#00363D", fontSize: "16px" }}>
                                                             {routes
-                                                                .filter(
-                                                                    (route) =>
-                                                                        route.isShowHeader &&
-                                                                        (!route.roles ||
-                                                                            route.roles.some(
-                                                                                (
-                                                                                    p
-                                                                                ) =>
-                                                                                    userRoles.includes(
-                                                                                        p
-                                                                                    )
-                                                                            ))
-                                                                )
-                                                                .map(
-                                                                    (route) => {
-                                                                        if (
-                                                                            route.children
-                                                                        ) {
-                                                                            return (
-                                                                                <Menu.SubMenu
-                                                                                    key={
-                                                                                        route.name
-                                                                                    }
-                                                                                    title={
-                                                                                        route.name
-                                                                                    }
-                                                                                    icon={
-                                                                                        route.icon
-                                                                                    }
-                                                                                >
-                                                                                    {route.children.map(
-                                                                                        (
-                                                                                            subRoute
-                                                                                        ) => (
-                                                                                            <Menu.Item
-                                                                                                key={
-                                                                                                    subRoute.path
-                                                                                                }
-                                                                                                icon={
-                                                                                                    subRoute.icon
-                                                                                                }
-                                                                                            >
-                                                                                                <Link
-                                                                                                    to={
-                                                                                                        subRoute.path
-                                                                                                    }
-                                                                                                >
-                                                                                                    {
-                                                                                                        subRoute.name
-                                                                                                    }
-                                                                                                </Link>
-                                                                                            </Menu.Item>
-                                                                                        )
-                                                                                    )}
-                                                                                </Menu.SubMenu>
-                                                                            );
-                                                                        }
+                                                                .filter(route => route.isShowHeader && (!route.permissions || route.permissions.some(p => userPermissions.includes(p))))
+                                                                .map(route => {
+                                                                    if (route.children) {
                                                                         return (
-                                                                            <Menu.Item
-                                                                                key={
-                                                                                    route.path
-                                                                                }
-                                                                                icon={
-                                                                                    route.icon
-                                                                                }
-                                                                            >
-                                                                                <Link
-                                                                                    to={
-                                                                                        route.path
-                                                                                    }
-                                                                                >
-                                                                                    {
-                                                                                        route.name
-                                                                                    }
-                                                                                </Link>
-                                                                            </Menu.Item>
+                                                                            <Menu.SubMenu key={route.name} title={route.name} icon={route.icon}>
+                                                                                {route.children.map(subRoute => (
+                                                                                    <Menu.Item key={subRoute.path} icon={subRoute.icon}>
+                                                                                        <Link style={{ textDecoration: 'none' }} to={subRoute.path}>{subRoute.name}</Link>
+                                                                                    </Menu.Item>
+                                                                                ))}
+                                                                            </Menu.SubMenu>
                                                                         );
                                                                     }
-                                                                )}
+                                                                    return (
+                                                                        <Menu.Item key={route.path} icon={route.icon}>
+                                                                            <Link style={{ textDecoration: 'none' }} to={route.path}>{route.name}</Link>
+                                                                        </Menu.Item>
+                                                                    );
+                                                                })}
                                                         </Menu>
                                                     </Sider>
 
                                                     {/* MAIN CONTENT */}
                                                     <Layout>
-                                                        <Content
-                                                            style={{
-                                                                padding: "17px",
-                                                                background:
-                                                                    "#fff",
-                                                            }}
-                                                        >
+                                                        <Content style={{ padding: "17px", background: "#fff" }}>
                                                             <route.page />
                                                         </Content>
                                                     </Layout>
@@ -602,7 +289,7 @@ const App = () => {
                                             <route.page />
                                         )
                                     }
-                                    requiredRoles={route.roles}
+                                    requiredPermissions={route.permissions}
                                 />
                             }
                         />
@@ -612,15 +299,18 @@ const App = () => {
                 {/* Fallback for unknown routes */}
                 <Route path="*" element={<NotFoundPage />} />
             </Routes>
+
         </Layout>
     );
 };
 
 export default App;
 
-const ProtectedRoute = ({ element, requiredRoles }) => {
+
+
+const ProtectedRoute = ({ element, requiredPermissions }) => {
     const account = useSelector((state) => state.account);
-    const userRoles = account?.roles || [];
+    const userPermissions = account?.permissions || [];
     const location = useLocation();
 
     if (location.pathname === "/login") return element; // Allow login page
@@ -631,9 +321,10 @@ const ProtectedRoute = ({ element, requiredRoles }) => {
         return <div>Loading...</div>; // Prevents immediate redirect to login
     }
 
-    if (requiredRoles && !requiredRoles.some((p) => userRoles.includes(p))) {
-        console.log("You don't have the roles to view this");
+    if (requiredPermissions && !requiredPermissions.some(p => userPermissions.includes(p))) {
+        console.log("You don't have the permission to view this");
         return <Navigate to="/dashboard" />;
     }
+
     return element;
 };
