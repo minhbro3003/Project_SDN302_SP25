@@ -6,10 +6,10 @@ const accounts = new mongoose.Schema(
         Username: { type: String, required: true },
         Password: { type: String, required: true },
         IsDelete: { type: Boolean },
-        roles: [
+        permissions: [
             {
                 type: mongoose.Schema.Types.ObjectId,
-                ref: "Roles",
+                ref: "Permissions",
                 // required: true,
             },
         ],

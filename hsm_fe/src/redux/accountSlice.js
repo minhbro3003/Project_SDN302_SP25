@@ -5,7 +5,7 @@ const initialState = {
     fullName: "",
     email: "",
     username: "",
-    roles: [],
+    permissions: [],
     isDeleted: false,
     access_token: "",
     refreshToken: "",
@@ -22,7 +22,7 @@ export const accountSlice = createSlice({
                 FullName = "",
                 Email = "",
                 Username = "",
-                roleDetails = [],
+                permissionDetails = [],
                 IsDelete = false,
                 access_token = "",
                 refreshToken = "",
@@ -32,13 +32,7 @@ export const accountSlice = createSlice({
             state.fullName = FullName;
             state.email = Email;
             state.username = Username;
-            // Kiểm tra roleDetails trước khi map
-            if (Array.isArray(roleDetails)) {
-                state.roles = roleDetails.map((p) => p?.RoleName || "Unknown");
-            } else {
-                console.error("roleDetails is not an array:", roleDetails);
-                state.roles = [];
-            }
+            state.permissions = permissionDetails.map(p => p.PermissionName)
             state.isDeleted = IsDelete;
             state.access_token = access_token;
             state.refreshToken = refreshToken;

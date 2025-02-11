@@ -95,10 +95,10 @@ const getAllAccounts = async () => {
         const allAccounts = await Account.aggregate([
             {
                 $lookup: {
-                    from: "roles",
-                    localField: "roles",
+                    from: "permissions",
+                    localField: "permissions",
                     foreignField: "_id",
-                    as: "roleDetails",
+                    as: "permissionDetails",
                 },
             },
             {
@@ -108,7 +108,7 @@ const getAllAccounts = async () => {
                     Email: 1,
                     Username: 1,
                     // Password: 1, // ❌ Remove this for security
-                    roleDetails: 1,
+                    permissionDetails: 1,
                     IsDelete: 1,
                 },
             },
@@ -147,10 +147,10 @@ const getDetailsAccount = async (id) => {
             },
             {
                 $lookup: {
-                    from: "roles",
-                    localField: "roles",
+                    from: "permissions",
+                    localField: "permissions",
                     foreignField: "_id",
-                    as: "roleDetails",
+                    as: "permissionDetails",
                 },
             },
             {
@@ -159,7 +159,7 @@ const getDetailsAccount = async (id) => {
                     FullName: 1,
                     Email: 1,
                     Username: 1,
-                    roleDetails: 1,
+                    permissionDetails: 1,
                     IsDelete: 1,
                 },
             },
