@@ -27,7 +27,7 @@ const App = () => {
 
 
     useEffect(() => {
-        if (publicRoutes.includes(location.pathname)) return; 
+        if (publicRoutes.includes(location.pathname)) return;
 
         const checkToken = () => {
             const token = localStorage.getItem("access_token");
@@ -38,7 +38,7 @@ const App = () => {
             }
         };
         const interval = setInterval(checkToken, 2000);
-        return () => clearInterval(interval); 
+        return () => clearInterval(interval);
     }, [dispatch, navigate, location]);
 
     useEffect(() => {
@@ -181,18 +181,18 @@ const App = () => {
                                                                     .map(route => {
                                                                         if (route.children) {
                                                                             return (
-                                                                                <Menu.SubMenu key={route.name} title={route.name} icon={route.icon} > 
+                                                                                <Menu.SubMenu key={route.name} title={route.name} icon={route.icon} >
                                                                                     {route.children.map(subRoute => (
-                                                                                        <Menu.Item key={subRoute.path} icon={subRoute.icon} > 
-                                                                                            <Link style={{ textDecoration: "none"}}  to={subRoute.path}>{subRoute.name}</Link>
+                                                                                        <Menu.Item key={subRoute.path} icon={subRoute.icon} >
+                                                                                            <Link style={{ textDecoration: "none" }} to={subRoute.path}>{subRoute.name}</Link>
                                                                                         </Menu.Item>
                                                                                     ))}
                                                                                 </Menu.SubMenu>
                                                                             );
                                                                         }
                                                                         return (
-                                                                            <Menu.Item key={route.path} icon={route.icon}> 
-                                                                                <Link style={{ textDecoration: "none"}} to={route.path}>{route.name}</Link>
+                                                                            <Menu.Item key={route.path} icon={route.icon}>
+                                                                                <Link style={{ textDecoration: "none" }} to={route.path}>{route.name}</Link>
                                                                             </Menu.Item>
                                                                         );
                                                                     })}
