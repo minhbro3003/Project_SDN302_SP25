@@ -40,11 +40,11 @@ const createRooms = async (req, res) => {
             RoomName,
             Price,
             Status,
+            Floor,
             Active,
             typerooms,
-            locations,
             room_amenities,
-            Discription,
+            Description,
             Image,
             IsDelete,
         } = req.body;
@@ -55,7 +55,6 @@ const createRooms = async (req, res) => {
             !Status ||
             !Active ||
             !typerooms ||
-            !locations ||
             !room_amenities
         ) {
             return res
