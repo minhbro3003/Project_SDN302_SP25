@@ -5,6 +5,8 @@ import {
     SearchOutlined,
 } from "@ant-design/icons";
 import { Button, Input, Space, Table } from "antd";
+import * as HotelService from "../../services/HotelService";
+import { useQuery } from "@tanstack/react-query";
 
 const data = [
     {
@@ -112,6 +114,28 @@ const HotelList = () => {
     const [searchText, setSearchText] = useState("");
     const [searchedColumn, setSearchedColumn] = useState("");
     const searchInput = useRef(null);
+
+    const getAllHotels = async () => {
+        const res = await HotelService.getAllHotel();
+        console.log("data hotel: ", res);
+        return res;
+    };
+    // console.log("getAllHotels: ", getAllHotels)
+
+    const queryProduct = useQuery({
+        queryKey: ["hotels"],
+        queryFn: getAllHotels,
+    });
+
+    const { isLoading: isLoadingProducts, data: hotels = [] } = queryProduct;
+
+    const dataTable =
+        hotels?.data?.length &&
+        hotels?.data?.map((p) => {
+            return { ...p, key: p._id };
+        });
+    console.log("dataTable", dataTable);
+
     const handleSearch = (selectedKeys, confirm, dataIndex) => {
         confirm();
         setSearchText(selectedKeys[0]);
@@ -243,7 +267,7 @@ const HotelList = () => {
                         fontSize: "20px",
                         cursor: "pointer",
                     }}
-                    // onClick={() => setIsModalDelete(true)}
+                // onClick={() => setIsModalDelete(true)}
                 />
                 <EditOutlined
                     style={{
@@ -251,57 +275,64 @@ const HotelList = () => {
                         fontSize: "20px",
                         cursor: "pointer",
                     }}
-                    // onClick={handleDetailsProduct}
+                // onClick={handleDetailsProduct}
                 />
             </div>
         );
     };
     const columns = [
         {
-            title: "RoomName",
-            dataIndex: "roomname",
-            key: "roomname",
-            // width: "30%",
-            ...getColumnSearchProps("roomname"),
-            sorter: (a, b) => a.roomname.length - b.roomname.length,
-        },
-        {
-            title: "Image",
-            dataIndex: "image",
-            key: "image",
+            title: "Image Hotel",
+            dataIndex: "images",
+            key: "images",
             // width: "20%",
-            ...getColumnSearchProps("image"),
+            ...getColumnSearchProps("images"),
         },
         {
-            title: "Price",
-            dataIndex: "price",
-            key: "price",
-            ...getColumnSearchProps("price"),
-            sorter: (a, b) => a.price.length - b.price.length,
+            title: "Hotel Code",
+            dataIndex: "CodeHotel",
+            key: "CodeHotel",
+            // width: "30%",
+            ...getColumnSearchProps("CodeHotel"),
+            sorter: (a, b) => a.CodeHotel.length - b.CodeHotel.length,
+        },
+        {
+            title: "Name Hotel",
+            dataIndex: "NameHotel",
+            key: "NameHotel",
+            // width: "20%",
+            ...getColumnSearchProps("NameHotel"),
+        },
+        {
+            title: "Title",
+            dataIndex: "Title",
+            key: "Title",
+            ...getColumnSearchProps("Title"),
+            sorter: (a, b) => a.Title.length - b.Title.length,
+            sortDirections: ["descend", "ascend"],
+        },
+        {
+            title: "LocationHotel",
+            dataIndex: "LocationHotel",
+            key: "LocationHotel",
+            ...getColumnSearchProps("LocationHotel"),
+            sorter: (a, b) => a.LocationHotel.length - b.LocationHotel.length,
+            sortDirections: ["descend", "ascend"],
+        },
+        {
+            title: "Rooms",
+            dataIndex: "rooms",
+            key: "rooms",
+            ...getColumnSearchProps("rooms"),
+            sorter: (a, b) => a.rooms.length - b.rooms.length,
             sortDirections: ["descend", "ascend"],
         },
         {
             title: "Status",
-            dataIndex: "status",
-            key: "status",
-            ...getColumnSearchProps("status"),
-            sorter: (a, b) => a.status.length - b.status.length,
-            sortDirections: ["descend", "ascend"],
-        },
-        {
-            title: "Type Rooms",
-            dataIndex: "typerooms",
-            key: "typerooms",
-            ...getColumnSearchProps("typerooms"),
-            sorter: (a, b) => a.typerooms.length - b.typerooms.length,
-            sortDirections: ["descend", "ascend"],
-        },
-        {
-            title: "Location",
-            dataIndex: "location",
-            key: "location",
-            ...getColumnSearchProps("location"),
-            sorter: (a, b) => a.location.length - b.location.length,
+            dataIndex: "Active",
+            key: "Active",
+            ...getColumnSearchProps("Active"),
+            sorter: (a, b) => a.Active.length - b.Active.length,
             sortDirections: ["descend", "ascend"],
         },
         {
@@ -312,7 +343,7 @@ const HotelList = () => {
     ];
     return (
         <>
-            <Table columns={columns} dataSource={data} />
+            <Table columns={columns} dataSource={dataTable} />
         </>
     );
 };
