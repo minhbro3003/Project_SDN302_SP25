@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-
+require("./ImgaeModel")
 const hotelSchema = new mongoose.Schema(
     {
         CodeHotel: {
