@@ -2,10 +2,10 @@ import axios from "axios";
 
 export const getAllHotel = async (data) => {
     const res = await axios.get(
-        `${process.env.REACT_APP_API_URL_BACKEND}/hotel/get-all-hotel`,
+        `${process.env.REACT_APP_API_URL_BACKEND}/hotel`,
         data
     );
-    console.log("data", data);
+    console.log("res getAllHotel:", res);
     return res.data;
 };
 
@@ -15,7 +15,6 @@ export const createHotel = async (data) => {
         data
 
     );
-    console.log("data", data);
+    console.log("res createHotel:", res);
     return res.data;
 };
-// console.log("API URL:", process.env.REACT_APP_API_URL_BACKEND);

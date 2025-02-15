@@ -7,7 +7,6 @@ export const getAllRoom = async (data) => {
         data
 
     );
-    console.log("data", data);
+    console.log("res getAllRoom:", res);
     return res.data;
 };
-console.log("API URL:", process.env.REACT_APP_API_URL_BACKEND);

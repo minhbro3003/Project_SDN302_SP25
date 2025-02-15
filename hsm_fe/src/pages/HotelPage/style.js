@@ -25,3 +25,9 @@ export const FullWidthItem = styled.div`
     width: 100%;
   }
 `;
+
+export const FormTitle = styled.h2`
+    font-size: 24px;
+    font-weight: bold;
+    margin-bottom: 20px;
+`;

@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
-
+require("./TypeRoomModel");
+require("./RoomAmenitiesModel");
 const roomSchema = new mongoose.Schema(
     {
         RoomName: { type: String, required: true, trim: true },

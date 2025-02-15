@@ -30,13 +30,6 @@ const hotelSchema = new mongoose.Schema(
             type: String,
             trim: true,
         },
-        provinces: [
-            {
-                type: mongoose.Schema.Types.ObjectId,
-                ref: "Province",
-                required: true,
-            },
-        ],
         images: [
             {
                 type: mongoose.Schema.Types.ObjectId,

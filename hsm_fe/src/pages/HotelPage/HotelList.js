@@ -1,114 +1,13 @@
 import React, { useRef, useState } from "react";
 import {
     DeleteOutlined,
+    DownOutlined,
     EditOutlined,
     SearchOutlined,
 } from "@ant-design/icons";
-import { Button, Input, Space, Table } from "antd";
+import { Button, Dropdown, Input, Menu, Space, Table, Tag, Tooltip } from "antd";
 import * as HotelService from "../../services/HotelService";
 import { useQuery } from "@tanstack/react-query";
-
-const data = [
-    {
-        key: "1",
-        roomname: "1John Brown",
-        image: "Image 1",
-        price: 12000,
-        status: "active",
-        typerooms: "Deluxe",
-        location: "Tầng 1",
-    },
-    {
-        key: "2",
-        roomname: "2John Brown",
-        image: "Image 1",
-        price: 12000,
-        status: "active",
-        typerooms: "Deluxe",
-        location: "Tầng 1",
-    },
-    {
-        key: "3",
-        roomname: "3John Brown",
-        image: "Image 1",
-        price: 12000,
-        status: "active",
-        typerooms: "Deluxe",
-        location: "Tầng 1",
-    },
-    {
-        key: "4",
-        roomname: "4John Brown",
-        image: "Image 1",
-        price: 12000,
-        status: "active",
-        typerooms: "Deluxe",
-        location: "Tầng 1",
-    },
-    {
-        key: "5",
-        roomname: "5John Brown",
-        image: "Image 1",
-        price: 12000,
-        status: "active",
-        typerooms: "Deluxe",
-        location: "Tầng 1",
-    },
-    {
-        key: "6",
-        roomname: "6John Brown",
-        image: "Image 1",
-        price: 12000,
-        status: "active",
-        typerooms: "Deluxe",
-        location: "Tầng 1",
-    },
-    {
-        key: "7",
-        roomname: "7John Brown",
-        image: "Image 1",
-        price: 12000,
-        status: "active",
-        typerooms: "Deluxe",
-        location: "Tầng 1",
-    },
-    {
-        key: "8",
-        roomname: "8John Brown",
-        image: "Image 1",
-        price: 12000,
-        status: "active",
-        typerooms: "Deluxe",
-        location: "Tầng 1",
-    },
-    {
-        key: "9",
-        roomname: "John Brown",
-        image: "Image 1",
-        price: 12000,
-        status: "active",
-        typerooms: "Deluxe",
-        location: "Tầng 1",
-    },
-    {
-        key: "10",
-        roomname: "9John Brown",
-        image: "Image 1",
-        price: 12000,
-        status: "active",
-        typerooms: "Deluxe",
-        location: "Tầng 1",
-    },
-    {
-        key: "11",
-        roomname: "10John Brown",
-        image: "Image 1",
-        price: 12000,
-        status: "active",
-        typerooms: "Deluxe",
-        location: "Tầng 1",
-    },
-];
 
 const HotelList = () => {
     const [searchText, setSearchText] = useState("");
@@ -120,7 +19,6 @@ const HotelList = () => {
         console.log("data hotel: ", res);
         return res;
     };
-    // console.log("getAllHotels: ", getAllHotels)
 
     const queryProduct = useQuery({
         queryKey: ["hotels"],
@@ -287,6 +185,17 @@ const HotelList = () => {
             key: "images",
             // width: "20%",
             ...getColumnSearchProps("images"),
+            render: (images) => (
+                images && images.length > 0 ? (
+                    <img
+                        src={images[0].LinkImage}
+                        alt="Hotel"
+                        style={{ width: 80, height: 50, objectFit: "cover", borderRadius: 5 }}
+                    />
+                ) : (
+                    "No Image"
+                )
+            ),
         },
         {
             title: "Hotel Code",
@@ -302,6 +211,7 @@ const HotelList = () => {
             key: "NameHotel",
             // width: "20%",
             ...getColumnSearchProps("NameHotel"),
+            sorter: (a, b) => a.NameHotel.length - b.NameHotel.length,
         },
         {
             title: "Title",
@@ -326,14 +236,66 @@ const HotelList = () => {
             ...getColumnSearchProps("rooms"),
             sorter: (a, b) => a.rooms.length - b.rooms.length,
             sortDirections: ["descend", "ascend"],
+            // render: (rooms) => {
+            //     if (!rooms || rooms.length === 0) {
+            //         return <span style={{ color: "gray" }}>No rooms</span>;
+            //     }
+
+            //     const menuItems = rooms.map((room) => ({
+            //         key: room._id,
+            //         label: room.NameRoom,
+            //     }));
+
+            //     return (
+            //         <Dropdown menu={{ items: menuItems }}>
+            //             <Button>
+            //                 View Rooms <DownOutlined />
+            //             </Button>
+            //         </Dropdown>
+            //     );
+            // },
+            render: (rooms) => {
+                if (!rooms || rooms.length === 0) {
+                    return <span style={{ color: "gray" }}>No rooms</span>;
+                };
+
+                const firstAmenity = rooms[0]; // Chỉ lấy 1 cái đầu tiên
+                const otherAmenities = rooms.slice(1); // Những cái còn lại
+
+                return (
+                    <Tooltip
+                        title={otherAmenities.map(a => a.NameRoom).join(" - ")}
+                        placement="top"
+                    >
+                        <Tag color="blue">{firstAmenity.NameRoom}</Tag>
+                        {otherAmenities.length > 0 && (
+                            <span style={{ color: "#f300f4", cursor: "pointer" }}>
+                                +{otherAmenities.length} more
+                            </span>
+                        )}
+                    </Tooltip>
+                );
+            },
+            onFilter: (value, record) =>
+                record.rooms?.some(room =>
+                    room.NameRoom.toLowerCase().includes(value.toLowerCase())
+                ),
         },
         {
             title: "Status",
             dataIndex: "Active",
             key: "Active",
             ...getColumnSearchProps("Active"),
-            sorter: (a, b) => a.Active.length - b.Active.length,
-            sortDirections: ["descend", "ascend"],
+            render: (Active) => (
+                <Tag color={Active ? "green" : "volcano"}>
+                    {Active ? "Active" : "Inactive"}
+                </Tag>
+            ),
+            filters: [
+                { text: "Active", value: true },
+                { text: "Inactive", value: false },
+            ],
+            onFilter: (value, record) => record.Active === value,
         },
         {
             title: "Action",

@@ -1,16 +1,59 @@
-// const Product = require("../models/ProductModel");
-const Room = require("../models/RoomModel");
 const Rooms = require("../models/RoomModel");
 
 //get all rooms
+// const getAllRoomsService = () => {
+//     return new Promise(async (resolve, reject) => {
+//         try {
+//             const allRooms = await Rooms.find();
+//             resolve({
+//                 status: "OK",
+//                 message: " All rooms successfully",
+//                 data: allRooms,
+//             });
+//         } catch (e) {
+//             console.log("Error: ", e.message);
+//             reject(e);
+//         }
+//     });
+// };
 const getAllRoomsService = () => {
     return new Promise(async (resolve, reject) => {
         try {
-            const allRooms = await Rooms.find();
+            const allRooms = await Rooms.find()
+                .populate({ path: "typerooms" })
+                .populate({ path: "room_amenities.room_amenitiesID", })
+                .lean(); // Chuyển về object thuần JS để dễ xử lý
+
+            // Format lại dữ liệu
+            const formatData = allRooms.map((room) => ({
+                id: room._id,
+                RoomName: room.RoomName,
+                Price: room.Price,
+                Status: room.Status,
+                Floor: room.Floor,
+                Active: room.Active,
+                IsDelete: room.IsDelete,
+                Description: room.Description,
+                typerooms: room.typerooms
+                    ? { TypeName: room.typerooms.TypeName, Note: room.typerooms.Note }
+                    : null,
+                room_amenities: room.room_amenities.map((amenity) => ({
+                    id: amenity.room_amenitiesID?._id,
+                    name: amenity.room_amenitiesID?.AmenitiesName,
+                    note: amenity.room_amenitiesID?.Note,
+                    quantity: amenity.quantity,
+                    status: amenity.status,
+                })),
+                Image: room.Image.map((img) => ({
+                    url: img.url,
+                    alt: img.alt || "Room Image",
+                })),
+            }));
+
             resolve({
                 status: "OK",
-                message: " All rooms successfully",
-                data: allRooms,
+                message: "All rooms successfully",
+                data: formatData,
             });
         } catch (e) {
             console.log("Error: ", e.message);
@@ -18,6 +61,7 @@ const getAllRoomsService = () => {
         }
     });
 };
+
 
 //get room by id
 const getRoomByRoomIdService = (id) => {
@@ -46,16 +90,8 @@ const getRoomByRoomIdService = (id) => {
 const createRoomService = async (newRoom) => {
     try {
         const {
-            RoomName,
-            Price,
-            Status,
-            Floor,
-            Active,
-            typerooms,
-            room_amenities,
-            Description,
-            Image,
-            IsDelete,
+            RoomName, Price, Status, Floor, Active,
+            typerooms, room_amenities, Description, Image, IsDelete,
         } = newRoom;
 
         const checkRoomName = await Rooms.findOne({
@@ -70,16 +106,8 @@ const createRoomService = async (newRoom) => {
 
         //create room
         const newedRoomData = new Rooms({
-            RoomName,
-            Price,
-            Status,
-            Floor,
-            Active,
-            typerooms,
-            room_amenities,
-            Description,
-            Image,
-            IsDelete,
+            RoomName, Price, Status, Floor, Active,
+            typerooms, room_amenities, Description, Image, IsDelete,
         });
         //save database
         const savedRoom = await newedRoomData.save();
@@ -102,7 +130,7 @@ const createRoomService = async (newRoom) => {
 //update room by id
 const updateRoomService = async (id, data) => {
     try {
-        const checkRoom = await Room.findById(id);
+        const checkRoom = await Rooms.findById(id);
         console.log("checkRoom: ", checkRoom);
         if (!checkRoom) {
             return {
@@ -110,7 +138,7 @@ const updateRoomService = async (id, data) => {
                 message: "The room is not defined",
             };
         }
-        const updatedRoom = await Room.findByIdAndUpdate(id, data, {
+        const updatedRoom = await Rooms.findByIdAndUpdate(id, data, {
             new: true,
         });
         return {
@@ -132,7 +160,7 @@ const updateRoomService = async (id, data) => {
 const deleteRoomService = (id) => {
     return new Promise(async (resolve, reject) => {
         try {
-            const checkRoom = await Room.findOne({ _id: id }); //_id
+            const checkRoom = await Rooms.findOne({ _id: id }); //_id
             console.log("checkRoom: ", checkRoom);
             if (!checkRoom) {
                 resolve({
@@ -141,7 +169,7 @@ const deleteRoomService = (id) => {
                 });
             }
 
-            await Room.findByIdAndDelete(id);
+            await Rooms.findByIdAndDelete(id);
             resolve({
                 status: "OK",
                 message: "Delete room successfully",
@@ -151,172 +179,6 @@ const deleteRoomService = (id) => {
         }
     });
 };
-
-// const updateProduct = (id, data) => {
-//     return new Promise(async (resolve, reject) => {
-//         try {
-//             const checkProduct = await Product.findOne({ _id: id }); //_id
-//             console.log("checkProduct: ", checkProduct);
-//             if (checkProduct === null) {
-//                 resolve({
-//                     status: "OK",
-//                     message: "The product is not defined",
-//                 });
-//             }
-
-//             const updatedProduct = await Product.findByIdAndUpdate(id, data, {
-//                 new: true,
-//             });
-//             resolve({
-//                 status: "OK",
-//                 message: "Updata Product Success",
-//                 data: updatedProduct,
-//             });
-//         } catch (e) {
-//             reject(e);
-//         }
-//     });
-// };
-
-// const deleteProduct = (id) => {
-//     return new Promise(async (resolve, reject) => {
-//         try {
-//             const checkProduct = await Product.findOne({ _id: id }); //_id
-//             console.log("checkUser: ", checkProduct);
-//             if (checkProduct === null) {
-//                 resolve({
-//                     status: "Error",
-//                     message: "The Product is not defined",
-//                 });
-//             }
-
-//             await Product.findByIdAndDelete(id);
-//             resolve({
-//                 status: "OK",
-//                 message: "Delete product successfully",
-//             });
-//         } catch (e) {
-//             reject(e);
-//         }
-//     });
-// };
-
-// const deleteManyProduct = (ids) => {
-//     console.log("_ids: ", ids);
-//     return new Promise(async (resolve, reject) => {
-//         try {
-//             await Product.deleteMany({ _id: ids });
-//             resolve({
-//                 status: "OK",
-//                 message: "Delete product successfully",
-//             });
-//         } catch (e) {
-//             reject(e);
-//         }
-//     });
-// };
-
-// const getAllProduct = (limit, page, sort, filter) => {
-//     // console.log("sort", sort);
-//     return new Promise(async (resolve, reject) => {
-//         try {
-//             const totalProduct = await Product.countDocuments();
-//             let allProduct = [];
-//             // console.log("filter", filter);
-//             // Kiểm tra và áp dụng filter
-//             if (filter) {
-//                 const allProductFilter = await Product.find({
-//                     [filter[0]]: { $regex: filter[1], $options: "i" },
-//                 })
-//                     .limit(limit)
-//                     .skip(page * limit);
-//                 resolve({
-//                     status: "OK",
-//                     message: " All product successfully",
-//                     data: allProductFilter,
-//                     total: totalProduct,
-//                     pageCurrent: Number(page + 1),
-//                     totalPage: Math.ceil(totalProduct / limit),
-//                 });
-//             }
-//             // Kiểm tra và áp dụng sort
-//             if (sort) {
-//                 // console.log("oko");
-//                 const objectSort = {};
-//                 objectSort[sort[1]] = sort[0];
-//                 // console.log("objectSort", objectSort);
-//                 const allProductSort = await Product.find()
-//                     .limit(limit)
-//                     .skip(page * limit)
-//                     .sort(objectSort);
-//                 resolve({
-//                     status: "OK",
-//                     message: " All product successfully",
-//                     data: allProductSort,
-//                     total: totalProduct,
-//                     pageCurrent: Number(page + 1),
-//                     totalPage: Math.ceil(totalProduct / limit),
-//                 });
-//             }
-//             if (!limit) {
-//                 allProduct = await Product.find();
-//             } else {
-//                 // Nếu không có filter hoặc sort, lấy tất cả sản phẩm
-//                 allProduct = await Product.find()
-//                     .limit(limit)
-//                     .skip(page * limit);
-//             }
-
-//             resolve({
-//                 status: "OK",
-//                 message: " All product successfully",
-//                 data: allProduct,
-//                 total: totalProduct,
-//                 pageCurrent: Number(page + 1),
-//                 totalPage: Math.ceil(totalProduct / limit),
-//             });
-//         } catch (e) {
-//             reject(e);
-//         }
-//     });
-// };
-
-// const getDetailsProduct = (id) => {
-//     return new Promise(async (resolve, reject) => {
-//         try {
-//             const product = await Product.findOne({ _id: id }); //_id
-//             if (product === null) {
-//                 resolve({
-//                     status: "Error",
-//                     message: "The product is not defined",
-//                 });
-//             }
-
-//             resolve({
-//                 status: "OK",
-//                 message: "Product successfully",
-//                 data: product,
-//             });
-//         } catch (e) {
-//             reject(e);
-//         }
-//     });
-// };
-
-// const getAllTypes = () => {
-//     return new Promise(async (resolve, reject) => {
-//         try {
-//             const allType = await Product.distinct("type");
-//             resolve({
-//                 status: "OK",
-//                 message: "Type Product successfully",
-//                 data: allType,
-//             });
-//         } catch (e) {
-//             reject(e);
-//         }
-//     });
-// };
 
 module.exports = {
     getAllRoomsService,

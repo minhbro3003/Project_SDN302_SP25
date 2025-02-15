@@ -4,114 +4,35 @@ import {
     EditOutlined,
     SearchOutlined,
 } from "@ant-design/icons";
-import { Button, Input, Space, Table } from "antd";
-
-const data = [
-    {
-        key: "1",
-        roomname: "1John Brown",
-        image: "Image 1",
-        price: 12000,
-        status: "active",
-        typerooms: "Deluxe",
-        location: "Tầng 1",
-    },
-    {
-        key: "2",
-        roomname: "2John Brown",
-        image: "Image 1",
-        price: 12000,
-        status: "active",
-        typerooms: "Deluxe",
-        location: "Tầng 1",
-    },
-    {
-        key: "3",
-        roomname: "3John Brown",
-        image: "Image 1",
-        price: 12000,
-        status: "active",
-        typerooms: "Deluxe",
-        location: "Tầng 1",
-    },
-    {
-        key: "4",
-        roomname: "4John Brown",
-        image: "Image 1",
-        price: 12000,
-        status: "active",
-        typerooms: "Deluxe",
-        location: "Tầng 1",
-    },
-    {
-        key: "5",
-        roomname: "5John Brown",
-        image: "Image 1",
-        price: 12000,
-        status: "active",
-        typerooms: "Deluxe",
-        location: "Tầng 1",
-    },
-    {
-        key: "6",
-        roomname: "6John Brown",
-        image: "Image 1",
-        price: 12000,
-        status: "active",
-        typerooms: "Deluxe",
-        location: "Tầng 1",
-    },
-    {
-        key: "7",
-        roomname: "7John Brown",
-        image: "Image 1",
-        price: 12000,
-        status: "active",
-        typerooms: "Deluxe",
-        location: "Tầng 1",
-    },
-    {
-        key: "8",
-        roomname: "8John Brown",
-        image: "Image 1",
-        price: 12000,
-        status: "active",
-        typerooms: "Deluxe",
-        location: "Tầng 1",
-    },
-    {
-        key: "9",
-        roomname: "John Brown",
-        image: "Image 1",
-        price: 12000,
-        status: "active",
-        typerooms: "Deluxe",
-        location: "Tầng 1",
-    },
-    {
-        key: "10",
-        roomname: "9John Brown",
-        image: "Image 1",
-        price: 12000,
-        status: "active",
-        typerooms: "Deluxe",
-        location: "Tầng 1",
-    },
-    {
-        key: "11",
-        roomname: "10John Brown",
-        image: "Image 1",
-        price: 12000,
-        status: "active",
-        typerooms: "Deluxe",
-        location: "Tầng 1",
-    },
-];
+import { Button, Input, Space, Table, Tag, Tooltip } from "antd";
+import * as RoomService from "../../services/RoomService";
+import { useQuery } from "@tanstack/react-query";
 
 const RoomList = () => {
     const [searchText, setSearchText] = useState("");
     const [searchedColumn, setSearchedColumn] = useState("");
     const searchInput = useRef(null);
+
+    const getAllRooms = async () => {
+        const res = await RoomService.getAllRoom();
+        console.log("data rooms: ", res);
+        return res;
+    };
+
+    const queryProduct = useQuery({
+        queryKey: ["rooms"],
+        queryFn: getAllRooms,
+    });
+
+    const { isLoading: isLoadingProducts, data: rooms = [] } = queryProduct;
+
+    const dataTable =
+        rooms?.data?.length &&
+        rooms?.data?.map((p) => {
+            return { ...p, key: p._id };
+        });
+    console.log("dataTable", dataTable);
+
     const handleSearch = (selectedKeys, confirm, dataIndex) => {
         confirm();
         setSearchText(selectedKeys[0]);
@@ -243,7 +164,7 @@ const RoomList = () => {
                         fontSize: "20px",
                         cursor: "pointer",
                     }}
-                    // onClick={() => setIsModalDelete(true)}
+                // onClick={() => setIsModalDelete(true)}
                 />
                 <EditOutlined
                     style={{
@@ -251,58 +172,94 @@ const RoomList = () => {
                         fontSize: "20px",
                         cursor: "pointer",
                     }}
-                    // onClick={handleDetailsProduct}
+                // onClick={handleDetailsProduct}
                 />
             </div>
         );
     };
     const columns = [
         {
-            title: "RoomName",
-            dataIndex: "roomname",
-            key: "roomname",
-            // width: "30%",
-            ...getColumnSearchProps("roomname"),
-            sorter: (a, b) => a.roomname.length - b.roomname.length,
+            title: "Image",
+            dataIndex: "Image",
+            key: "image",
+            width: "9%",
+            render: (Image) => (
+                Image && Image.length > 0 ? (
+                    <img
+                        src={Image[0]?.url}
+                        alt={Image[0]?.alt || "Room Image"}
+                        style={{ width: 80, height: 50, objectFit: "cover", borderRadius: 5 }}
+                    />
+                ) : (
+                    "No Image"
+                )
+            ),
         },
         {
-            title: "Image",
-            dataIndex: "image",
-            key: "image",
-            // width: "20%",
-            ...getColumnSearchProps("image"),
+            title: "Room Name",
+            dataIndex: "RoomName",
+            key: "roomName",
+            width: "17%",
+            ...getColumnSearchProps("roomName"),
+            sorter: (a, b) => a.RoomName.length - b.RoomName.length,
         },
         {
             title: "Price",
-            dataIndex: "price",
+            dataIndex: "Price",
             key: "price",
             ...getColumnSearchProps("price"),
-            sorter: (a, b) => a.price.length - b.price.length,
+            sorter: (a, b) => a.Price - b.Price,
             sortDirections: ["descend", "ascend"],
         },
         {
             title: "Status",
-            dataIndex: "status",
+            dataIndex: "Status",
             key: "status",
-            ...getColumnSearchProps("status"),
-            sorter: (a, b) => a.status.length - b.status.length,
-            sortDirections: ["descend", "ascend"],
+            // ...getColumnSearchProps("status"),
         },
         {
             title: "Type Rooms",
             dataIndex: "typerooms",
+            width: "11%",
             key: "typerooms",
             ...getColumnSearchProps("typerooms"),
             sorter: (a, b) => a.typerooms.length - b.typerooms.length,
             sortDirections: ["descend", "ascend"],
+            render: (typerooms) => typerooms?.TypeName || "No type"
         },
         {
-            title: "Location",
-            dataIndex: "location",
-            key: "location",
-            ...getColumnSearchProps("location"),
-            sorter: (a, b) => a.location.length - b.location.length,
-            sortDirections: ["descend", "ascend"],
+            title: "Rooms Amenities",
+            dataIndex: "room_amenities",
+            width: "13%",
+            render: (room_amenities) => {
+                if (!room_amenities || room_amenities.length === 0) return "No amenities";
+
+                const firstAmenity = room_amenities[0]; // Chỉ lấy 1 cái đầu tiên
+                const otherAmenities = room_amenities.slice(1); // Những cái còn lại
+
+                return (
+                    <Tooltip
+                        title={otherAmenities.map(a => a.name).join(", ")}
+                        placement="top"
+                    >
+                        <Tag color="blue">{firstAmenity.name}</Tag>
+                        {otherAmenities.length > 0 && (
+                            <span style={{ color: "#f300f4", cursor: "pointer" }}>
+                                +{otherAmenities.length} more
+                            </span>
+                        )}
+                    </Tooltip>
+                );
+            }
+        },
+        {
+            title: "Floor",
+            dataIndex: "Floor",
+            key: "floor",
+            width: "5%",
+            // ...getColumnSearchProps("floor"),
+            // sorter: (a, b) => a.Floor.length - b.Floor.length,
+            // sortDirections: ["descend", "ascend"],
         },
         {
             title: "Action",
@@ -312,7 +269,7 @@ const RoomList = () => {
     ];
     return (
         <>
-            <Table columns={columns} dataSource={data} />
+            <Table columns={columns} dataSource={dataTable} />
         </>
     );
 };
