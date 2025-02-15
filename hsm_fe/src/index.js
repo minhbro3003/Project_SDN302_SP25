@@ -14,11 +14,11 @@ root.render(
     <QueryClientProvider client={queryClient}>
         <Provider store={store}>  {/* Wrap with Redux Provider */}
             <PersistGate loading={null} persistor={persistor}>
-                <React.StrictMode>
-                    <BrowserRouter>
-                    <App/>
-                    </BrowserRouter>
-                </React.StrictMode>
+                {/* <React.StrictMode> */}
+                <BrowserRouter>
+                    <App />
+                </BrowserRouter>
+                {/* </React.StrictMode> */}
             </PersistGate>
         </Provider>
     </QueryClientProvider>

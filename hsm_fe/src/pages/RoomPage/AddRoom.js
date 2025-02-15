@@ -67,10 +67,11 @@ const AddRoom = ({ initialValues, onSubmit, roomTypes, locations, amenities }) =
                                 <Thumbnail key={index} src={img.url} alt={img.alt} />
                             ))}
                         </ThumbnailContainer>
-                        <Upload listType="picture-card" fileList={imageList} onChange={handleImageChange}>
-                            <UploadBtn>
-                                <UploadOutlined /> Add new Image
-                            </UploadBtn>
+                        <Upload listType="picture-card" fileList={imageList} multiple onChange={handleImageChange} showUploadList={{ showPreviewIcon: false }}>
+                            <div>
+                                <UploadOutlined />
+                                <div style={{ marginTop: 8 }}>Upload</div>
+                            </div>
                         </Upload>
                     </ImageUploadSection>
                 </Col>
@@ -120,7 +121,13 @@ const AddRoom = ({ initialValues, onSubmit, roomTypes, locations, amenities }) =
                         </Form.Item>
 
                         <Form.Item>
-                            <SubmitBtn type="submit">Save Room</SubmitBtn>
+                            <Button
+                                style={{ backgroundColor: "rgb(121, 215, 190)", borderColor: "rgb(121, 215, 190)", color: "black" }}
+                                htmlType="submit"
+                            >
+                                Save Room
+                            </Button>
+                            {/* <SubmitBtn type="submit">Save Room</SubmitBtn> */}
                         </Form.Item>
                     </Form>
                 </Col>

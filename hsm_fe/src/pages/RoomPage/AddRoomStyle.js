@@ -35,8 +35,12 @@ export const MainImagePreviewImg = styled.img`
 
 export const ThumbnailContainer = styled.div`
     display: flex;
+    flex-wrap: wrap;
     gap: 8px;
     justify-content: center;
+    margin-bottom: 10px;
+    padding-bottom: 10px; 
+    border-bottom: 2px solid #ccc; 
 `;
 
 export const Thumbnail = styled.img`

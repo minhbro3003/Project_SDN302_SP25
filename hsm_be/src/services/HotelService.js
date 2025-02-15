@@ -4,17 +4,42 @@ const Hotel = require("../models/HotelModel");
 const getAllHotel = () => {
     return new Promise(async (resolve, reject) => {
         try {
-            const allHotel = await Hotel.find();
+            const allHotel = await Hotel.find()
+                .populate({ path: "rooms", })
+                .populate({ path: "images" })
+                .lean();
+
+            const formatData = allHotel.map((hotel) => ({
+                id: hotel._id,
+                CodeHotel: hotel.CodeHotel,
+                NameHotel: hotel.NameHotel,
+                Introduce: hotel.Introduce,
+                Title: hotel.Title,
+                LocationHotel: hotel.LocationHotel,
+                Note: hotel.Note,
+                Active: hotel.Active,
+                IsDelete: hotel.IsDelete,
+                images: hotel.images?.map((img) => ({
+                    // id: img?._id,
+                    LinkImage: img?.LinkImage,
+                })) || [],
+                rooms: hotel.rooms.map((room) => ({
+                    // id: room._id,
+                    NameRoom: room.RoomName,
+                })),
+            }));
+
             resolve({
                 status: "OK",
-                message: " All Hotel successfully",
-                data: allHotel,
+                message: "All Room successfully",
+                data: formatData,
             });
         } catch (e) {
             reject(e);
         }
     });
 };
+
 
 //get hotel by id
 const getHotelByIdService = async (id) => {
