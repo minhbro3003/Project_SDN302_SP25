@@ -21,6 +21,9 @@ import {
     UploadBtn,
     SubmitBtn
 } from "./AddRoomStyle";
+import * as RoomTypeService from "../../services/RoomService";
+import * as RoomAmenitiesService from "../../services/RoomService";
+import { useQuery } from "@tanstack/react-query";
 
 const { Option } = Select;
 
@@ -28,6 +31,25 @@ const AddRoom = ({ initialValues, onSubmit, roomTypes, locations, amenities }) =
     const [form] = Form.useForm();
     const [imageList, setImageList] = useState(initialValues?.Imgae || []);
 
+    const getAllHotels = async () => {
+        const res = await RoomTypeService.getAllRoomTyoe();
+        console.log("data hotel: ", res);
+        return res;
+    };
+
+    const queryProduct = useQuery({
+        queryKey: ["hotels"],
+        queryFn: getAllHotels,
+    });
+
+    const { isLoading: isLoadingProducts, data: hotels = [] } = queryProduct;
+
+    const dataTable =
+        hotels?.data?.length &&
+        hotels?.data?.map((p) => {
+            return { ...p, key: p._id };
+        });
+    console.log("dataTable", dataTable);
     const handleImageChange = ({ fileList }) => {
         const formattedList = fileList.map((file) => ({
             url: file.url || URL.createObjectURL(file.originFileObj),
@@ -91,8 +113,8 @@ const AddRoom = ({ initialValues, onSubmit, roomTypes, locations, amenities }) =
                             <Col span={12}>
                                 <Form.Item label="Room Type" name="typerooms" rules={[{ required: true, message: "Please select room type" }]}>
                                     <Select>
-                                        {roomTypes?.map((type) => (
-                                            <Option key={type._id} value={type._id}>{type.name}</Option>
+                                        {dataTable?.map((type) => (
+                                            <Option key={type._id} value={type._id}>{type.TypeName}</Option>
                                         ))}
                                     </Select>
                                 </Form.Item>
@@ -101,7 +123,7 @@ const AddRoom = ({ initialValues, onSubmit, roomTypes, locations, amenities }) =
 
                         <Row gutter={16}>
                             <Col span={12}>
-                                <Form.Item label="Room Location" name="locations" rules={[{ required: true, message: "Please select room location" }]}>
+                                <Form.Item label="Room Floor" name="floor" rules={[{ required: true, message: "Please select room location" }]}>
                                     <InputNumber style={{ width: "100%" }} min={0} placeholder="Value" />
                                 </Form.Item>
                             </Col>
