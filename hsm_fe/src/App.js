@@ -175,7 +175,7 @@ const App = () => {
                                                             }}
                                                         >
 
-                                                            <Menu mode="inline" defaultSelectedKeys={["dashboard"]} style={{ background: "#79D7BE", color: "#00363D", fontSize: "16px" }}>
+                                                            <Menu mode="inline" defaultSelectedKeys={["dashboard"]} style={{ background: "#79D7BE", color: "#00363D", fontSize: "16px" }} selectedKeys={[location.pathname]}>
                                                                 {routes
                                                                     .filter(route => route.isShowHeader && (!route.permissions || route.permissions.some(p => userPermissions.includes(p))))
                                                                     .map(route => {

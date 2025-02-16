@@ -97,7 +97,7 @@ export const routes = [
         icon: <BankOutlined />,
         children: [
             {
-                path: "/hotel/room-list",
+                path: "/hotel/hotel-list",
                 name: "Hotel List",
                 isShowHeader: true,
                 icon: <ProfileOutlined />,
@@ -105,7 +105,7 @@ export const routes = [
                 roles: ["Admin"],
             },
             {
-                path: "/hotel/add-room",
+                path: "/hotel/add-hotel",
                 name: "Add Hotel",
                 isShowHeader: true,
                 page: AddHotel,

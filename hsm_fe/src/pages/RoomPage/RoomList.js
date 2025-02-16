@@ -2,16 +2,19 @@ import React, { useRef, useState } from "react";
 import {
     DeleteOutlined,
     EditOutlined,
+    PlusOutlined,
     SearchOutlined,
 } from "@ant-design/icons";
 import { Button, Input, Space, Table, Tag, Tooltip } from "antd";
 import * as RoomService from "../../services/RoomService";
 import { useQuery } from "@tanstack/react-query";
+import { useNavigate } from "react-router";
 
 const RoomList = () => {
     const [searchText, setSearchText] = useState("");
     const [searchedColumn, setSearchedColumn] = useState("");
     const searchInput = useRef(null);
+    const navigate = useNavigate();
 
     const getAllRooms = async () => {
         const res = await RoomService.getAllRoom();
@@ -269,6 +272,26 @@ const RoomList = () => {
     ];
     return (
         <>
+            <Button
+                style={{
+                    height: "150px",
+                    width: "150px",
+                    borderRadius: "6px",
+                    borderStyle: "dashed",
+                    marginBottom: "15px",
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    justifyContent: "center",
+                }}
+                onClick={() => navigate('/rooms/add-room')}
+            >
+                <PlusOutlined style={{ fontSize: "60px" }} />
+                <div style={{ fontSize: "16px", marginTop: "10px", fontWeight: "500" }}>
+                    Add new Room
+                </div>
+            </Button>
+
             <Table columns={columns} dataSource={dataTable} />
         </>
     );

@@ -3,16 +3,19 @@ import {
     DeleteOutlined,
     DownOutlined,
     EditOutlined,
+    PlusOutlined,
     SearchOutlined,
 } from "@ant-design/icons";
 import { Button, Dropdown, Input, Menu, Space, Table, Tag, Tooltip } from "antd";
 import * as HotelService from "../../services/HotelService";
 import { useQuery } from "@tanstack/react-query";
+import { useNavigate } from "react-router";
 
 const HotelList = () => {
     const [searchText, setSearchText] = useState("");
     const [searchedColumn, setSearchedColumn] = useState("");
     const searchInput = useRef(null);
+    const navigate = useNavigate();
 
     const getAllHotels = async () => {
         const res = await HotelService.getAllHotel();
@@ -305,6 +308,25 @@ const HotelList = () => {
     ];
     return (
         <>
+            <Button
+                style={{
+                    height: "150px",
+                    width: "150px",
+                    borderRadius: "6px",
+                    borderStyle: "dashed",
+                    marginBottom: "15px",
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    justifyContent: "center",
+                }}
+                onClick={() => navigate('/hotel/add-hotel')}
+            >
+                <PlusOutlined style={{ fontSize: "60px" }} />
+                <div style={{ fontSize: "16px", marginTop: "10px", fontWeight: "500" }}>
+                    Add new Hotel
+                </div>
+            </Button>
             <Table columns={columns} dataSource={dataTable} />
         </>
     );
