@@ -1,4 +1,4 @@
-const RoomTypes = require("../models/TypeRoomModel");
+const RoomTypes = require("../models/RoomTypeModel");
 
 //get all rooms type
 const getAllRoomsTypeService = () => {

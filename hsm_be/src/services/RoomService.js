@@ -23,7 +23,7 @@ const getAllRoomsService = () => {
             resolve({
                 status: "OK",
                 message: "All rooms successfully",
-                data: formatData,
+                data: allRooms,
             });
         } catch (e) {
             console.log("Error: ", e.message);
