@@ -1,98 +1,163 @@
-const TransactionService = require("../services/TransactionService");
+const Transaction = require("../models/TransactionModel");
+const Booking = require("../models/BookingModelRFA");
+const Service = require("../models/ServiceModel");
+const mongoose = require("mongoose");
+const { createBookingAndTransaction } = require("../services/TransactionService");
+
+// Create a new transaction with a booking
+const createBookingAndTransactionController = async (req, res) => {
+    try {
+        const { bookingData, transactionData } = req.body;
+
+        // Validate input data (optional but recommended)
+        if (!bookingData || !transactionData) {
+            return res.status(400).json({
+                status: 'ERR',
+                message: 'Missing required data for booking or transaction.',
+            });
+        }
+
+        // Call the service function to create booking and transaction
+        const result = await createBookingAndTransaction(bookingData, transactionData);
+
+        if (result.status === 'OK') {
+            return res.status(200).json(result);
+        } else {
+            return res.status(500).json(result); // Internal Server Error
+        }
+    } catch (error) {
+        console.error("Error in createBookingAndTransactionController:", error.message);
+        return res.status(500).json({
+            status: 'ERR',
+            message: 'An unexpected error occurred while creating booking and transaction.',
+            error: error.message,
+        });
+    }
+};
 
 // Get all transactions
 const getAllTransactions = async (req, res) => {
     try {
-        const transactions = await TransactionService.getAllTransactions();
-        return res.status(200).json(transactions);
-    } catch (e) {
+        const transactions = await Transaction.find().populate("bookings services.serviceId");
+        return res.status(200).json({
+            status: "OK",
+            message: "All transactions retrieved successfully",
+            data: transactions,
+        });
+    } catch (error) {
+        console.error("Error in getAllTransactions:", error.message);
         return res.status(500).json({
+            status: "ERR",
             message: "Failed to retrieve transactions",
-            error: e.message,
+            error: error.message,
         });
     }
 };
 
-// Get all transaction with everything intack
-const getFullAllTransactions = async (req, res) => {
-    try {
-        const transactions = await TransactionService.getFullAllTransactions();
-        return res.status(200).json(transactions);
-    } catch (e) {
-        return res.status(500).json({
-            message: "Failed to retrieve full transactions",
-            error: e.message,
-        });
-    }
-};
-
-
-// Get a transaction by ID
+// Get a single transaction by ID
 const getTransactionById = async (req, res) => {
     try {
-        const transaction = await TransactionService.getTransactionById(req.params.id);
+        const { id } = req.params;
+        const transaction = await Transaction.findById(id).populate("bookings services.serviceId");
+
         if (!transaction) {
-            return res.status(404).json({ message: "Transaction not found" });
+            return res.status(404).json({
+                status: "ERR",
+                message: "Transaction not found",
+            });
         }
-        return res.status(200).json(transaction);
-    } catch (e) {
+
+        return res.status(200).json({
+            status: "OK",
+            message: "Transaction retrieved successfully",
+            data: transaction,
+        });
+    } catch (error) {
+        console.error("Error in getTransactionById:", error.message);
         return res.status(500).json({
-            message: "Error retrieving transaction",
-            error: e.message,
+            status: "ERR",
+            message: "Failed to retrieve transaction",
+            error: error.message,
         });
     }
 };
 
-// Create a new transaction
-const createTransaction = async (req, res) => {
-    try {
-        const transaction = await TransactionService.createTransaction(req.body);
-        return res.status(201).json(transaction);
-    } catch (e) {
-        return res.status(400).json({
-            message: "Transaction creation failed",
-            error: e.message,
-        });
-    }
-};
-
-// Update a transaction by ID
+// Update transaction (payment, status, etc.)
 const updateTransaction = async (req, res) => {
     try {
-        const updatedTransaction = await TransactionService.updateTransaction(req.params.id, req.body);
-        if (!updatedTransaction) {
-            return res.status(404).json({ message: "Transaction not found" });
+        const { id } = req.params;
+        const updateData = req.body;
+
+        const transaction = await Transaction.findById(id);
+        if (!transaction) {
+            return res.status(404).json({
+                status: "ERR",
+                message: "Transaction not found",
+            });
         }
-        return res.status(200).json(updatedTransaction);
-    } catch (e) {
-        return res.status(400).json({
-            message: "Transaction update failed",
-            error: e.message,
+
+        // If updating payment, adjust the "Pay" status dynamically
+        if (updateData.PaidAmount !== undefined) {
+            transaction.PaidAmount += updateData.PaidAmount;
+
+            if (transaction.PaidAmount >= transaction.FinalPrice) {
+                transaction.Pay = "Paid";
+            } else if (transaction.PaidAmount > 0) {
+                transaction.Pay = "Partial";
+            }
+        }
+
+        // Update other fields
+        Object.assign(transaction, updateData);
+
+        const updatedTransaction = await transaction.save();
+        return res.status(200).json({
+            status: "OK",
+            message: "Transaction updated successfully",
+            data: updatedTransaction,
+        });
+    } catch (error) {
+        console.error("Error in updateTransaction:", error.message);
+        return res.status(500).json({
+            status: "ERR",
+            message: "Failed to update transaction",
+            error: error.message,
         });
     }
 };
 
-// Delete a transaction by ID
+// Delete transaction
 const deleteTransaction = async (req, res) => {
     try {
-        const deletedTransaction = await TransactionService.deleteTransaction(req.params.id);
-        if (!deletedTransaction) {
-            return res.status(404).json({ message: "Transaction not found" });
+        const { id } = req.params;
+        const transaction = await Transaction.findById(id);
+
+        if (!transaction) {
+            return res.status(404).json({
+                status: "ERR",
+                message: "Transaction not found",
+            });
         }
-        return res.status(200).json({ message: "Transaction deleted successfully" });
-    } catch (e) {
+
+        await Transaction.findByIdAndDelete(id);
+        return res.status(200).json({
+            status: "OK",
+            message: "Transaction deleted successfully",
+        });
+    } catch (error) {
+        console.error("Error in deleteTransaction:", error.message);
         return res.status(500).json({
-            message: "Transaction deletion failed",
-            error: e.message,
+            status: "ERR",
+            message: "Failed to delete transaction",
+            error: error.message,
         });
     }
 };
 
 module.exports = {
+    createBookingAndTransactionController,
     getAllTransactions,
-    getFullAllTransactions,
     getTransactionById,
-    createTransaction,
     updateTransaction,
     deleteTransaction,
 };

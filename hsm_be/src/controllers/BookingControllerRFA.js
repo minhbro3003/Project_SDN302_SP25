@@ -1,4 +1,4 @@
-const BookingService = require("../services/BookingService");
+const BookingService = require("../services/BookingServiceRFA");
 
 // Get all bookings
 const getAllBookings = async (req, res) => {

@@ -9,20 +9,9 @@ const roomSchema = new mongoose.Schema(
             enum: ["Available", "Occupied", "Maintenance", "Booked"], // Có thể thêm trạng thái khác nếu cần
             default: "Available",
         },
-        Active: { type: Boolean, default: true },
-        typerooms: {
+        roomtype: {
             type: mongoose.Schema.Types.ObjectId,
-            ref: "TypeRoom",
-            required: true,
-        },
-        locations: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: "Location",
-            required: true,
-        },
-        room_amenities: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: "RoomAmenities",
+            ref: "RoomType",
             required: true,
         },
         Discription: { type: String, trim: true },

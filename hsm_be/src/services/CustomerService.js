@@ -127,10 +127,41 @@ const deleteCustomer = async (id) => {
     }
 };
 
+const checkCustomerExists = async (phone, cccd) => {
+    try {
+        const existingCustomer = await Customer.findOne({
+            $or: [{ phone }, { cccd }]
+        });
+
+        if (existingCustomer) {
+            return {
+                status: "ERR",
+                message: "Phone number or CCCD already exists",
+                data: existingCustomer,
+            };
+        }
+
+        return {
+            status: "OK",
+            message: "Phone number and CCCD are available",
+        };
+    } catch (error) {
+        console.error("Error in checkCustomerExists:", error.message);
+        return {
+            status: "ERR",
+            message: "Failed to check customer existence",
+            error: error.message,
+        };
+    }
+};
+
+module.exports = { checkCustomerExists };
+
 module.exports = {
     getAllCustomers,
     getCustomerById,
     createCustomer,
     updateCustomer,
     deleteCustomer,
+    checkCustomerExists,
 };

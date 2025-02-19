@@ -6,7 +6,6 @@ const serviceSchema = new mongoose.Schema(
         Price: { type: Number, required: true },
         Note: { type: String, trim: true },
         Active: { type: Boolean, default: true },
-        Quantity: { type: Number, required: true, min: 1 },
         IsDelete: { type: Boolean, default: false },
     },
     {

@@ -24,7 +24,7 @@ const transactionSchema = new mongoose.Schema(
             enum: ["Pending", "Completed", "Cancelled"],
             required: true
         },
-        PaymentMethod: { type: String, enum: ["Cash", "Credit Card", "Bank Transfer", "Other"] },
+        PaymentMethod: { type: String },
         PaymentReference: { type: String }, //This might be removed
         CreatedBy: { type: String, required: true },
         UpdatedBy: { type: String },

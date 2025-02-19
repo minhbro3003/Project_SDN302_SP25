@@ -1,7 +1,11 @@
 const Transaction = require("../models/TransactionModel");
-const Booking = require("../models/BookingModel");
-
-// Get all transactions
+const Booking = require("../models/BookingModelRFA");
+const Customer = require("../models/CustomerModel");
+const Service = require("../models/ServiceModel");
+const Room = require("../models/RoomModel");
+const mongoose = require("mongoose");
+const { createPaymentLinkAD } = require("../utils");
+// Get all transactions //Used to display partial information about transaction - I don't recommend getting the full spaghetti just for the all
 const getAllTransactions = async () => {
     try {
         const allTransactions = await Transaction.find()
@@ -85,7 +89,7 @@ const getTransactionById = async (id) => {
 // Create a new transaction
 const createTransaction = async (newTransaction) => {
     try {
-        const { bookings, services, BuyTime, CreatedBy, PaidAmount = 0 } = newTransaction;
+        const { bookings, services, BuyTime, CreatedBy, PaidAmount = 0, PaymentReference } = newTransaction;
 
         if (!bookings || !bookings.length) {
             return {
@@ -134,6 +138,7 @@ const createTransaction = async (newTransaction) => {
             PaidAmount,  // New field to track how much has been paid
             Pay: PayStatus, // Updated payment status logic
             Status: "Pending", // Default status
+            PaymentReference,
             CreatedBy
         });
 
@@ -208,6 +213,145 @@ const deleteTransaction = async (id) => {
     }
 };
 
+const createBookingAndTransaction = async (bookingData, transactionData) => {
+    try {
+        if (!bookingData.customer) {
+            throw new Error('Customer data is missing');
+        }
+
+        const { rooms, SumPrice, Status, checkin, checkout, customer } = bookingData;
+        const { full_name, phone, cccd } = customer;
+
+        if (!rooms || rooms.length === 0) {
+            throw new Error('At least one room must be selected');
+        }
+
+        let existingCustomer = await Customer.findOne({ $or: [{ cccd }, { phone }] });
+
+        if (existingCustomer) {
+            if (existingCustomer.full_name !== full_name) {
+                const newCustomer = new Customer({ full_name, phone, cccd });
+                existingCustomer = await newCustomer.save();
+            }
+        } else {
+            const newCustomer = new Customer({ full_name, phone, cccd });
+            existingCustomer = await newCustomer.save();
+        }
+
+        // **Step 1: Update Room Status to "Booked"**
+        await Room.updateMany(
+            { _id: { $in: rooms }, Status: "Available" },
+            { $set: { Status: "Available" } }
+        );
+
+        // **Step 2: Create a Booking**
+        const newBooking = new Booking({
+            customers: existingCustomer._id,
+            SumPrice,
+            Status,
+            Time: {
+                Checkin: new Date(checkin),
+                Checkout: new Date(checkout),
+            },
+            rooms,
+        });
+
+        await newBooking.save();
+
+        // **Step 3: Calculate Total Service Price**
+        let totalServicePrice = 0;
+        const transactionServices = [];
+
+        for (const service of transactionData.services || []) {
+            const serviceDetails = await Service.findById(service.serviceId);
+
+            if (!serviceDetails) {
+                throw new Error(`Service ${serviceDetails?.ServiceName || "Unknown"} is unavailable.`);
+            }
+
+            const pricePerUnit = serviceDetails.Price;
+            const totalPrice = pricePerUnit * service.quantity;
+
+            totalServicePrice += totalPrice;
+
+            serviceDetails.Quantity -= service.quantity;
+            await serviceDetails.save();
+
+            transactionServices.push({
+                serviceId: service.serviceId,
+                quantity: service.quantity,
+                pricePerUnit,
+                totalPrice,
+            });
+        }
+
+        // **Step 4: Create a Transaction**
+        const finalPrice = (transactionData.FinalPrice || newBooking.SumPrice) + totalServicePrice;
+        const paidAmount = transactionData.PaidAmount || 0;
+        const paymentType = transactionData.paymentType;
+        let payStatus = "Unpaid";
+        if (paidAmount >= finalPrice) payStatus = "Paid";
+        else if (paidAmount > 0) payStatus = "Partial";
+
+        const newTransaction = new Transaction({
+            bookings: [newBooking._id],
+            services: transactionServices,
+            BuyTime: new Date(),
+            FinalPrice: finalPrice,
+            PaidAmount: paidAmount,
+            Pay: payStatus,
+            Status: "Pending",
+            PaymentMethod: transactionData.PaymentMethod || "Cash",
+            CreatedBy: transactionData.CreatedBy,
+        });
+
+        const savedTransaction = await newTransaction.save(); // Save and get the transactionID
+        const transactionID = savedTransaction._id;
+
+        // **Step 5: Generate Payment Link (Only if Credit Card)**
+        if (transactionData.PaymentMethod === "Credit Card") {
+            let payAmount = finalPrice;
+
+            if (transactionData.paymentType === "Partial Pay") {
+                payAmount = Math.ceil(finalPrice * 0.3); // 30% of FinalPrice, rounded up
+            }
+
+            const paymentLink = createPaymentLinkAD(
+                payAmount,
+                `Thanh toán đơn ${transactionID}`,
+                transactionData.ipAddr,
+                transactionID
+            );
+
+            // **Step 6: Update Transaction with Payment Link**
+            savedTransaction.PaymentReference = paymentLink;
+            await savedTransaction.save();
+        }
+
+        return {
+            status: "OK",
+            message: "Booking and transaction created successfully",
+            data: {
+                booking: newBooking,
+                transaction: savedTransaction,
+                transactionID
+            },
+        };
+    } catch (error) {
+        console.error("Error in createBookingAndTransaction:", error.message);
+        return {
+            status: "ERR",
+            message: "Failed to create booking and transaction",
+            error: error.message,
+        };
+    }
+};
+
+
+
+
+
+
 module.exports = {
     getAllTransactions,
     getFullAllTransactions,
@@ -215,4 +359,5 @@ module.exports = {
     createTransaction,
     updateTransaction,
     deleteTransaction,
+    createBookingAndTransaction,
 };

@@ -1,4 +1,4 @@
-const Booking = require("../models/BookingModel");
+const Booking = require("../models/BookingModelRFA");
 const Customers = require("../models/CustomerModel");
 const Room = require("../models/RoomModel");
 // Get all bookings
@@ -85,7 +85,7 @@ const createBookingRaw = async (newBooking) => {
 
 const createBooking = async (bookingData) => {
     try {
-        const { full_name, phone, cccd, rooms, Time, GuestsNumber } = bookingData;
+        const { full_name, phone, cccd, room, Time, GuestsNumber } = bookingData;
 
         // Check if the customer exists by phone or CCCD
         let customer = await Customers.findOne({ $or: [{ phone }, { cccd }] });
@@ -96,17 +96,21 @@ const createBooking = async (bookingData) => {
             await customer.save();
         }
 
-        // Calculate SumPrice based on room prices (assuming room model has price field)
-        let sumPrice = 0;
-        for (const roomId of rooms) {
-            const room = await Room.findById(roomId);
-            if (room) sumPrice += room.price;
+        // Find the selected room and calculate SumPrice
+        const selectedRoom = await Room.findById(room);
+        if (!selectedRoom) {
+            return {
+                status: "ERR",
+                message: "Invalid room ID",
+            };
         }
+
+        const sumPrice = selectedRoom.price;
 
         // Create booking with customer reference
         const newBooking = new Booking({
             customers: customer._id,
-            rooms,
+            room, // Now only one room per booking
             Time,
             GuestsNumber,
             SumPrice: sumPrice,
@@ -128,6 +132,7 @@ const createBooking = async (bookingData) => {
         };
     }
 };
+
 
 
 // Update a booking by ID

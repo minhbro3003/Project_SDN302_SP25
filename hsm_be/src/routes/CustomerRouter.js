@@ -8,6 +8,9 @@ router.get("/", CustomerController.getAllCustomers);
 // Get a single customer by ID
 router.get("/:id", CustomerController.getCustomerById);
 
+// Check if phone or CCCD exists
+router.post("/check-exists", CustomerController.checkCustomerExists);
+
 // Create a new customer
 router.post("/", CustomerController.createCustomer);
 

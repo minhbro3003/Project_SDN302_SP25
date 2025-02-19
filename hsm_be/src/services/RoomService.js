@@ -1,12 +1,12 @@
 // const Product = require("../models/ProductModel");
 const Room = require("../models/RoomModel");
 const Rooms = require("../models/RoomModel");
-
+const RoomType = require("../models/RoomTypeModel");
 //get all rooms
 const getAllRoomsService = () => {
     return new Promise(async (resolve, reject) => {
         try {
-            const allRooms = await Rooms.find();
+            const allRooms = await Rooms.find().populate("roomtype");
             resolve({
                 status: "OK",
                 message: " All rooms successfully",
@@ -150,6 +150,28 @@ const deleteRoomService = (id) => {
             reject(e);
         }
     });
+};
+
+const getAvailableRooms = async () => {
+    try {
+        const availableRooms = await Room.find({
+            Status: "Available",
+            IsDelete: false
+        }).select("RoomName Price roomtype Description Status");
+
+        return {
+            status: "OK",
+            message: "Available rooms retrieved successfully",
+            data: availableRooms,
+        };
+    } catch (error) {
+        console.error("Error in getAvailableRooms:", error.message);
+        return {
+            status: "ERR",
+            message: "Failed to retrieve available rooms",
+            error: error.message,
+        };
+    }
 };
 
 // const updateProduct = (id, data) => {
@@ -324,6 +346,7 @@ module.exports = {
     updateRoomService,
     deleteRoomService,
     getRoomByRoomIdService,
+    getAvailableRooms,
     // createProduct,
     // updateProduct,
     // getDetailsProduct,

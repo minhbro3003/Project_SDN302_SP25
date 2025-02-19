@@ -15,5 +15,4 @@ const getAllHotel = async (req, res) => {
 
 module.exports = {
     getAllHotel,
-
 };

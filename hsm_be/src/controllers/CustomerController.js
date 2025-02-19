@@ -59,10 +59,29 @@ const deleteCustomer = async (req, res) => {
     }
 };
 
+// Check if phone or CCCD exists
+const checkCustomerExists = async (req, res) => {
+    try {
+        const { phone, cccd } = req.body;
+        if (!phone && !cccd) {
+            return res.status(400).json({ message: "Phone number or CCCD is required" });
+        }
+
+        const result = await CustomerService.checkCustomerExists(phone, cccd);
+        return res.status(200).json(result);
+    } catch (e) {
+        return res.status(500).json({ message: "Error checking customer existence", error: e.message });
+    }
+};
+
+module.exports = { checkCustomerExists };
+
+
 module.exports = {
     getAllCustomers,
     getCustomerById,
     createCustomer,
     updateCustomer,
     deleteCustomer,
+    checkCustomerExists,
 }
