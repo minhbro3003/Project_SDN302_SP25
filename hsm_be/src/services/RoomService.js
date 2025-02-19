@@ -1,5 +1,5 @@
 const Rooms = require("../models/RoomModel");
-
+const RoomType = require("../models/RoomTypeModel");
 //get all rooms
 // const getAllRoomsService = () => {
 //     return new Promise(async (resolve, reject) => {
@@ -19,37 +19,7 @@ const Rooms = require("../models/RoomModel");
 const getAllRoomsService = () => {
     return new Promise(async (resolve, reject) => {
         try {
-            const allRooms = await Rooms.find()
-                .populate({ path: "typerooms" })
-                .populate({ path: "room_amenities.room_amenitiesID", })
-                .lean(); // Chuyển về object thuần JS để dễ xử lý
-
-            // Format lại dữ liệu
-            const formatData = allRooms.map((room) => ({
-                id: room._id,
-                RoomName: room.RoomName,
-                Price: room.Price,
-                Status: room.Status,
-                Floor: room.Floor,
-                Active: room.Active,
-                IsDelete: room.IsDelete,
-                Description: room.Description,
-                typerooms: room.typerooms
-                    ? { TypeName: room.typerooms.TypeName, Note: room.typerooms.Note }
-                    : null,
-                room_amenities: room.room_amenities.map((amenity) => ({
-                    id: amenity.room_amenitiesID?._id,
-                    name: amenity.room_amenitiesID?.AmenitiesName,
-                    note: amenity.room_amenitiesID?.Note,
-                    quantity: amenity.quantity,
-                    status: amenity.status,
-                })),
-                Image: room.Image.map((img) => ({
-                    url: img.url,
-                    alt: img.alt || "Room Image",
-                })),
-            }));
-
+            const allRooms = await Rooms.find().populate("roomtype");
             resolve({
                 status: "OK",
                 message: "All rooms successfully",
@@ -179,18 +149,32 @@ const deleteRoomService = (id) => {
         }
     });
 };
+const getAvailableRooms = async () => {
+    try {
+        const availableRooms = await Rooms.find({
+            Status: "Available",
+            IsDelete: false
+        }).select("RoomName Price roomtype Description Status");
 
+        return {
+            status: "OK",
+            message: "Available rooms retrieved successfully",
+            data: availableRooms,
+        };
+    } catch (error) {
+        console.error("Error in getAvailableRooms:", error.message);
+        return {
+            status: "ERR",
+            message: "Failed to retrieve available rooms",
+            error: error.message,
+        };
+    }
+};
 module.exports = {
     getAllRoomsService,
     createRoomService,
     updateRoomService,
     deleteRoomService,
     getRoomByRoomIdService,
-    // createProduct,
-    // updateProduct,
-    // getDetailsProduct,
-    // deleteProduct,
-    // getAllProduct,
-    // deleteManyProduct,
-    // getAllTypes,
+    getAvailableRooms,
 };

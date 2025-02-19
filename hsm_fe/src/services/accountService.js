@@ -36,7 +36,7 @@ export const getDetailsAccount = async (id, access_token) => {
         `${process.env.REACT_APP_API_URL_BACKEND}/account/${id}`,
         {
             headers: {
-                token: `Bearer ${access_token}`, 
+                token: `Bearer ${access_token}`,
             },
         }
     );

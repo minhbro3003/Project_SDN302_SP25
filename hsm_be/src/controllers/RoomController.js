@@ -13,6 +13,17 @@ const getAllRooms = async (req, res) => {
     }
 };
 
+const getAvailableRooms = async (req, res) => {
+    try {
+        const rooms = await RoomService.getAvailableRooms();
+        return res.status(200).json(rooms);
+    } catch (e) {
+        return res.status(404).json({
+            error: e.message,
+        });
+    }
+};
+
 //get room by id
 const getRoomByRoomId = async (req, res) => {
     try {
@@ -123,4 +134,5 @@ module.exports = {
     updateRoom,
     deleteRoom,
     getRoomByRoomId,
+    getAvailableRooms,
 };
