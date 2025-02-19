@@ -3,8 +3,7 @@ const mongoose = require("mongoose");
 const imageSchema = new mongoose.Schema(
     {
         LinkImage: { type: String, required: true, unique: true, trim: true },
-        Rang: { type: Number, required: true ,min:1},
-        IsDelete:{ type: Boolean, default: false}
+        IsDelete: { type: Boolean, default: false }
     },
     {
         timestamps: true,

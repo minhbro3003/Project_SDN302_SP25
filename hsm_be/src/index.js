@@ -5,10 +5,8 @@ const routes = require("./routes");
 const bodyParser = require("body-parser");
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
-const connectDb = require("../dbConnect/db");
 dotenv.config();
-const connectDB = require('../dbConnect/db');
-
+const connectDB = require("../dbConnect/db");
 
 const app = express();
 const port = process.env.PORT || 9999;
@@ -24,7 +22,6 @@ routes(app);
 
 app.listen(port, () => {
     console.log(`Server is running on port ${port}`);
-     //Connect database 
-     connectDB();
-  });
-
+    //Connect database
+    connectDB();
+});

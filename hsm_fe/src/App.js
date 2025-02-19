@@ -13,10 +13,8 @@ import NotFoundPage from './pages/NotFoundPage/NotFoundPage';
 import { resetAccount, updateAccount } from './redux/accountSlice';
 import { persistStore } from 'redux-persist';
 import { store } from './redux/store';
-
-
 const { Sider, Content, Header } = Layout;
-
+const publicRoutes = ["/login", "/verification"];
 
 const App = () => {
     const dispatch = useDispatch();
@@ -24,13 +22,12 @@ const App = () => {
     const location = useLocation();
     const [isLoading, setIsLoading] = useState(false);
     const account = useSelector((state) => state.account);
-    const publicRoutes = ["/login", "/"];
+
     const userPermissions = account?.permissions || [];
 
 
     useEffect(() => {
-        if (publicRoutes.includes(location.pathname)) return; // Skip check on login page
-
+        if (publicRoutes.some((route) => location.pathname.startsWith(route))) return;
         const checkToken = () => {
             const token = localStorage.getItem("access_token");
             if (!token) {
@@ -40,11 +37,12 @@ const App = () => {
             }
         };
         const interval = setInterval(checkToken, 2000);
-        return () => clearInterval(interval); // Cleanup on unmount
+        return () => clearInterval(interval);
     }, [dispatch, navigate, location]);
 
     useEffect(() => {
-        if (publicRoutes.includes(location.pathname)) return; // Skip check on login page
+        if (publicRoutes.some((route) => location.pathname.startsWith(route))) return;
+
         if (account?.id) return; // 
 
         const handleAuthCheck = async () => {
@@ -177,24 +175,24 @@ const App = () => {
                                                             }}
                                                         >
 
-                                                            <Menu mode="inline" defaultSelectedKeys={["dashboard"]} style={{ background: "#79D7BE", color: "#00363D", fontSize: "16px" }}>
+                                                            <Menu mode="inline" defaultSelectedKeys={["dashboard"]} style={{ background: "#79D7BE", color: "#00363D", fontSize: "16px" }} selectedKeys={[location.pathname]}>
                                                                 {routes
                                                                     .filter(route => route.isShowHeader && (!route.permissions || route.permissions.some(p => userPermissions.includes(p))))
                                                                     .map(route => {
                                                                         if (route.children) {
                                                                             return (
-                                                                                <Menu.SubMenu key={route.name} title={route.name} icon={route.icon}> {/* 🔥 Dynamic Icon */}
+                                                                                <Menu.SubMenu key={route.name} title={route.name} icon={route.icon} >
                                                                                     {route.children.map(subRoute => (
-                                                                                        <Menu.Item key={subRoute.path} icon={subRoute.icon}> {/* 🔥 Dynamic Icon */}
-                                                                                            <Link to={subRoute.path}>{subRoute.name}</Link>
+                                                                                        <Menu.Item key={subRoute.path} icon={subRoute.icon} >
+                                                                                            <Link style={{ textDecoration: "none" }} to={subRoute.path}>{subRoute.name}</Link>
                                                                                         </Menu.Item>
                                                                                     ))}
                                                                                 </Menu.SubMenu>
                                                                             );
                                                                         }
                                                                         return (
-                                                                            <Menu.Item key={route.path} icon={route.icon}> {/* 🔥 Dynamic Icon */}
-                                                                                <Link to={route.path}>{route.name}</Link>
+                                                                            <Menu.Item key={route.path} icon={route.icon}>
+                                                                                <Link style={{ textDecoration: "none" }} to={route.path}>{route.name}</Link>
                                                                             </Menu.Item>
                                                                         );
                                                                     })}
@@ -264,7 +262,7 @@ const App = () => {
                                                                             <Menu.SubMenu key={route.name} title={route.name} icon={route.icon}>
                                                                                 {route.children.map(subRoute => (
                                                                                     <Menu.Item key={subRoute.path} icon={subRoute.icon}>
-                                                                                        <Link to={subRoute.path}>{subRoute.name}</Link>
+                                                                                        <Link style={{ textDecoration: 'none' }} to={subRoute.path}>{subRoute.name}</Link>
                                                                                     </Menu.Item>
                                                                                 ))}
                                                                             </Menu.SubMenu>
@@ -272,7 +270,7 @@ const App = () => {
                                                                     }
                                                                     return (
                                                                         <Menu.Item key={route.path} icon={route.icon}>
-                                                                            <Link to={route.path}>{route.name}</Link>
+                                                                            <Link style={{ textDecoration: 'none' }} to={route.path}>{route.name}</Link>
                                                                         </Menu.Item>
                                                                     );
                                                                 })}
@@ -314,9 +312,7 @@ const ProtectedRoute = ({ element, requiredPermissions }) => {
     const account = useSelector((state) => state.account);
     const userPermissions = account?.permissions || [];
     const location = useLocation();
-
-    if (location.pathname === "/login") return element; // Allow login page
-
+    if (publicRoutes.some((route) => location.pathname.startsWith(route))) return element;
     // If account.id is not set, show a loading screen
     if (!account?.id) {
         console.log("Waiting for account to load...");

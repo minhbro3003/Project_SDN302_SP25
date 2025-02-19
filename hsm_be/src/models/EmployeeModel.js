@@ -4,7 +4,6 @@ const employeeSchema = new mongoose.Schema(
     {
         hotels: [{ type: mongoose.Schema.Types.ObjectId, ref: "Hotel", required: true }],
         FullName: { type: String, required: true, trim: true },
-        permissions: [{ type: mongoose.Schema.Types.ObjectId, ref: "Permission", required: true }],
         Phone: { 
             type: String, 
             trim: true,
@@ -16,15 +15,21 @@ const employeeSchema = new mongoose.Schema(
             },
         },
         Email: { type: String, required: true, trim: true },
-        Address: { type: String, required: true, trim: true },
-        Gender: { type: String, enum: ["Male", "Female", "Other"], trim: true },
+        Gender: { type: String, trim: true },
         Image: { type: String, trim: true },
+        Address: { type: String, required: true, trim: true },
+        accountId:{
+            type: mongoose.Schema.Types.ObjectId, 
+                        ref: "Account", 
+                        required: true 
+        }
+
     },
     {
         timestamps: true,
     }
 );
 
-const Employee = mongoose.model("Employee", employeeSchema);
+const Employee = mongoose.model("employees", employeeSchema);
 
 module.exports = Employee;
