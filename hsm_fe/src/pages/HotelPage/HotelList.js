@@ -1,37 +1,38 @@
 import React, { useRef, useState } from "react";
 import {
     DeleteOutlined,
+    DownOutlined,
     EditOutlined,
     PlusOutlined,
     SearchOutlined,
 } from "@ant-design/icons";
-import { Button, Input, Space, Table, Tag, Tooltip } from "antd";
-import * as RoomService from "../../services/RoomService";
+import { Button, Dropdown, Input, Menu, Space, Table, Tag, Tooltip } from "antd";
+import * as HotelService from "../../services/HotelService";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router";
 
-const RoomList = () => {
+const HotelList = () => {
     const [searchText, setSearchText] = useState("");
     const [searchedColumn, setSearchedColumn] = useState("");
     const searchInput = useRef(null);
     const navigate = useNavigate();
 
-    const getAllRooms = async () => {
-        const res = await RoomService.getAllRoom();
-        console.log("data rooms: ", res);
+    const getAllHotels = async () => {
+        const res = await HotelService.getAllHotel();
+        console.log("data hotel: ", res);
         return res;
     };
 
     const queryProduct = useQuery({
-        queryKey: ["rooms"],
-        queryFn: getAllRooms,
+        queryKey: ["hotels"],
+        queryFn: getAllHotels,
     });
 
-    const { isLoading: isLoadingProducts, data: rooms = [] } = queryProduct;
+    const { isLoading: isLoadingProducts, data: hotels = [] } = queryProduct;
 
     const dataTable =
-        rooms?.data?.length &&
-        rooms?.data?.map((p) => {
+        hotels?.data?.length &&
+        hotels?.data?.map((p) => {
             return { ...p, key: p._id };
         });
     console.log("dataTable", dataTable);
@@ -182,15 +183,16 @@ const RoomList = () => {
     };
     const columns = [
         {
-            title: "Image",
-            dataIndex: "Image",
-            key: "image",
-            width: "9%",
-            render: (Image) => (
-                Image && Image.length > 0 ? (
+            title: "Image Hotel",
+            dataIndex: "images",
+            key: "images",
+            // width: "20%",
+            ...getColumnSearchProps("images"),
+            render: (images) => (
+                images && images.length > 0 ? (
                     <img
-                        src={Image[0]?.url}
-                        alt={Image[0]?.alt || "Room Image"}
+                        src={images[0].LinkImage}
+                        alt="Hotel"
                         style={{ width: 80, height: 50, objectFit: "cover", borderRadius: 5 }}
                     />
                 ) : (
@@ -199,53 +201,76 @@ const RoomList = () => {
             ),
         },
         {
-            title: "Room Name",
-            dataIndex: "RoomName",
-            key: "roomName",
-            width: "17%",
-            ...getColumnSearchProps("roomName"),
-            sorter: (a, b) => a.RoomName.length - b.RoomName.length,
+            title: "Hotel Code",
+            dataIndex: "CodeHotel",
+            key: "CodeHotel",
+            // width: "30%",
+            ...getColumnSearchProps("CodeHotel"),
+            sorter: (a, b) => a.CodeHotel.length - b.CodeHotel.length,
         },
         {
-            title: "Price",
-            dataIndex: "Price",
-            key: "price",
-            ...getColumnSearchProps("price"),
-            sorter: (a, b) => a.Price - b.Price,
+            title: "Name Hotel",
+            dataIndex: "NameHotel",
+            key: "NameHotel",
+            // width: "20%",
+            ...getColumnSearchProps("NameHotel"),
+            sorter: (a, b) => a.NameHotel.length - b.NameHotel.length,
+        },
+        {
+            title: "Title",
+            dataIndex: "Title",
+            key: "Title",
+            ...getColumnSearchProps("Title"),
+            sorter: (a, b) => a.Title.length - b.Title.length,
             sortDirections: ["descend", "ascend"],
         },
         {
-            title: "Status",
-            dataIndex: "Status",
-            key: "status",
-            // ...getColumnSearchProps("status"),
-        },
-        {
-            title: "Type Rooms",
-            dataIndex: "typerooms",
-            width: "11%",
-            key: "typerooms",
-            ...getColumnSearchProps("typerooms"),
-            sorter: (a, b) => a.typerooms.length - b.typerooms.length,
+            title: "LocationHotel",
+            dataIndex: "LocationHotel",
+            key: "LocationHotel",
+            ...getColumnSearchProps("LocationHotel"),
+            sorter: (a, b) => a.LocationHotel.length - b.LocationHotel.length,
             sortDirections: ["descend", "ascend"],
-            render: (typerooms) => typerooms?.TypeName || "No type"
         },
         {
-            title: "Rooms Amenities",
-            dataIndex: "room_amenities",
-            width: "13%",
-            render: (room_amenities) => {
-                if (!room_amenities || room_amenities.length === 0) return "No amenities";
+            title: "Rooms",
+            dataIndex: "rooms",
+            key: "rooms",
+            ...getColumnSearchProps("rooms"),
+            sorter: (a, b) => a.rooms.length - b.rooms.length,
+            sortDirections: ["descend", "ascend"],
+            // render: (rooms) => {
+            //     if (!rooms || rooms.length === 0) {
+            //         return <span style={{ color: "gray" }}>No rooms</span>;
+            //     }
 
-                const firstAmenity = room_amenities[0]; // Chỉ lấy 1 cái đầu tiên
-                const otherAmenities = room_amenities.slice(1); // Những cái còn lại
+            //     const menuItems = rooms.map((room) => ({
+            //         key: room._id,
+            //         label: room.NameRoom,
+            //     }));
+
+            //     return (
+            //         <Dropdown menu={{ items: menuItems }}>
+            //             <Button>
+            //                 View Rooms <DownOutlined />
+            //             </Button>
+            //         </Dropdown>
+            //     );
+            // },
+            render: (rooms) => {
+                if (!rooms || rooms.length === 0) {
+                    return <span style={{ color: "gray" }}>No rooms</span>;
+                };
+
+                const firstAmenity = rooms[0]; // Chỉ lấy 1 cái đầu tiên
+                const otherAmenities = rooms.slice(1); // Những cái còn lại
 
                 return (
                     <Tooltip
-                        title={otherAmenities.map(a => a.name).join(", ")}
+                        title={otherAmenities.map(a => a.NameRoom).join(" - ")}
                         placement="top"
                     >
-                        <Tag color="blue">{firstAmenity.name}</Tag>
+                        <Tag color="blue">{firstAmenity.NameRoom}</Tag>
                         {otherAmenities.length > 0 && (
                             <span style={{ color: "#f300f4", cursor: "pointer" }}>
                                 +{otherAmenities.length} more
@@ -253,16 +278,27 @@ const RoomList = () => {
                         )}
                     </Tooltip>
                 );
-            }
+            },
+            onFilter: (value, record) =>
+                record.rooms?.some(room =>
+                    room.NameRoom.toLowerCase().includes(value.toLowerCase())
+                ),
         },
         {
-            title: "Floor",
-            dataIndex: "Floor",
-            key: "floor",
-            width: "5%",
-            // ...getColumnSearchProps("floor"),
-            // sorter: (a, b) => a.Floor.length - b.Floor.length,
-            // sortDirections: ["descend", "ascend"],
+            title: "Status",
+            dataIndex: "Active",
+            key: "Active",
+            ...getColumnSearchProps("Active"),
+            render: (Active) => (
+                <Tag color={Active ? "green" : "volcano"}>
+                    {Active ? "Active" : "Inactive"}
+                </Tag>
+            ),
+            filters: [
+                { text: "Active", value: true },
+                { text: "Inactive", value: false },
+            ],
+            onFilter: (value, record) => record.Active === value,
         },
         {
             title: "Action",
@@ -284,17 +320,16 @@ const RoomList = () => {
                     alignItems: "center",
                     justifyContent: "center",
                 }}
-                onClick={() => navigate('/rooms/add-room')}
+                onClick={() => navigate('/hotel/add-hotel')}
             >
                 <PlusOutlined style={{ fontSize: "60px" }} />
                 <div style={{ fontSize: "16px", marginTop: "10px", fontWeight: "500" }}>
-                    Add new Room
+                    Add new Hotel
                 </div>
             </Button>
-
             <Table columns={columns} dataSource={dataTable} />
         </>
     );
 };
 
-export default RoomList;
+export default HotelList;

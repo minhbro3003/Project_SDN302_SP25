@@ -7,10 +7,15 @@ import HomePage from "../pages/HomePage/HomePage";
 import NotFoundPage from "../pages/NotFoundPage/NotFoundPage";
 import ProfilePage from "../pages/ProfilePage/ProfilePage";
 import RevenuePage from "../pages/RevenuePage/RevenuePage";
-import RoomForm from "../pages/RoomPage/AddRoom";
+import AddRoom from "../pages/RoomPage/AddRoom";
 import RoomDashboard from "../pages/RoomPage/RoomDashboard";
+import { SettingOutlined, AppstoreAddOutlined, HomeOutlined, BarChartOutlined, LineChartOutlined, PlusCircleOutlined, TableOutlined, BorderOuterOutlined, ProfileOutlined, BankOutlined } from '@ant-design/icons';
+import RoomList from "../pages/RoomPage/RoomList";
 import EmployeesPage from "../pages/EmployeesPage/EmployeesPage";
-import {SettingOutlined, AppstoreAddOutlined, HomeOutlined } from '@ant-design/icons';
+import EmployeeDetail from "../pages/EmployeesPage/EmployeeDetail/EmployeeDetail";
+import AddHotel from "../pages/HotelPage/AddHotel";
+import HotelList from "../pages/HotelPage/HotelList";
+
 
 
 export const routes = [
@@ -48,7 +53,7 @@ export const routes = [
                 isShowHeader: true,
                 icon: <AppstoreAddOutlined />,
                 page: AddEmployees,
-                permissions: ["Admin"],
+                permissions: ["Admin", "Receptionist", "Janitor"],
             },
             {
                 path: "/employees/details",
@@ -56,7 +61,15 @@ export const routes = [
                 isShowHeader: true,
                 page: EmployeesPage,
                 icon: <AppstoreAddOutlined />,
-                permissions: ["Admin"],
+                permissions: ["Admin", "Receptionist", "Janitor"],
+            },
+            {
+                path: "/employee-detail",
+                name: "Employee Detail",
+                page: EmployeeDetail,
+                isShowHeader: true,
+                icon: <SettingOutlined />,
+                permissions: ["Admin", "Receptionist", "Janitor"],
             },
         ],
     },
@@ -66,7 +79,7 @@ export const routes = [
         page: RevenuePage,
         isShowHeader: true,
         icon: <SettingOutlined />,
-        permissions: ["Admin"],
+        permissions: ["Admin", "Receptionist", "Janitor"],
     },
     {
         path: "/booking-log",
@@ -74,30 +87,63 @@ export const routes = [
         page: BookingPage,
         isShowHeader: true,
         icon: <SettingOutlined />,
-        permissions: ["Admin", "Receptionist"],
+        permissions: ["Admin", "Receptionist", "Janitor"],
     },
     {
-        path: "/room-dashboard",
-        name: "Room Dashboard",
+        path: "/hotel",
+        name: "Hotel",
         isShowHeader: true,
-        permissions: ["Admin"],
-        icon: <SettingOutlined />,
+        roles: ["Admin"],
+        icon: <BankOutlined />,
         children: [
             {
-                path: "/room-dashboard/add-room",
-                name: "Add Room",
+                path: "/hotel/hotel-list",
+                name: "Hotel List",
                 isShowHeader: true,
-                icon: <AppstoreAddOutlined />,
-                page: RoomForm,
-                permissions: ["Admin"],
+                icon: <ProfileOutlined />,
+                page: HotelList,
+                roles: ["Admin"],
             },
             {
-                path: "/room-dashboard/room-list",
-                name: "Room List",
+                path: "/hotel/add-hotel",
+                name: "Add Hotel",
+                isShowHeader: true,
+                page: AddHotel,
+                icon: <BorderOuterOutlined />,
+                roles: ["Admin"],
+            },
+        ],
+    },
+    {
+        path: "/rooms",
+        name: "Rooms",
+        isShowHeader: true,
+        permissions: ["Admin", "Receptionist", "Janitor"],
+        icon: <BarChartOutlined />,
+        children: [
+            {
+                path: "/rooms/room-dashboard",
+                name: "Room Dashboard",
                 isShowHeader: true,
                 page: RoomDashboard,
-                icon: <AppstoreAddOutlined />,
-                permissions: ["Admin"],
+                icon: <LineChartOutlined />,
+                permissions: ["Admin", "Receptionist", "Janitor"],
+            },
+            {
+                path: "/rooms/room-list",
+                name: "Room List",
+                isShowHeader: true,
+                page: RoomList,
+                icon: <TableOutlined />,
+                permissions: ["Admin", "Receptionist", "Janitor"],
+            },
+            {
+                path: "/rooms/add-room",
+                name: "Add Room",
+                isShowHeader: true,
+                icon: <PlusCircleOutlined />,
+                page: AddRoom,
+                permissions: ["Admin", "Receptionist", "Janitor"],
             },
         ],
     },
@@ -123,7 +169,7 @@ export const routes = [
         page: AccountPage,
         isShowHeader: true,
         icon: <HomeOutlined />,
-        permissions: ["Admin"],
+        permissions: ["Admin", "Receptionist", "Janitor"],
     },
     {
         path: "*",

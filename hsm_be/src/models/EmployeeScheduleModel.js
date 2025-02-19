@@ -17,11 +17,7 @@ const employeeScheduleSchema = new mongoose.Schema(
             ref: "EmployeeType", 
             required: true 
         },
-        working_shifts: { 
-            type: mongoose.Schema.Types.ObjectId, 
-            ref: "WorkingShift", 
-            required: true 
-        },
+      
         schedule: [
             {
                 date: { 
@@ -44,6 +40,6 @@ const employeeScheduleSchema = new mongoose.Schema(
     }
 );
 
-const EmployeeSchedule = mongoose.model("EmployeeSchedule", employeeScheduleSchema);
+const EmployeeSchedule = mongoose.model("employee_schedules", employeeScheduleSchema);
 
 module.exports = EmployeeSchedule;

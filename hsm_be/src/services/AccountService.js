@@ -38,8 +38,6 @@ const createAcount = (newAccount) => {
     });
 };
 
-
-
 const loginAccount = async (accountLogin) => {
     try {
         const { email, password } = accountLogin;
@@ -54,7 +52,10 @@ const loginAccount = async (accountLogin) => {
         }
 
         // Compare password
-        const isPasswordValid = await bcrypt.compare(password, account.Password);
+        const isPasswordValid = await bcrypt.compare(
+            password,
+            account.Password
+        );
         if (!isPasswordValid) {
             return {
                 status: "ERR",
@@ -88,8 +89,6 @@ const loginAccount = async (accountLogin) => {
         };
     }
 };
-
-
 
 const getAllAccounts = async () => {
     try {
@@ -129,7 +128,6 @@ const getAllAccounts = async () => {
     }
 };
 
-
 const getDetailsAccount = async (id) => {
     try {
         // Validate ObjectId
@@ -142,18 +140,18 @@ const getDetailsAccount = async (id) => {
 
         const objectId = new mongoose.Types.ObjectId(id);
 
-        // Aggregate query to get user details with permissions
+        // Aggregate query to get user details with role
         const account = await Account.aggregate([
             {
-                $match: { _id: objectId }
+                $match: { _id: objectId },
             },
             {
                 $lookup: {
                     from: "permissions",
                     localField: "permissions",
                     foreignField: "_id",
-                    as: "permissionDetails"
-                }
+                    as: "permissionDetails",
+                },
             },
             {
                 $project: {
@@ -162,9 +160,9 @@ const getDetailsAccount = async (id) => {
                     Email: 1,
                     Username: 1,
                     permissionDetails: 1,
-                    IsDelete: 1
-                }
-            }
+                    IsDelete: 1,
+                },
+            },
         ]);
 
         if (!account.length) {
@@ -188,8 +186,9 @@ const getDetailsAccount = async (id) => {
     }
 };
 
-
-
-module.exports = { createAcount, getAllAccounts, getDetailsAccount, loginAccount };
-
-
+module.exports = {
+    createAcount,
+    getAllAccounts,
+    getDetailsAccount,
+    loginAccount,
+};
