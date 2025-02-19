@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const  employeeScheduleController = require("../controllers/EmployeeScheduleController");
+const employeeScheduleController = require("../controllers/EmployeeScheduleController");
 const {
     authMiddleware,
     authUserMiddleware,
