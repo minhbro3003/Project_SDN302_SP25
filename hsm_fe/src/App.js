@@ -14,7 +14,7 @@ import { resetAccount, updateAccount } from './redux/accountSlice';
 import { persistStore } from 'redux-persist';
 import { store } from './redux/store';
 const { Sider, Content, Header } = Layout;
-
+const publicRoutes = ["/login", "/verification"];
 
 const App = () => {
     const dispatch = useDispatch();
@@ -22,13 +22,12 @@ const App = () => {
     const location = useLocation();
     const [isLoading, setIsLoading] = useState(false);
     const account = useSelector((state) => state.account);
-    const publicRoutes = ["/login"];
+
     const userPermissions = account?.permissions || [];
 
 
     useEffect(() => {
-        if (publicRoutes.includes(location.pathname)) return;
-
+        if (publicRoutes.some((route) => location.pathname.startsWith(route))) return;
         const checkToken = () => {
             const token = localStorage.getItem("access_token");
             if (!token) {
@@ -42,7 +41,8 @@ const App = () => {
     }, [dispatch, navigate, location]);
 
     useEffect(() => {
-        if (publicRoutes.includes(location.pathname)) return;
+        if (publicRoutes.some((route) => location.pathname.startsWith(route))) return;
+
         if (account?.id) return; // 
 
         const handleAuthCheck = async () => {
@@ -312,9 +312,7 @@ const ProtectedRoute = ({ element, requiredPermissions }) => {
     const account = useSelector((state) => state.account);
     const userPermissions = account?.permissions || [];
     const location = useLocation();
-
-    if (location.pathname === "/login") return element; // Allow login page
-
+    if (publicRoutes.some((route) => location.pathname.startsWith(route))) return element;
     // If account.id is not set, show a loading screen
     if (!account?.id) {
         console.log("Waiting for account to load...");

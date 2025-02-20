@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 
-const RoomTypeSchema = new mongoose.Schema(
+const roomTypeSchema = new mongoose.Schema(
     {
         TypeName: { type: String, required: true, trim: true },
         Note: { type: String, required: true, trim: true }
@@ -10,6 +10,6 @@ const RoomTypeSchema = new mongoose.Schema(
     }
 );
 
-const RoomType = mongoose.model("roomtypes", RoomTypeSchema);
+const RoomType = mongoose.model("RoomType", roomTypeSchema);
 
 module.exports = RoomType;

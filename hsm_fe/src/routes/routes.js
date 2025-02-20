@@ -15,6 +15,9 @@ import EmployeesPage from "../pages/EmployeesPage/EmployeesPage";
 import EmployeeDetail from "../pages/EmployeesPage/EmployeeDetail/EmployeeDetail";
 import AddHotel from "../pages/HotelPage/AddHotel";
 import HotelList from "../pages/HotelPage/HotelList";
+import ReservationPage from "../pages/ReservationPage/ReservationPage";
+import ReservationList from "../pages/ReservationPage/ReservationListPage";
+import VerificationPage from "../pages/ReservationPage/VerificationPayment";
 
 
 
@@ -23,7 +26,12 @@ export const routes = [
         path: "/",
         name: "Login",
         page: LoginPage,
-        icon: <SettingOutlined />,
+        isShowHeader: false,
+    },
+    {
+        path: "/verification",
+        name: "Verification Payment",
+        page: VerificationPage,
         isShowHeader: false,
     },
     {
@@ -113,6 +121,29 @@ export const routes = [
                 roles: ["Admin"],
             },
         ],
+    },
+    {
+        path: "/reservations",
+        name: "Reservation",
+        isShowHeader: true,
+        permissions: ["Admin", "Receptionist", "Janitor"],
+        icon: <BarChartOutlined />,
+        children: [{
+            path: "/createreservation",
+            name: "Create Reservation",
+            page: ReservationPage,
+            isShowHeader: true,
+            icon: <HomeOutlined />,
+            permissions: ["Admin", "Receptionist", "Janitor"],
+        }, {
+            path: "/reservationlist",
+            name: "Reservation History",
+            page: ReservationList,
+            isShowHeader: true,
+            icon: <HomeOutlined />,
+            permissions: ["Admin", "Receptionist", "Janitor"],
+        }
+        ]
     },
     {
         path: "/rooms",
