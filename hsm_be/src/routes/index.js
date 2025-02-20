@@ -10,7 +10,7 @@ const EmployeeSchedule = require("./EmployeeScheduleRouter");
 const routes = (app) => {
     app.use("/api/account", AccountRouter);
     app.use("/api/rooms", RoomRouter);
-    app.use("/api/rooms-type", RoomTypeRouter);
+    app.use("/api/roomtype", RoomTypeRouter);
     app.use("/api/rooms-amenities", RoomAmenitiesRouter);
     app.use("/api/employee-type", EmployeeType);
     app.use("/api/hotel", Hotel);

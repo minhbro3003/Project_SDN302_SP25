@@ -1,59 +1,16 @@
 const Rooms = require("../models/RoomModel");
 
 //get all rooms
-// const getAllRoomsService = () => {
-//     return new Promise(async (resolve, reject) => {
-//         try {
-//             const allRooms = await Rooms.find();
-//             resolve({
-//                 status: "OK",
-//                 message: " All rooms successfully",
-//                 data: allRooms,
-//             });
-//         } catch (e) {
-//             console.log("Error: ", e.message);
-//             reject(e);
-//         }
-//     });
-// };
 const getAllRoomsService = () => {
     return new Promise(async (resolve, reject) => {
         try {
             const allRooms = await Rooms.find()
-                .populate({ path: "typerooms" })
-                .populate({ path: "room_amenities.room_amenitiesID", })
-                .lean(); // Chuyển về object thuần JS để dễ xử lý
-
-            // Format lại dữ liệu
-            const formatData = allRooms.map((room) => ({
-                id: room._id,
-                RoomName: room.RoomName,
-                Price: room.Price,
-                Status: room.Status,
-                Floor: room.Floor,
-                Active: room.Active,
-                IsDelete: room.IsDelete,
-                Description: room.Description,
-                typerooms: room.typerooms
-                    ? { TypeName: room.typerooms.TypeName, Note: room.typerooms.Note }
-                    : null,
-                room_amenities: room.room_amenities.map((amenity) => ({
-                    id: amenity.room_amenitiesID?._id,
-                    name: amenity.room_amenitiesID?.AmenitiesName,
-                    note: amenity.room_amenitiesID?.Note,
-                    quantity: amenity.quantity,
-                    status: amenity.status,
-                })),
-                Image: room.Image.map((img) => ({
-                    url: img.url,
-                    alt: img.alt || "Room Image",
-                })),
-            }));
-
+                .populate("roomtype")
+                .populate("room_amenities")
             resolve({
                 status: "OK",
-                message: "All rooms successfully",
-                data: formatData,
+                message: " All rooms successfully",
+                data: allRooms,
             });
         } catch (e) {
             console.log("Error: ", e.message);
@@ -61,7 +18,6 @@ const getAllRoomsService = () => {
         }
     });
 };
-
 
 //get room by id
 const getRoomByRoomIdService = (id) => {
@@ -90,8 +46,8 @@ const getRoomByRoomIdService = (id) => {
 const createRoomService = async (newRoom) => {
     try {
         const {
-            RoomName, Price, Status, Floor, Active,
-            typerooms, room_amenities, Description, Image, IsDelete,
+            RoomName, Price, Status, Floor,
+            roomtype, Description, Image
         } = newRoom;
 
         const checkRoomName = await Rooms.findOne({
@@ -106,12 +62,12 @@ const createRoomService = async (newRoom) => {
 
         //create room
         const newedRoomData = new Rooms({
-            RoomName, Price, Status, Floor, Active,
-            typerooms, room_amenities, Description, Image, IsDelete,
+            RoomName, Price, Status, Floor,
+            roomtype, Description, Image
         });
         //save database
         const savedRoom = await newedRoomData.save();
-
+        console.log("savedRoom", savedRoom)
         return {
             status: "OK",
             message: "Create room successfully",

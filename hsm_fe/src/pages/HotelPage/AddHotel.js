@@ -60,20 +60,16 @@ const AddHotel = ({ onSubmit }) => {
 
         {/* Province & Rooms on the same row */}
         <RowContainer>
-          <Form.Item name="province" label="Room List" rules={[{ required: true, message: "Please select a province" }]}>
+          <Form.Item name="rooms" label="Room List" rules={[{ required: true, message: "Please select a province" }]}>
             <Select mode="multiple" placeholder="Select rooms">
               {rooms.map((room) => (
                 <Option key={room._id} value={room._id}>{room.name}</Option>
               ))}
             </Select>
           </Form.Item>
-          <Form.Item name="rooms" label="Status">
-            {/* Status - Full width */}
-            {/* <FullWidthItem> */}
-            <Form.Item name="status" valuePropName="checked">
-              <Switch />
-            </Form.Item>
-            {/* </FullWidthItem> */}
+          {/* Status - Full width */}
+          <Form.Item name="Active" label="Status" valuePropName="checked">
+            <Switch />
           </Form.Item>
         </RowContainer>
 

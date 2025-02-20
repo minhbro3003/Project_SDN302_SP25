@@ -22,7 +22,7 @@ const App = () => {
     const location = useLocation();
     const [isLoading, setIsLoading] = useState(false);
     const account = useSelector((state) => state.account);
-    const publicRoutes = ["/login", "/"];
+    const publicRoutes = ["/login"];
     const userPermissions = account?.permissions || [];
 
 

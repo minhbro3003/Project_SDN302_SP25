@@ -1,4 +1,4 @@
-const RoomTypes = require("../models/TypeRoomModel");
+const RoomTypes = require("../models/RoomTypeModel");
 
 //get all rooms type
 const getAllRoomsTypeService = () => {
@@ -7,7 +7,7 @@ const getAllRoomsTypeService = () => {
             const allRoomsTypes = await RoomTypes.find();
             resolve({
                 status: "OK",
-                message: " All rooms successfully",
+                message: " All roomtype successfully",
                 data: allRoomsTypes,
             });
         } catch (e) {

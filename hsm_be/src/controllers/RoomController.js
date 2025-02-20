@@ -37,29 +37,12 @@ const getRoomByRoomId = async (req, res) => {
 const createRooms = async (req, res) => {
     try {
         const {
-            RoomName,
-            Price,
-            Status,
-            Floor,
-            Active,
-            typerooms,
-            room_amenities,
-            Description,
-            Image,
-            IsDelete,
+            RoomName, Price, Status, Floor,
+            roomtype, room_amenities, Description, Image
         } = req.body;
         console.log("req.body", req.body);
-        if (
-            !RoomName ||
-            !Price ||
-            !Status ||
-            !Active ||
-            !typerooms ||
-            !room_amenities
-        ) {
-            return res
-                .status(200)
-                .json({ status: "ERR", message: "The input is required." });
+        if (!RoomName || !Price || !Floor) {
+            return res.status(404).json({ status: "ERR", message: "The input is required." });
         }
 
         const room = await RoomService.createRoomService(req.body);

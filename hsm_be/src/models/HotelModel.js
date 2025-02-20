@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-require("./ImgaeModel")
+
 const hotelSchema = new mongoose.Schema(
     {
         CodeHotel: {
@@ -30,12 +30,10 @@ const hotelSchema = new mongoose.Schema(
             type: String,
             trim: true,
         },
-        images: [
-            {
-                type: mongoose.Schema.Types.ObjectId,
-                ref: "Image",
-            },
-        ],
+        image: {
+            type: String,
+            trim: true,
+        },
         rooms: [
             {
                 type: mongoose.Schema.Types.ObjectId,
