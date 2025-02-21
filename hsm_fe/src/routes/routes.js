@@ -56,8 +56,8 @@ export const routes = [
                 permissions: ["Admin", "Receptionist", "Janitor"],
             },
             {
-                path: "/employees/details",
-                name: "Employee Details",
+                path: "/employees/list",
+                name: "Employees",
                 isShowHeader: true,
                 page: EmployeesPage,
                 icon: <AppstoreAddOutlined />,
