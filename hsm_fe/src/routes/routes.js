@@ -10,8 +10,8 @@ import RevenuePage from "../pages/RevenuePage/RevenuePage";
 import RoomForm from "../pages/RoomPage/AddRoom";
 import RoomDashboard from "../pages/RoomPage/RoomDashboard";
 import EmployeesPage from "../pages/EmployeesPage/EmployeesPage";
-import {SettingOutlined, AppstoreAddOutlined, HomeOutlined } from '@ant-design/icons';
-
+import ServicePage from "../pages/ServicePage/ServicePage";
+import { SettingOutlined, AppstoreAddOutlined, HomeOutlined } from '@ant-design/icons';
 
 export const routes = [
     {
@@ -123,6 +123,14 @@ export const routes = [
         page: AccountPage,
         isShowHeader: true,
         icon: <HomeOutlined />,
+        permissions: ["Admin"],
+    },
+    {
+        path: "/service",
+        name: "Service",
+        page: ServicePage,
+        icon: <HomeOutlined />,
+        isShowHeader: true,
         permissions: ["Admin"],
     },
     {
