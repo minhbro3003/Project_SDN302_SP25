@@ -12,20 +12,9 @@ const roomSchema = new mongoose.Schema(
         Floor: { type: Number, required: true },
         roomtype: {
             type: mongoose.Schema.Types.ObjectId,
-            ref: "roomtypes",
+            ref: "RoomType",
             required: true,
         },
-        room_amenities: [
-            {
-                room_amenitiesID: {
-                    type: mongoose.Schema.Types.ObjectId,
-                    ref: "room_amenities",
-                    // required: true,
-                },
-                quantity: { type: Number },
-                status: { type: String, trim: true },
-            }
-        ],
         Description: { type: String, trim: true },
         Image: {
             type: String,

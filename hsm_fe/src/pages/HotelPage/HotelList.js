@@ -378,14 +378,13 @@ const HotelList = () => {
             title: "Image Hotel",
             dataIndex: "image",
             key: "image",
-            // width: "20%",
-            ...getColumnSearchProps("image"),
+            width: "8%",
             render: (image) =>
                 image ? (
                     <img
                         src={image}
                         alt="Hotel"
-                        style={{ width: 80, height: 80, objectFit: "cover", borderRadius: 8 }}
+                        style={{ width: "80%", height: 35, objectFit: "cover", borderRadius: 6 }}
                     />
                 ) : (
                     "No Image"
@@ -486,8 +485,8 @@ const HotelList = () => {
         <>
             <Button
                 style={{
-                    height: "150px",
-                    width: "150px",
+                    height: "90px",
+                    width: "90px",
                     borderRadius: "6px",
                     borderStyle: "dashed",
                     marginBottom: "15px",
@@ -498,9 +497,9 @@ const HotelList = () => {
                 }}
                 onClick={() => navigate('/hotel/add-hotel')}
             >
-                <PlusOutlined style={{ fontSize: "60px" }} />
-                <div style={{ fontSize: "16px", marginTop: "10px", fontWeight: "500" }}>
-                    Add new Hotel
+                <PlusOutlined style={{ fontSize: "35px" }} />
+                <div style={{ fontSize: "13px", fontWeight: "500" }}>
+                    Add Hotel
                 </div>
             </Button>
             <Table columns={columns} dataSource={dataTable}

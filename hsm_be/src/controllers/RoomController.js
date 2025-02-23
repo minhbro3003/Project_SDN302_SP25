@@ -111,6 +111,15 @@ const deleteRoom = async (req, res) => {
     }
 };
 
+const getRoomsGroupedByTypeController = async (req, res) => {
+    try {
+        const response = await RoomService.getRoomsGroupedByType();
+        return res.status(200).json(response);
+    } catch (error) {
+        res.status(500).json({ status: "ERROR", message: error.message });
+    }
+};
+
 module.exports = {
     getAllRooms,
     createRooms,
@@ -118,4 +127,5 @@ module.exports = {
     deleteRoom,
     getRoomByRoomId,
     getAvailableRooms,
+    getRoomsGroupedByTypeController,
 };

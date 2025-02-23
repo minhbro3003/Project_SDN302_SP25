@@ -19,7 +19,7 @@ export const ImageUploadSection = styled.div`
 
 export const MainImagePreview = styled.div`
     width: 100%;
-    height: 300px;
+    height: 250px;
     background: #f0f0f0;
     display: flex;
     align-items: center;
@@ -98,9 +98,9 @@ export const StyledRadioButton = styled(Radio.Button)`
   // Giữ nền khi được chọn
   &.ant-radio-button-wrapper-checked {
     background-color: ${({ value }) =>
-        value === "single" ? "#ff7f50" : "#FF83A9"} !important;
+        value === "single" ? "#4DA1A9" : "#2E5077"} !important;
     color: white !important;
     border-color: ${({ value }) =>
-        value === "single" ? "#ff4500" : "#1e90ff"} !important;
+        value === "single" ? "#2E5077" : "#4DA1A9"} !important;
   }
 `;

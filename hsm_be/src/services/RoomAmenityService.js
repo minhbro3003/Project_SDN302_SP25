@@ -16,7 +16,7 @@ const getAllRoomAmenities = async () => {
                 select: "AmenitiesName", // Select AmenitiesName from Amenity model
             });
 
-        console.log(roomAmenities); // Check if room fields are populated
+        console.log("roomAmenities: ", roomAmenities); // Check if room fields are populated
 
         return {
             status: "OK",
@@ -98,6 +98,25 @@ const getAllNotFunctioningRoomAmenities = async () => {
 
 
 // Create a new room amenity
+// const createRoomAmenity = async (newRoomAmenity) => {
+//     try {
+//         const { room, amenity, quantity, status } = newRoomAmenity;
+//         const roomAmenity = new RoomAmenity({ room, amenity, quantity, status });
+//         const savedRoomAmenity = await roomAmenity.save();
+//         return {
+//             status: "OK",
+//             message: "Room amenity created successfully",
+//             data: savedRoomAmenity,
+//         };
+//     } catch (error) {
+//         console.error("Error in createRoomAmenity:", error.message);
+//         return {
+//             status: "ERR",
+//             message: "Failed to create room amenity",
+//             error: error.message,
+//         };
+//     }
+// };
 const createRoomAmenity = async (newRoomAmenity) => {
     try {
         const { room, amenity, quantity, status } = newRoomAmenity;
@@ -117,6 +136,7 @@ const createRoomAmenity = async (newRoomAmenity) => {
         };
     }
 };
+
 
 // Update a room amenity by ID
 const updateRoomAmenity = async (id, data) => {

@@ -1,4 +1,4 @@
-
+const mongoose = require("mongoose"); // 👈 Import mongoose để tránh lỗi
 const Hotel = require("../models/HotelModel");
 
 
@@ -18,41 +18,6 @@ const getAllHotel = () => {
         }
     });
 };
-
-// const getAllHotel = () => {
-//     return new Promise(async (resolve, reject) => {
-//         try {
-//             const allHotel = await Hotel.find()
-//                 .populate("rooms")
-//                 .lean();
-
-//             const formatData = allHotel.map((hotel) => ({
-//                 id: hotel._id,
-//                 CodeHotel: hotel.CodeHotel,
-//                 NameHotel: hotel.NameHotel,
-//                 Introduce: hotel.Introduce,
-//                 Title: hotel.Title,
-//                 LocationHotel: hotel.LocationHotel,
-//                 Note: hotel.Note,
-//                 Active: hotel.Active,
-//                 IsDelete: hotel.IsDelete,
-//                 image: hotel.image,
-//                 rooms: hotel.rooms.map((room) => ({
-//                     // id: room._id,
-//                     NameRoom: room.RoomName,
-//                 })),
-//             }));
-
-//             resolve({
-//                 status: "OK",
-//                 message: "All Room successfully",
-//                 data: formatData,
-//             });
-//         } catch (e) {
-//             reject(e);
-//         }
-//     });
-// };
 
 
 //get hotel by id
@@ -87,42 +52,42 @@ const createHotelService = async (newHotel) => {
     try {
         const {
             CodeHotel, NameHotel, Introduce, Title, LocationHotel,
-            Note, provinces, images, rooms, Active, IsDelete
+            Note, image, rooms, Active, IsDelete
         } = newHotel;
+
+        console.log("📌 Data nhận từ FE:", newHotel);
+
+        // Kiểm tra dữ liệu rooms
+        if (!Array.isArray(rooms) || rooms.length === 0) {
+            return { status: "ERR", message: "Danh sách rooms không hợp lệ" };
+        }
+
+        if (rooms.some(room => !mongoose.Types.ObjectId.isValid(room))) {
+            return { status: "ERR", message: "Dữ liệu rooms chứa ObjectId không hợp lệ" };
+        }
 
         const checkHotel = await Hotel.findOne({
             $or: [{ CodeHotel }, { NameHotel }]
         });
 
         if (checkHotel) {
-            return {
-                status: "ERR",
-                message: "The hotel code or name already exists",
-            };
+            return { status: "ERR", message: "The hotel code or name already exists" };
         }
 
-        //create room
-        const newedHotelData = new Hotel({
+        // Lưu danh sách `_id` của `Rooms`
+        const newHotelData = new Hotel({
             CodeHotel, NameHotel, Introduce, Title, LocationHotel,
-            Note, provinces, images, rooms, Active, IsDelete
+            Note, image, rooms, Active, IsDelete
         });
-        //save database
-        const savedHotel = await newedHotelData.save();
 
-        return {
-            status: "OK",
-            message: "Create room successfully",
-            data: savedHotel,
-        };
+        const savedHotel = await newHotelData.save();
+        return { status: "OK", message: "Create hotel successfully", data: savedHotel };
     } catch (error) {
-        console.error("Error in createRoomService:", error.message);
-        return {
-            status: "ERR",
-            message: "Create room failed",
-            error: error.message,
-        };
+        console.error("❌ Error in createHotelService:", error.message);
+        return { status: "ERR", message: "Create hotel failed", error: error.message };
     }
 };
+
 
 //update a hotel
 const updateHotelService = async (id, data) => {

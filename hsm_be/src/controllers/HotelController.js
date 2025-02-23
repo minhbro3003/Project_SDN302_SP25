@@ -49,13 +49,12 @@ const createHotel = async (req, res) => {
     try {
         const {
             CodeHotel, NameHotel, Introduce, Title, LocationHotel,
-            Note, provinces, images, rooms, Active, IsDelete
+            Note, images, rooms, Active, IsDelete
         } = req.body;
         console.log("req.body.hotel: ", req.body);
 
         if (
-            !CodeHotel || !NameHotel || !Introduce || !Title || !LocationHotel ||
-            !provinces || !images || !rooms
+            !CodeHotel || !NameHotel || !Introduce || !LocationHotel || !rooms
         ) {
             return res
                 .status(200)

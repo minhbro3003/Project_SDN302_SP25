@@ -77,6 +77,14 @@ export const getAllRoomType = async () => {
     return res.data;
 };
 
+export const getRoomsGroupedByType = async (data) => {
+    const res = await axios.get(
+        `${process.env.REACT_APP_API_URL_BACKEND}/rooms/by-type`, data
+    );
+    console.log("res getRoomsGroupedByType:", res);
+    return res.data;
+};
+
 export const getAllRoomAmenities = async () => {
     const res = await axios.get(
         `${process.env.REACT_APP_API_URL_BACKEND}/rooms-amenities`

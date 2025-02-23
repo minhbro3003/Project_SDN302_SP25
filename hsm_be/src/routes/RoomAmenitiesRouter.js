@@ -8,7 +8,7 @@ const {
 } = require("../middleware/authMiddleware");
 
 //router get all rooms
-router.get("", roomsAmenitiesController.getAllRoomsAmenities);
+router.get("", roomsAmenitiesController.getAllRoomAmenities);
 //router create new room
 // router.post("", roomsTypeController.createRooms);
 // //router update by id

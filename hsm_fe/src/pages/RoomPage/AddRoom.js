@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from "react";
-import { Form, Input, InputNumber, Select, Button, Upload, Row, Col, Radio, Table, } from "antd";
-import { UploadOutlined } from "@ant-design/icons";
+import { Form, Input, InputNumber, Select, Button, Upload, Row, Col, notification, Table, Space, Popconfirm, } from "antd";
+import { MinusOutlined, PlusOutlined, UploadOutlined } from "@ant-design/icons";
 import { RoomFormContainer, ImageUploadSection, MainImagePreview, MainImagePreviewImg, StyledRadioGroup, StyledRadioButton, } from "./AddRoomStyle";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import * as RoomService from "../../services/RoomService";
-import * as message from "../../components/Message/Message";
+import * as AmenityService from "../../services/AmenityService";
+import * as RoomAmenityService from "../../services/RoomAmenitiesService";
 import { convertPrice, getBase64, renderOptions } from "../../utils";
+import ModalComponent from "../../components/ModalComponent/ModalComponent";
 
 const { Option } = Select;
 
@@ -16,17 +18,24 @@ const AddRoomForm = ({ initialValues }) => {
     const [imageList, setImageList] = useState(initialValues?.Imgae || []);
     const [quantity, setQuantity] = useState(1);
     const [rooms, setRooms] = useState([]);
+    const [api, contextHolder] = notification.useNotification();
+    const [amenities, setAmenities] = useState([]);
+    const [status, setStatus] = useState("Functioning");
+    const [isModalConfirm, setIsModalConfirm] = useState(false);
+    const [amenitiesQuantity, setAmenitiesQuantity] = useState({});
+    const [selectedAmenityId, setSelectedAmenityId] = useState(null);
 
     const [stateRoom, setStateRoom] = useState({
-        roomName: "",
-        price: "",
-        roomType: [],
-        floor: "",
-        amenities: [],
-        image: "",
-        description: "",
-        quantity: "",
+        roomName: "", price: "", roomType: [], floor: "", image: "", description: "", quantity: "",
     });
+
+    //create room amenities
+    const mutationCreateRoomAmenities = useMutation({
+        mutationFn: (data) => RoomAmenityService.createRoomAmenity(data),
+    });
+
+    //create room amenities
+    const { data: dataroomamenities, isSuccessamenities, isErroramenities } = mutationCreateRoomAmenities;
 
     //create room
     const mutationCreate = useMutation({
@@ -59,40 +68,124 @@ const AddRoomForm = ({ initialValues }) => {
     }, {});
 
     //crete product
-    useEffect(() => {
-        if (isSuccess && data?.status === "OK") {
-            message.success("Add new room successfull!");
-        } else if (isError) {
-            message.error("Add new room faile!");
-        }
-    }, [isSuccess, isError, data?.status]);
+    // useEffect(() => {
+    //     if (isSuccess && data?.status === "OK") {
+    //         api.success({ message: "Add new room successfull!" });
+    //     } else if (isError) {
+    //         api.error({ message: "Add new room faile!" });
+    //     }
+    // }, [isSuccess, isError, data?.status]);
 
     //create product
-    const handleFinish = () => {
-        const params = {
-            RoomName: stateRoom.roomName,
-            Price: Number(stateRoom.price),
-            roomtype: stateRoom.roomType,
-            Floor: Number(stateRoom.floor),
-            room_amenities: stateRoom.amenities,
-            Image: stateRoom.image,
-            Description: stateRoom.description,
-            // Status: "Available", 
+    const handleFinish = async () => {
+        try {
+            const roomName = stateRoom.roomName;
+            const floor = Number(stateRoom.floor);
+
+            // Kiểm tra xem phòng có tồn tại trên cùng một tầng không
+            const isRoomExist = existingRooms.some(
+                (room) => room.RoomName === roomName && room.Floor === floor
+            );
+
+            if (isRoomExist) {
+                api.error({
+                    message: "Room Already Exists!",
+                    description: `Room "${roomName}" already exists on floor ${floor}.`,
+                });
+                return;
+            }
+
+            // Nếu không trùng, tiến hành tạo phòng
+            const roomParams = {
+                RoomName: roomName,
+                Price: Number(stateRoom.price),
+                roomtype: stateRoom.roomType,
+                Floor: floor,
+                Image: stateRoom.image,
+                Description: stateRoom.description,
+            };
+
+            const roomResponse = await mutationCreate.mutateAsync(roomParams);
+
+            if (roomResponse?.status !== "OK") {
+                api.error({
+                    message: "Room Creation Failed",
+                    description: roomResponse?.message || "An error occurred while creating the room.",
+                });
+                return;
+            }
+
+            const newRoomId = roomResponse?.data?._id;
+
+            api.success({
+                message: "Room Created Successfully",
+                description: `Room "${roomName}" has been added.`,
+            });
+
+            // Xử lý amenities nếu có
+            if (newRoomId && stateRoom.amenities?.length > 0) {
+                const amenitiesParams = stateRoom.amenities.map((amenityId) => ({
+                    room: newRoomId,
+                    amenity: amenityId,
+                    quantity: amenitiesQuantity[amenityId] || 1,
+                    status: "Functioning",
+                }));
+
+                console.log("Sending Room Amenities:", amenitiesParams);
+
+                await Promise.all(
+                    amenitiesParams.map(async (params) => {
+                        const roomAmenityResponse = await mutationCreateRoomAmenities.mutateAsync(params);
+
+                        if (roomAmenityResponse?.status !== "OK") {
+                            api.warning({
+                                message: "Some Amenities Failed to Add",
+                                description: `Amenity ID: ${params.amenity} could not be added.`,
+                            });
+                        }
+                    })
+                );
+
+                api.success({
+                    message: "Amenities Added Successfully",
+                    description: `All selected amenities have been linked to Room "${roomName}".`,
+                });
+            } else {
+                api.info({
+                    message: "No Amenities Selected",
+                    description: "Room was added, but no amenities were linked.",
+                });
+            }
+        } catch (error) {
+            console.error("Error in handleFinish:", error);
+            api.error({
+                message: "Process Failed",
+                description: "An error occurred while creating the room and amenities.",
+            });
+        }
+    };
+
+    const handleQuantityChange = (amenityId, newQuantity) => {
+        setAmenitiesQuantity((prev) => ({
+            ...prev,
+            [amenityId]: newQuantity,
+        }));
+    };
+
+    //get all amenities
+    useEffect(() => {
+        const fetchAmenities = async () => {
+            try {
+                const res = await AmenityService.getAllAmenities();
+                setAmenities(res.data);
+                console.log("res amenities: ", res)
+            } catch (error) {
+                console.error("Failed to fetch amenities:", error);
+            }
         };
 
-        console.log("Submitting room:", params); // Debug dữ liệu
-
-        mutationCreate.mutate(params, {
-            onSuccess: (data) => {
-                console.log("Room created successfully:", data);
-                message.success("Add new room successfully!");
-            },
-            onError: (error) => {
-                console.error("Error creating room:", error);
-                message.error("Add new room failed!");
-            },
-        });
-    };
+        fetchAmenities();
+    }, []);
 
     const handleOnChange = (e) => {
         const { name, value } = e.target;
@@ -136,105 +229,41 @@ const AddRoomForm = ({ initialValues }) => {
 
     const handleDeleteRoom = (roomKey) => {
         setRooms((prevRooms) => prevRooms.filter(room => room.key !== roomKey));
-        message.success("Room removed from the list.");
+        api.success({ message: "Room removed from the list." });
     };
 
-    // const handleBulkAdd = () => {
-    //     const roomName = formBulk.getFieldValue("roomName");
-    //     if (!roomName) {
-    //         message.error("Room name is required!");
-    //         return;
-    //     }
-
-    //     const quantity = formBulk.getFieldValue("quantity") || 1; // Số lượng phòng muốn thêm
-    //     const existingRoomNames = new Set(existingRooms.map(room => room.RoomName));
-
-    //     let newRooms = [];
-    //     let counter = 1; // Số thứ tự nếu bị trùng
-
-    //     for (let i = 0; i < quantity; i++) {
-    //         let newRoomName = `${roomName}${i + 1}`; // Tên mặc định
-
-    //         // Nếu tên đã tồn tại, thêm số vào sau để tránh trùng lặp
-    //         while (existingRoomNames.has(newRoomName)) {
-    //             newRoomName = `${roomName}${counter}`;
-    //             counter++;
-    //         }
-
-    //         existingRoomNames.add(newRoomName); // Đánh dấu là đã dùng tên này
-
-    //         newRooms.push({
-    //             key: newRoomName,
-    //             RoomName: newRoomName,
-    //             Price: formBulk.getFieldValue("Price"),
-    //             RoomType: formBulk.getFieldValue("roomtype"),
-    //             Floor: formBulk.getFieldValue("floor"),
-    //             Amenities: formBulk.getFieldValue("amenities"),
-    //             Description: formBulk.getFieldValue("description"),
-    //             Image: imageList.length > 0 ? imageList[0].url : "",
-    //         });
-    //     }
-
-    //     setRooms((prevRooms) => [...prevRooms, ...newRooms]);
-    //     message.success(`${newRooms.length} rooms added successfully!`);
-    // };
-    const handleBulkAdd = () => {
-        const roomName = formBulk.getFieldValue("roomName");
-        if (!roomName) {
-            message.error("Room name is required!");
-            return;
-        }
-
-        const quantity = formBulk.getFieldValue("quantity") || 1;
-        const existingRoomNames = new Set(existingRooms.map(room => room.RoomName));
-
-        let newRooms = [];
-        let highestIndex = 0;
-
-        // Find the highest number used for this room type
-        existingRoomNames.forEach(name => {
-            const match = name.match(new RegExp(`^${roomName}(\\d+)$`));
-            if (match) {
-                highestIndex = Math.max(highestIndex, parseInt(match[1], 10));
-            }
-        });
-
-        for (let i = 0; i < quantity; i++) {
-            let newRoomName = `${roomName}${highestIndex + 1}`;
-            highestIndex++;
-
-            newRooms.push({
-                key: newRoomName,
-                RoomName: newRoomName,
-                Price: formBulk.getFieldValue("Price"),
-                RoomType: formBulk.getFieldValue("roomtype"),
-                Floor: formBulk.getFieldValue("floor"),
-                Amenities: formBulk.getFieldValue("amenities"),
-                Description: formBulk.getFieldValue("description"),
-                Image: imageList.length > 0 ? imageList[0].url : "",
-            });
-        }
-
-        setRooms(prevRooms => [...prevRooms, ...newRooms]);
-        message.success(`${newRooms.length} rooms added successfully!`);
+    const handleConfirmSubmit = () => {
+        setIsModalConfirm(false);
+        handleSubmitBulk(); // Gọi hàm lưu tất cả rooms
     };
 
     const columns = [
         {
-            title: "Image", dataIndex: "Image", key: "Image",
+            title: "Image", dataIndex: "Image", key: "Image", width: "10%",
             render: (text) => (
                 <img
                     src={text}
                     alt="Room Image"
-                    style={{ width: 80, height: 50, objectFit: "cover", borderRadius: 4 }}
+                    style={{ width: 50, height: 30, objectFit: "cover", borderRadius: 4 }}
                 />
             ),
         },
         { title: "Room Name", dataIndex: "RoomName", key: "RoomName" },
-        { title: "Price", dataIndex: "Price", key: "Price" },
+        { title: "Price", dataIndex: "Price", key: "Price", render: (text) => convertPrice(text) },
         { title: "Room Type", dataIndex: "RoomType", key: "RoomType", render: (roomTypeId) => roomTypeMap[roomTypeId] || "N/A", },
         { title: "Floor", dataIndex: "Floor", key: "Floor" },
-        { title: "Amenities", dataIndex: "Amenities", key: "Amenities" },
+        {
+            title: "Amenities",
+            dataIndex: "roomAmenities",
+            key: "Amenities",
+            render: (roomAmenities) => {
+                if (!roomAmenities || roomAmenities.length === 0) return 0;
+
+                // Đếm số loại amenities duy nhất
+                const uniqueAmenities = new Set(roomAmenities.map(item => item.amenityId));
+                return uniqueAmenities.size;
+            }
+        },
         {
             title: "Action",
             key: "action",
@@ -246,71 +275,162 @@ const AddRoomForm = ({ initialValues }) => {
         },
     ];
 
-    // const handleSubmitBulk = async () => {
-    //     if (rooms.length === 0) {
-    //         message.error("No rooms added to submit!");
-    //         return;
-    //     }
+    const handleBulkAdd = () => {
+        const roomName = formBulk.getFieldValue("roomName").trim();
+        const floor = formBulk.getFieldValue("floor");
 
-    //     const formattedRooms = rooms.map((room) => ({
-    //         RoomName: room.RoomName,
-    //         Price: Number(room.Price),
-    //         roomtype: room.RoomType,
-    //         Floor: Number(room.Floor),
-    //         room_amenities: room.Amenities,
-    //         Image: room.Image || "",
-    //         Description: room.Description,
-    //     }));
-
-    //     console.log("Submitting bulk rooms:", formattedRooms); // Debug
-
-    //     try {
-    //         for (let room of formattedRooms) {
-    //             await mutationCreate.mutateAsync(room);  // Gửi từng phòng một
-    //         }
-    //         message.success("Added multiple rooms successfully!");
-    //         setRooms([]); // Reset danh sách sau khi thêm thành công
-    //         formBulk.resetFields(); // Reset form
-    //     } catch (error) {
-    //         console.error("Error creating multiple rooms:", error);
-    //         message.error("Failed to add multiple rooms!");
-    //     }
-    // };
-    const handleSubmitBulk = async () => {
-        if (rooms.length === 0) {
-            message.error("No rooms added to submit!");
+        if (!roomName) {
+            api.error({ message: "⚠ Room name is required!" });
             return;
         }
 
-        const formattedRooms = rooms.map(room => ({
-            RoomName: room.RoomName,
-            Price: Number(room.Price),
-            roomtype: room.RoomType,
-            Floor: Number(room.Floor),
-            room_amenities: room.Amenities,
-            Image: room.Image || "",
-            Description: room.Description,
-        }));
+        const quantity = formBulk.getFieldValue("quantity") || 1;
+        const selectedAmenities = [...new Set(formBulk.getFieldValue("amenities") || [])];
 
-        console.log("Submitting bulk rooms:", formattedRooms);
+        // 📌 Chuẩn hóa roomName: Nếu R1, R2... thì chuyển thành R01, R02...
+        const match = roomName.match(/^([A-Za-z]+)(\d+)$/);
+        let prefix = roomName;
+        let baseNumber = 0;
+
+        if (match) {
+            prefix = match[1];
+            baseNumber = parseInt(match[2], 10);
+            if (baseNumber < 10) {
+                baseNumber = `0${baseNumber}`; // Nếu R1 → R01
+            }
+        }
+
+        // 📌 Lấy danh sách số phòng trên tầng hiện tại (bao gồm cả những phòng đã queue)
+        const roomsOnSameFloor = [...existingRooms, ...rooms]
+            .filter(room => room.Floor === floor)
+            .map(room => room.RoomName);
+
+        let existingNumbers = roomsOnSameFloor
+            .map(name => {
+                const match = name.match(new RegExp(`^${prefix}(\\d+)$`));
+                return match ? parseInt(match[1], 10) : null;
+            })
+            .filter(num => num !== null)
+            .sort((a, b) => a - b);
+
+        let newRooms = [];
+        let numberToUse = existingNumbers.length > 0 ? Math.max(...existingNumbers) + 1 : parseInt(`${baseNumber}01`, 10);
+
+        for (let i = 0; i < quantity; i++) {
+            while (existingNumbers.includes(numberToUse)) {
+                numberToUse++;
+            }
+
+            let newRoomName = `${prefix}${numberToUse}`;
+            existingNumbers.push(numberToUse);
+            existingNumbers.sort((a, b) => a - b);
+
+            let newRoom = {
+                key: newRoomName,
+                RoomName: newRoomName,
+                Price: formBulk.getFieldValue("Price"),
+                RoomType: formBulk.getFieldValue("roomtype"),
+                Floor: floor,
+                Description: formBulk.getFieldValue("description"),
+                Image: imageList.length > 0 ? imageList[0].url : "",
+                roomAmenities: selectedAmenities.map(amenityId => ({
+                    amenityId,
+                    quantity: amenitiesQuantity[amenityId] || 1,
+                })),
+            };
+
+            newRooms.push(newRoom);
+            numberToUse++;
+        }
+
+        if (newRooms.length === 0) {
+            api.error({ message: "⚠ No valid rooms to add!" });
+            return;
+        }
+
+        console.log("🚀 New rooms added:", newRooms);
+        setRooms(prevRooms => [...prevRooms, ...newRooms]); // Cập nhật danh sách phòng queue
+        api.success({ message: `✅ ${newRooms.length} rooms added successfully!` });
+    };
+
+    const handleSubmitBulk = async () => {
+        if (rooms.length === 0) {
+            api.error({ message: "No rooms added to submit!" });
+            return;
+        }
 
         try {
-            await Promise.all(formattedRooms.map(room => mutationCreate.mutateAsync(room)));
+            const createdRooms = await Promise.all(
+                rooms.map(async (room) => {
+                    const roomParams = {
+                        RoomName: room.RoomName,
+                        Price: Number(room.Price),
+                        roomtype: room.RoomType,
+                        Floor: Number(room.Floor),
+                        Image: room.Image || "",
+                        Description: room.Description,
+                    };
 
-            message.success("Added multiple rooms successfully!");
+                    const roomResponse = await mutationCreate.mutateAsync(roomParams);
+
+                    if (roomResponse?.status !== "OK") {
+                        console.error("❌ Room Creation Failed:", roomResponse);
+                        return null;
+                    }
+
+                    return { ...room, _id: roomResponse?.data?._id };
+                })
+            );
+
+            const validRooms = createdRooms.filter((room) => room && room._id);
+            console.log("✅ Valid rooms:", validRooms);
+
+            // 🛠 Dùng Set để loại bỏ trùng lặp
+            const roomAmenitiesData = [];
+
+            validRooms.forEach((room) => {
+                const uniqueAmenities = new Set(); // Dùng Set để tránh trùng lặp
+
+                room.roomAmenities.forEach((amenity) => {
+                    if (!uniqueAmenities.has(`${room._id}-${amenity.amenityId}`)) {
+                        uniqueAmenities.add(`${room._id}-${amenity.amenityId}`);
+
+                        roomAmenitiesData.push({
+                            room: room._id,
+                            amenity: amenity.amenityId,
+                            quantity: amenity.quantity,
+                            status: "Functioning",
+                        });
+                    }
+                });
+            });
+
+            console.log("🏠 Final roomAmenitiesData before API:", roomAmenitiesData);
+
+            if (roomAmenitiesData.length > 0) {
+                await Promise.all(roomAmenitiesData.map((params) => mutationCreateRoomAmenities.mutateAsync(params)));
+            }
+
+            api.success({
+                message: "🎉 Bulk Rooms Added Successfully!",
+                description: `${validRooms.length} rooms have been created along with their amenities.`,
+            });
+
             setRooms([]);
             formBulk.resetFields();
         } catch (error) {
-            console.error("Error creating multiple rooms:", error);
-            message.error("Failed to add multiple rooms!");
+            console.error("❌ Error creating multiple rooms:", error);
+            api.error({ message: "⚠ Failed to add multiple rooms!" });
         }
     };
 
+
     return (
         <>
+            {contextHolder}
             <StyledRadioGroup value={mode} onChange={(e) => setMode(e.target.value)}>
                 <StyledRadioButton value="single" selected={mode === "single"}>
-                    Add Single Room
+                    Add a Room
                 </StyledRadioButton>
                 <StyledRadioButton value="bulk" selected={mode === "bulk"}>
                     Add Multiple Rooms
@@ -320,24 +440,16 @@ const AddRoomForm = ({ initialValues }) => {
             {mode === "single" && (
                 <RoomFormContainer>
                     <Row gutter={24}>
-                        <Col span={10}>
+                        <Col span={7}>
                             <ImageUploadSection>
                                 <MainImagePreview>
                                     {imageList.length > 0 && imageList[0].url ? (
-                                        <MainImagePreviewImg
-                                            src={imageList[0].url}
-                                            alt="Upload Image"
-                                        />
+                                        <MainImagePreviewImg src={imageList[0].url} alt="Upload Image" />
                                     ) : (
                                         <UploadOutlined className="placeholder-icon" />
                                     )}
                                 </MainImagePreview>
-                                <Upload
-                                    listType="picture-card"
-                                    fileList={imageList}
-                                    onChange={handleImageChange}
-                                    maxCount={1} // Chỉ cho phép 1 ảnh duy nhất
-                                >
+                                <Upload listType="picture-card" fileList={imageList} onChange={handleImageChange} maxCount={1} >
                                     {imageList.length === 0 && (
                                         <div>
                                             <UploadOutlined />
@@ -348,14 +460,23 @@ const AddRoomForm = ({ initialValues }) => {
                             </ImageUploadSection>
                         </Col>
 
-                        <Col span={14}>
+                        <Col span={17}>
                             <Form form={form} layout="vertical" initialValues={initialValues} onFinish={handleFinish} >
-                                <Form.Item label="Room Name" name="roomName" rules={[{ required: true, message: "Please enter room name" }]}>
-                                    <Input value={stateRoom.roomName} name="roomName" onChange={handleOnChange} placeholder="Enter room name" />
-                                    {mutationCreate.data?.status === "ERR" && (
-                                        <span style={{ color: "red" }}>*{mutationCreate.data?.message}</span>
-                                    )}
-                                </Form.Item>
+                                <Row gutter={16}>
+                                    <Col span={12}>
+                                        <Form.Item label="Room Name" name="roomName" rules={[{ required: true, message: "Please enter room name" }]}>
+                                            <Input value={stateRoom.roomName} name="roomName" onChange={handleOnChange} placeholder="Enter room name" />
+                                            {mutationCreate.data?.status === "ERR" && (
+                                                <span style={{ color: "red" }}>*{mutationCreate.data?.message}</span>
+                                            )}
+                                        </Form.Item>
+                                    </Col>
+                                    <Col span={12}>
+                                        <Form.Item style={{ width: "30%" }} label="Room Floor" name="floor" rules={[{ required: true, message: "Please enter floor" }]}>
+                                            <InputNumber value={stateRoom.floor} onChange={(value) => handleOnChangeNumber("floor", value)} style={{ width: "100%" }} min={0} placeholder="Value" />
+                                        </Form.Item>
+                                    </Col>
+                                </Row>
 
                                 <Row gutter={16}>
                                     <Col span={12}>
@@ -365,7 +486,7 @@ const AddRoomForm = ({ initialValues }) => {
                                     </Col>
                                     <Col span={12}>
                                         <Form.Item label="Room Type" name="roomtype" rules={[{ required: true, message: "Please select room type" }]}>
-                                            <Select value={stateRoom.roomType} onChange={(value) => handleOnChangeSelect("roomType", value)}>
+                                            <Select value={stateRoom.roomType} onChange={(value) => handleOnChangeSelect("roomType", value)} placeholder="Select Room Type">
                                                 {roomTypes?.map((type) => (
                                                     <Option key={type._id} value={type._id}>{type.TypeName}</Option> // Lưu _id vào state
                                                 ))}
@@ -374,37 +495,93 @@ const AddRoomForm = ({ initialValues }) => {
                                     </Col>
                                 </Row>
 
-                                <Row gutter={16}>
-                                    <Col span={12}>
-                                        <Form.Item label="Room Floor" name="floor" rules={[{ required: true, message: "Please select room location" }]}>
-                                            <InputNumber value={stateRoom.floor} onChange={(value) => handleOnChangeNumber("floor", value)} style={{ width: "100%" }} min={0} placeholder="Value" />
+                                <Row gutter={16} style={{ backgroundColor: "#EEEEEE", borderRadius: 8 }}>
+                                    <Col span={4}>
+                                        <Form.Item label="Quantity Amenities">
+                                            <Space>
+                                                <Button
+                                                    icon={<MinusOutlined />}
+                                                    disabled={!selectedAmenityId || (amenitiesQuantity[selectedAmenityId] || 1) <= 1}
+                                                    onClick={() => {
+                                                        if (!selectedAmenityId) return;
+                                                        const newValue = Math.max(1, (amenitiesQuantity[selectedAmenityId] || 1) - 1);
+                                                        handleQuantityChange(selectedAmenityId, newValue);
+                                                    }}
+                                                />
+                                                <Input
+                                                    min={1}
+                                                    max={100}
+                                                    value={selectedAmenityId ? amenitiesQuantity[selectedAmenityId] || 1 : ""}
+                                                    style={{ width: 40, textAlign: "center" }}
+                                                    onChange={(e) => {
+                                                        if (!selectedAmenityId) return;
+                                                        const newValue = Number(e.target.value) || 1;
+                                                        handleQuantityChange(selectedAmenityId, newValue);
+                                                    }}
+                                                />
+                                                <Button
+                                                    icon={<PlusOutlined />}
+                                                    onClick={() => {
+                                                        if (!selectedAmenityId) return;
+                                                        const newValue = Math.min(100, (amenitiesQuantity[selectedAmenityId] || 1) + 1);
+                                                        handleQuantityChange(selectedAmenityId, newValue);
+                                                    }}
+                                                />
+                                            </Space>
                                         </Form.Item>
+
                                     </Col>
-                                    <Col span={12}>
-                                        <Form.Item label="Room Amenities" name="amenities" rules={[{ required: true, message: "Please select room amenities" }]}>
-                                            <Select mode="multiple" value={stateRoom.amenities} onChange={(value) => handleOnChangeSelect("amenities", value)}>
-                                                {/* {amenities?.map((amenity) => (
-                                            <Option key={amenity._id} value={amenity._id}>{amenity.name}</Option>
-                                        ))} */}
-                                                <Option value="deluxe">Deluxe</Option>
-                                                <Option value="suite">Suite</Option>
+                                    <Col span={20}>
+                                        <Form.Item
+                                            label="Room Amenities"
+                                            name="amenities"
+                                            rules={[{ required: true, message: "Please select room amenities" }]}
+                                        >
+                                            <Select
+                                                mode="multiple"
+                                                placeholder="Select amenities"
+                                                value={stateRoom.amenities}
+                                                onChange={(selectedValues) => {
+                                                    setStateRoom({ ...stateRoom, amenities: selectedValues });
+
+                                                    // Gán số lượng mặc định là 1 nếu amenity chưa có số lượng
+                                                    setAmenitiesQuantity((prev) => {
+                                                        const updatedQuantities = { ...prev };
+                                                        selectedValues.forEach((amenityId) => {
+                                                            if (!updatedQuantities[amenityId]) {
+                                                                updatedQuantities[amenityId] = 1;
+                                                            }
+                                                        });
+                                                        return updatedQuantities;
+                                                    });
+
+                                                    // Cập nhật `selectedAmenityId` là tiện ích cuối cùng được chọn
+                                                    setSelectedAmenityId(selectedValues[selectedValues.length - 1] || null);
+                                                }}
+                                            >
+                                                {amenities?.map((amenity) => {
+                                                    const quantity = amenitiesQuantity[amenity._id] || 1;
+                                                    return (
+                                                        <Option key={amenity._id} value={amenity._id}>
+                                                            {`${amenity.AmenitiesName} (${quantity})`}
+                                                        </Option>
+                                                    );
+                                                })}
                                             </Select>
                                         </Form.Item>
+
                                     </Col>
                                 </Row>
 
                                 <Form.Item label="Room Description" name="description">
                                     <Input.TextArea value={stateRoom.description} name="description" onChange={handleOnChange} rows={3} placeholder="Enter room description" />
                                 </Form.Item>
-
+                                {/* <SubmitBtn type="submit">Save Room</SubmitBtn> */}
                                 <Form.Item>
-                                    <Button
-                                        style={{ backgroundColor: "rgb(121, 215, 190)", borderColor: "rgb(121, 215, 190)", color: "black" }}
-                                        htmlType="submit"
-                                    >
+                                    <Button style={{ backgroundColor: "rgb(121, 215, 190)", borderColor: "rgb(121, 215, 190)", color: "black" }} htmlType="submit">
                                         Save Room
                                     </Button>
-                                    {/* <SubmitBtn type="submit">Save Room</SubmitBtn> */}
+
                                 </Form.Item>
                             </Form>
                         </Col>
@@ -415,7 +592,7 @@ const AddRoomForm = ({ initialValues }) => {
             {mode === "bulk" && (
                 <RoomFormContainer>
                     <Row gutter={24}>
-                        <Col span={10}>
+                        <Col span={7}>
                             <ImageUploadSection>
                                 <MainImagePreview>
                                     {imageList.length > 0 && imageList[0].url ? (
@@ -427,12 +604,7 @@ const AddRoomForm = ({ initialValues }) => {
                                         <UploadOutlined className="placeholder-icon" />
                                     )}
                                 </MainImagePreview>
-                                <Upload
-                                    listType="picture-card"
-                                    fileList={imageList}
-                                    onChange={handleImageChange}
-                                    maxCount={1} // Chỉ cho phép 1 ảnh duy nhất
-                                >
+                                <Upload listType="picture-card" fileList={imageList} onChange={handleImageChange} maxCount={1}>
                                     {imageList.length === 0 && (
                                         <div>
                                             <UploadOutlined />
@@ -442,21 +614,37 @@ const AddRoomForm = ({ initialValues }) => {
                                 </Upload>
                             </ImageUploadSection>
                         </Col>
-                        <Col span={14}>
+                        <Col span={17}>
                             <Form form={formBulk} layout="vertical" initialValues={initialValues} onFinish={handleSubmitBulk} >
-                                <Form.Item label="Room Name" name="roomName" rules={[{ required: true, message: "Please enter room name" }]}>
-                                    <Input value={stateRoom.roomName} name="roomName" onChange={handleOnChange} placeholder="Enter room name" />
-                                </Form.Item>
-
                                 <Row gutter={16}>
                                     <Col span={12}>
+                                        <Form.Item label="Room Name" name="roomName" rules={[{ required: true, message: "Please enter room name" }]}>
+                                            <Input value={stateRoom.roomName} name="roomName" onChange={handleOnChange} placeholder="Enter room name" />
+                                        </Form.Item>
+                                    </Col>
+                                    <Col span={12}>
+                                        <Form.Item style={{ width: "30%" }} label="Room Floor" name="floor" rules={[{ required: true, message: "Please enter floor" }]}>
+                                            <InputNumber value={stateRoom.floor} name="floor" onChange={(value) => handleOnChangeNumber("floor", value)} style={{ width: "100%" }} min={0} placeholder="Value" />
+                                        </Form.Item>
+                                    </Col>
+                                </Row>
+
+                                <Row gutter={16}>
+                                    <Col span={6}>
                                         <Form.Item label="Room Price" name="Price" rules={[{ required: true, message: "Please enter room price" }]}>
                                             <InputNumber value={stateRoom.price} name="Price" onChange={(value) => handleOnChangeNumber("price", value)} style={{ width: "100%" }} min={1} placeholder="Value" />
                                         </Form.Item>
                                     </Col>
+                                    <Col span={6}>
+                                        {mode === "bulk" && (
+                                            <Form.Item label="Rooms to Queue" name="quantity" rules={[{ required: true, message: "Please enter quantity" }]}>
+                                                <InputNumber style={{ width: "100%" }} min={1} name="quantity" value={quantity} onChange={setQuantity} placeholder="Value" />
+                                            </Form.Item>
+                                        )}
+                                    </Col>
                                     <Col span={12}>
                                         <Form.Item label="Room Type" name="roomtype" rules={[{ required: true, message: "Please select room type" }]}>
-                                            <Select value={stateRoom.roomType} onChange={(value) => handleOnChangeSelect("roomType", value)}>
+                                            <Select name="roomtype" value={stateRoom.roomType} onChange={(value) => handleOnChangeSelect("roomType", value)} placeholder="Select Room Type">
                                                 {roomTypes?.map((type) => (
                                                     <Option key={type._id} value={type._id}>{type.TypeName}</Option> // Lưu _id vào state
                                                 ))}
@@ -465,36 +653,97 @@ const AddRoomForm = ({ initialValues }) => {
                                     </Col>
                                 </Row>
 
-                                <Row gutter={16}>
-                                    <Col span={12}>
-                                        <Form.Item label="Room Floor" name="floor" rules={[{ required: true, message: "Please select room location" }]}>
-                                            <InputNumber value={stateRoom.floor} onChange={(value) => handleOnChangeNumber("floor", value)} style={{ width: "100%" }} min={0} placeholder="Value" />
+                                <Row gutter={16} style={{ backgroundColor: "#EEEEEE", borderRadius: 8 }}>
+                                    <Col span={4}>
+                                        <Form.Item label="Quantity Amenities">
+                                            <Space>
+                                                <Button
+                                                    icon={<MinusOutlined />}
+                                                    disabled={!selectedAmenityId || (amenitiesQuantity[selectedAmenityId] || 1) <= 1}
+                                                    onClick={() => {
+                                                        if (!selectedAmenityId) return;
+                                                        const newValue = Math.max(1, (amenitiesQuantity[selectedAmenityId] || 1) - 1);
+                                                        handleQuantityChange(selectedAmenityId, newValue);
+                                                    }}
+                                                />
+                                                <Input
+                                                    min={1}
+                                                    max={100}
+                                                    value={selectedAmenityId ? amenitiesQuantity[selectedAmenityId] || 1 : ""}
+                                                    style={{ width: 40, textAlign: "center" }}
+                                                    onChange={(e) => {
+                                                        if (!selectedAmenityId) return;
+                                                        const newValue = Number(e.target.value) || 1;
+                                                        handleQuantityChange(selectedAmenityId, newValue);
+                                                    }}
+                                                />
+                                                <Button
+                                                    icon={<PlusOutlined />}
+                                                    onClick={() => {
+                                                        if (!selectedAmenityId) return;
+                                                        const newValue = Math.min(100, (amenitiesQuantity[selectedAmenityId] || 1) + 1);
+                                                        handleQuantityChange(selectedAmenityId, newValue);
+                                                    }}
+                                                />
+                                            </Space>
+                                        </Form.Item>
+
+                                    </Col>
+                                    <Col span={20}>
+                                        <Form.Item
+                                            label="Room Amenities"
+                                            name="amenities"
+                                            rules={[{ required: true, message: "Please select room amenities" }]}
+                                        >
+                                            <Select
+                                                mode="multiple"
+                                                placeholder="Select amenities"
+                                                value={stateRoom.amenities}
+                                                onChange={(selectedValues) => {
+                                                    setStateRoom({ ...stateRoom, amenities: selectedValues });
+
+                                                    // Gán số lượng mặc định là 1 nếu amenity chưa có số lượng
+                                                    setAmenitiesQuantity((prev) => {
+                                                        const updatedQuantities = { ...prev };
+                                                        selectedValues.forEach((amenityId) => {
+                                                            if (!updatedQuantities[amenityId]) {
+                                                                updatedQuantities[amenityId] = 1;
+                                                            }
+                                                        });
+                                                        return updatedQuantities;
+                                                    });
+
+                                                    // Cập nhật `selectedAmenityId` là tiện ích cuối cùng được chọn
+                                                    setSelectedAmenityId(selectedValues[selectedValues.length - 1] || null);
+                                                }}
+                                            >
+                                                {amenities?.map((amenity) => {
+                                                    const quantity = amenitiesQuantity[amenity._id] || 1;
+                                                    return (
+                                                        <Option key={amenity._id} value={amenity._id}>
+                                                            {`${amenity.AmenitiesName} (${quantity})`}
+                                                        </Option>
+                                                    );
+                                                })}
+                                            </Select>
                                         </Form.Item>
                                     </Col>
-                                    <Col span={12}>
-                                        {mode === "bulk" && (
-                                            <Form.Item label="Room Quantity" name="quantity" rules={[{ required: true, message: "Please enter quantity" }]}>
-                                                <InputNumber style={{ width: "100%" }} min={1} value={quantity} onChange={setQuantity} placeholder="Value" />
-                                            </Form.Item>
-                                        )}
-                                    </Col>
                                 </Row>
-                                <Form.Item label="Room Amenities" name="amenities" rules={[{ required: true, message: "Please select room amenities" }]}>
-                                    <Select mode="multiple">
-                                        {/* {amenities?.map((amenity) => (
-                                            <Option key={amenity._id} value={amenity._id}>{amenity.name}</Option>
-                                        ))} */}
-                                        <Option value="deluxe">Deluxe</Option>
-                                        <Option value="suite">Suite</Option>
-                                    </Select>
-                                </Form.Item>
+
                                 <Form.Item label="Room Description" name="description">
                                     <Input.TextArea value={stateRoom.description} name="description" onChange={handleOnChange} rows={3} placeholder="Enter room description" />
                                 </Form.Item>
 
                                 <Button
                                     style={{ backgroundColor: "rgb(121, 215, 190)", borderColor: "rgb(121, 215, 190)", color: "black" }}
-                                    onClick={() => form.validateFields().then(handleBulkAdd)}>Create Room List
+                                    onClick={async () => {
+                                        try {
+                                            await formBulk.validateFields(); // Đợi validate xong
+                                            handleBulkAdd(); // Nếu hợp lệ, tiếp tục thêm vào hàng đợi
+                                        } catch (error) {
+                                            console.log("Validation failed:", error);
+                                        }
+                                    }}>Queue Room (Not Saved Yet)
                                 </Button>
                             </Form>
                         </Col>
@@ -503,10 +752,19 @@ const AddRoomForm = ({ initialValues }) => {
 
                     <Table dataSource={rooms} columns={columns} pagination={false} style={{ marginTop: 20 }} />
 
+                    <ModalComponent
+                        title="Confirm saving rooms"
+                        open={isModalConfirm}
+                        onOk={handleConfirmSubmit}
+                        onCancel={() => setIsModalConfirm(false)}
+                    >
+                        <div>Are you sure you want to save all rooms?</div>
+                    </ModalComponent>
+
                     <Button
                         type="primary"
-                        onClick={() => handleSubmitBulk()}
                         style={{ marginTop: 20, backgroundColor: "rgb(121, 215, 190)", borderColor: "rgb(121, 215, 190)", color: "black" }}
+                        onClick={() => setIsModalConfirm(true)}
                     >
                         Add All Rooms
                     </Button>

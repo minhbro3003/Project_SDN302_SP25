@@ -393,13 +393,13 @@ const RoomList = () => {
             title: "Image",
             dataIndex: "Image",
             key: "image",
-            width: "9%",
+            width: "8%",
             render: (Image) =>
                 Image ? (
                     <img
                         src={Image}
                         alt="Hotel"
-                        style={{ width: 80, height: 80, objectFit: "cover", borderRadius: 8 }}
+                        style={{ width: "80%", height: 35, objectFit: "cover", borderRadius: 6 }}
                     />
                 ) : (
                     "No Image"
@@ -417,6 +417,7 @@ const RoomList = () => {
             title: "Price",
             dataIndex: "Price",
             key: "price",
+            render: (Price) => convertPrice(Price),
             ...getColumnSearchProps("price"),
             sorter: (a, b) => a.Price - b.Price,
             sortDirections: ["descend", "ascend"],
@@ -430,7 +431,7 @@ const RoomList = () => {
         {
             title: "Type Rooms",
             dataIndex: "roomtype",
-            width: "11%",
+            width: "16%",
             key: "roomtype",
             ...getColumnSearchProps("roomtype"),
             sorter: (a, b) => a.roomtype.length - b.roomtype.length,
@@ -438,32 +439,10 @@ const RoomList = () => {
             render: (roomtype) => roomtype?.TypeName || "No type"
         },
         {
-            title: "Rooms Amenities",
-            dataIndex: "room_amenities",
-            width: "13%",
-            render: (room_amenities) => {
-                if (!room_amenities || room_amenities.length === 0) return "No amenities";
-
-                const firstAmenity = room_amenities[0];
-                const otherAmenities = room_amenities.slice(1);
-
-                return (
-                    <Tooltip title={otherAmenities.map(a => a.AmenitiesName).join(", ")} placement="top">
-                        <Tag color="blue">{firstAmenity.AmenitiesName}</Tag>
-                        {otherAmenities.length > 0 && (
-                            <span style={{ color: "#f300f4", cursor: "pointer" }}>
-                                +{otherAmenities.length} more
-                            </span>
-                        )}
-                    </Tooltip>
-                );
-            }
-        },
-        {
             title: "Floor",
             dataIndex: "Floor",
             key: "floor",
-            width: "5%",
+            width: "7%",
             // ...getColumnSearchProps("floor"),
             // sorter: (a, b) => a.Floor.length - b.Floor.length,
             // sortDirections: ["descend", "ascend"],
@@ -478,8 +457,8 @@ const RoomList = () => {
         <>
             <Button
                 style={{
-                    height: "150px",
-                    width: "150px",
+                    height: "90px",
+                    width: "90px",
                     borderRadius: "6px",
                     borderStyle: "dashed",
                     marginBottom: "15px",
@@ -490,9 +469,9 @@ const RoomList = () => {
                 }}
                 onClick={() => navigate('/rooms')}
             >
-                <PlusOutlined style={{ fontSize: "60px" }} />
-                <div style={{ fontSize: "16px", marginTop: "10px", fontWeight: "500" }}>
-                    Add new Room
+                <PlusOutlined style={{ fontSize: "35px" }} />
+                <div style={{ fontSize: "13px", fontWeight: "500" }}>
+                    Add Room
                 </div>
             </Button>
 
