@@ -47,13 +47,19 @@ const getRoomByRoomId = async (req, res) => {
 //create a room
 const createRooms = async (req, res) => {
     try {
-        const {
-            RoomName, Price, Status, Floor,
-            roomtype, room_amenities, Description, Image
-        } = req.body;
-        console.log("req.body", req.body);
-        if (!RoomName || !Price || !Floor) {
-            return res.status(404).json({ status: "ERR", message: "The input is required." });
+        // const {
+        //     RoomName, Price, Status, Floor, hotel,
+        //     roomtype, room_amenities, Description, Image
+        // } = req.body;
+        // console.log("req.body", req.body);
+        const requiredFields = ["RoomName", "Price", "Floor", "hotel"];
+        const missingFields = requiredFields.filter(field => !req.body[field]);
+
+        if (missingFields.length > 0) {
+            return res.status(400).json({
+                status: "ERR",
+                message: `The following fields are required: ${missingFields.join(", ")}`,
+            });
         }
 
         const room = await RoomService.createRoomService(req.body);
@@ -111,15 +117,6 @@ const deleteRoom = async (req, res) => {
     }
 };
 
-const getRoomsGroupedByTypeController = async (req, res) => {
-    try {
-        const response = await RoomService.getRoomsGroupedByType();
-        return res.status(200).json(response);
-    } catch (error) {
-        res.status(500).json({ status: "ERROR", message: error.message });
-    }
-};
-
 module.exports = {
     getAllRooms,
     createRooms,
@@ -127,5 +124,4 @@ module.exports = {
     deleteRoom,
     getRoomByRoomId,
     getAvailableRooms,
-    getRoomsGroupedByTypeController,
 };

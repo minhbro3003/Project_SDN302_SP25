@@ -54,3 +54,24 @@ export const deleteRoomAmenity = async (id, access_token) => {
     console.log("res deleteRoomAmenity:", res);
     return res.data;
 };
+
+export const getAmenitiesByRoomId = async (roomId) => {
+    const res = await axios.get(
+        `${process.env.REACT_APP_API_URL_BACKEND}/roomamenities/${roomId}/amenities`
+    );
+    console.log("res getAmenitiesByRoomId:", res);
+    return res.data;
+};
+
+export const updateRoomAmenitiesByRoomId = async (roomId, amenities) => {
+    const res = await axios.put(
+        `${process.env.REACT_APP_API_URL_BACKEND}/roomamenities/${roomId}/amenities`,
+        { room_amenities: amenities },
+        // {
+        //     headers: {
+        //         token: `Bearer: ${access_token}`,
+        //     },
+        // }
+    );
+    return res.data;
+};

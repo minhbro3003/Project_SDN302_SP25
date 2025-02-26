@@ -2,61 +2,12 @@ const Rooms = require("../models/RoomModel");
 const RoomType = require("../models/RoomTypeModel");
 //get all rooms
 
-const getRoomsGroupedByType = async () => {
-    try {
-        const roomsRaw = await Rooms.find({ IsDelete: false }).lean();
-        // console.log("Raw rooms data:", roomsRaw); // Kiểm tra dữ liệu phòng
-
-        const groupedRooms = await Rooms.aggregate([
-            {
-                $match: { IsDelete: false }
-            },
-            {
-                $group: {
-                    _id: "$roomtype",
-                    count: { $sum: 1 },
-                    rooms: { $push: { _id: "$_id" } }
-                }
-            },
-            {
-                $lookup: {
-                    from: "roomtypes",
-                    localField: "_id",
-                    foreignField: "_id",
-                    as: "roomtypeDetails"
-                }
-            },
-            {
-                $unwind: "$roomtypeDetails"
-            },
-            {
-                $project: {
-                    _id: 0,
-                    roomtypeId: "$_id",
-                    roomtypeName: "$roomtypeDetails.TypeName",
-                    count: 1,
-                    rooms: 1
-                }
-            }
-        ]);
-
-        // console.log("Aggregated rooms:", groupedRooms); // Kiểm tra kết quả
-
-        return {
-            status: "OK",
-            message: "Successfully fetched rooms grouped by type",
-            data: groupedRooms,
-        }
-    } catch (error) {
-        console.error("Error fetching rooms grouped by type:", error);
-        throw error;
-    }
-};
-
 const getAllRoomsService = () => {
     return new Promise(async (resolve, reject) => {
         try {
-            const allRooms = await Rooms.find().populate("roomtype");
+            const allRooms = await Rooms.find({},)//"-Image"
+                .populate("roomtype")
+                .populate("hotel", "CodeHotel NameHotel Introduce LocationHotel ")
             resolve({
                 status: "OK",
                 message: "All rooms successfully",
@@ -74,7 +25,7 @@ const getAllRoomsService = () => {
 const getRoomByRoomIdService = (id) => {
     return new Promise(async (resolve, reject) => {
         try {
-            const room = await Rooms.findById(id);
+            const room = await Rooms.findById(id); // ,"-Image"
             if (!room) {
                 resolve({
                     status: "ERR",
@@ -97,23 +48,22 @@ const getRoomByRoomIdService = (id) => {
 const createRoomService = async (newRoom) => {
     try {
         const {
-            RoomName, Price, Status, Floor, Active,
+            RoomName, Price, Status, Floor, Active, hotel,
             roomtype, Description, Image, IsDelete,
         } = newRoom;
 
         const checkRoomName = await Rooms.findOne({
             RoomName: { $regex: `^${RoomName.trim()}$`, $options: "i" },
-            Floor: Floor // Chỉ kiểm tra trong cùng 1 tầng
         });
         if (checkRoomName) {
             return {
                 status: "ERR",
-                message: "A room with this name already exists on this floor",
+                message: "The room name already exists",
             };
         }
         //create room
         const newedRoomData = new Rooms({
-            RoomName, Price, Status, Floor, Active,
+            RoomName, Price, Status, Floor, Active, hotel,
             roomtype, Description, Image, IsDelete,
         });
         //save database
@@ -214,5 +164,4 @@ module.exports = {
     deleteRoomService,
     getRoomByRoomIdService,
     getAvailableRooms,
-    getRoomsGroupedByType
 };

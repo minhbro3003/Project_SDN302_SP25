@@ -7,7 +7,7 @@ export const getAllRoom = async (data) => {
         data
 
     );
-    console.log("res getAllRoom:", res);
+    // console.log("res getAllRoom:", res);
     return res.data;
 };
 
@@ -29,7 +29,7 @@ export const createRoom = async (data) => {
     return res.data;
 };
 
-export const updateRoom = async (id, access_token, data) => {
+export const updateRoom = async (id, data) => {
     const res = await axios.put(
         `${process.env.REACT_APP_API_URL_BACKEND}/rooms/${id}`,
         data,
@@ -39,7 +39,7 @@ export const updateRoom = async (id, access_token, data) => {
         //     },
         // }
     );
-    console.log("res updateRoom:", res);
+    console.log("Update API Response:", res.data)
     return res.data;
 };
 
@@ -73,7 +73,7 @@ export const getAllRoomType = async () => {
     const res = await axios.get(
         `${process.env.REACT_APP_API_URL_BACKEND}/roomtype`
     );
-    console.log("res getAllRoomType:", res);
+    // console.log("res getAllRoomType:", res);
     return res.data;
 };
 

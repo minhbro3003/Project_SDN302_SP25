@@ -5,7 +5,7 @@ export const getAllHotel = async (data) => {
         `${process.env.REACT_APP_API_URL_BACKEND}/hotel`,
         data
     );
-    // console.log("res getAllHotel:", res);
+    console.log("res getAllHotel:", res);
     return res.data;
 };
 

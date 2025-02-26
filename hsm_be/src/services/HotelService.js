@@ -1,13 +1,10 @@
-const mongoose = require("mongoose"); // 👈 Import mongoose để tránh lỗi
 const Hotel = require("../models/HotelModel");
-
 
 //get all hotel
 const getAllHotel = () => {
     return new Promise(async (resolve, reject) => {
         try {
             const allHotel = await Hotel.find()
-                .populate("rooms");
             resolve({
                 status: "OK",
                 message: " All Hotel successfully",
@@ -19,13 +16,10 @@ const getAllHotel = () => {
     });
 };
 
-
 //get hotel by id
 const getHotelByIdService = async (id) => {
     try {
         const hotel = await Hotel.findById(id)
-            .populate("rooms"); // Lấy chi tiết phòng
-
         if (!hotel) {
             return {
                 status: "ERR",
@@ -51,20 +45,9 @@ const getHotelByIdService = async (id) => {
 const createHotelService = async (newHotel) => {
     try {
         const {
-            CodeHotel, NameHotel, Introduce, Title, LocationHotel,
-            Note, image, rooms, Active, IsDelete
+            CodeHotel, NameHotel, Introduce, LocationHotel,
+            image, Active, IsDelete
         } = newHotel;
-
-        console.log("📌 Data nhận từ FE:", newHotel);
-
-        // Kiểm tra dữ liệu rooms
-        if (!Array.isArray(rooms) || rooms.length === 0) {
-            return { status: "ERR", message: "Danh sách rooms không hợp lệ" };
-        }
-
-        if (rooms.some(room => !mongoose.Types.ObjectId.isValid(room))) {
-            return { status: "ERR", message: "Dữ liệu rooms chứa ObjectId không hợp lệ" };
-        }
 
         const checkHotel = await Hotel.findOne({
             $or: [{ CodeHotel }, { NameHotel }]
@@ -76,8 +59,8 @@ const createHotelService = async (newHotel) => {
 
         // Lưu danh sách `_id` của `Rooms`
         const newHotelData = new Hotel({
-            CodeHotel, NameHotel, Introduce, Title, LocationHotel,
-            Note, image, rooms, Active, IsDelete
+            CodeHotel, NameHotel, Introduce, LocationHotel,
+            image, Active, IsDelete
         });
 
         const savedHotel = await newHotelData.save();

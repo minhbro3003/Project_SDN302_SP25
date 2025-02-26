@@ -4,6 +4,7 @@ import { MinusOutlined, PlusOutlined, UploadOutlined } from "@ant-design/icons";
 import { RoomFormContainer, ImageUploadSection, MainImagePreview, MainImagePreviewImg, StyledRadioGroup, StyledRadioButton, } from "./AddRoomStyle";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import * as RoomService from "../../services/RoomService";
+import * as HotelService from "../../services/HotelService";
 import * as AmenityService from "../../services/AmenityService";
 import * as RoomAmenityService from "../../services/RoomAmenitiesService";
 import { convertPrice, getBase64, renderOptions } from "../../utils";
@@ -20,13 +21,15 @@ const AddRoomForm = ({ initialValues }) => {
     const [rooms, setRooms] = useState([]);
     const [api, contextHolder] = notification.useNotification();
     const [amenities, setAmenities] = useState([]);
-    const [status, setStatus] = useState("Functioning");
+    const [status, setStatus] = useState("");
     const [isModalConfirm, setIsModalConfirm] = useState(false);
     const [amenitiesQuantity, setAmenitiesQuantity] = useState({});
     const [selectedAmenityId, setSelectedAmenityId] = useState(null);
+    const [currentForm, setCurrentForm] = useState("single"); // "single" hoặc "bulk"
+
 
     const [stateRoom, setStateRoom] = useState({
-        roomName: "", price: "", roomType: [], floor: "", image: "", description: "", quantity: "",
+        roomName: "", price: "", roomType: [], floor: "", hotel: [], image: "", description: "", quantity: "",
     });
 
     //create room amenities
@@ -45,11 +48,21 @@ const AddRoomForm = ({ initialValues }) => {
     //create room
     const { data: datarooms, isSuccess, isError } = mutationCreate;
 
-    //get room types
-    const { data, isLoading } = useQuery({
-        queryKey: ["roomTypes"],
-        queryFn: RoomService.getAllRoomType,
+    //get hotels
+    const { data: dataHotel } = useQuery({
+        queryKey: ["hotels"],
+        queryFn: HotelService.getAllHotel,
     });
+
+    const hotels = dataHotel?.data || [];
+    // console.log("hotels:", hotels);
+
+    // Chuyển roomTypes thành object để dễ lookup
+    const hotelsMap = hotels.reduce((acc, type) => {
+        acc[type._id] = type.NameHotel;
+        return acc;
+    }, {});
+    // console.log("hotelsMap:", hotelsMap);
 
     //get rooms 
     const { data: existingRoomsData } = useQuery({
@@ -58,39 +71,45 @@ const AddRoomForm = ({ initialValues }) => {
     });
     const existingRooms = existingRoomsData?.data || [];
 
+    //get room types
+    const { data: dataRoomType, isLoading } = useQuery({
+        queryKey: ["roomTypes"],
+        queryFn: RoomService.getAllRoomType,
+    });
 
-    const roomTypes = data?.data || [];
+    const roomTypes = dataRoomType?.data || [];
+    // console.log("roomTypes:", roomTypes);
 
     // Chuyển roomTypes thành object để dễ lookup
     const roomTypeMap = roomTypes.reduce((acc, type) => {
         acc[type._id] = type.TypeName;
         return acc;
     }, {});
-
-    //crete product
-    // useEffect(() => {
-    //     if (isSuccess && data?.status === "OK") {
-    //         api.success({ message: "Add new room successfull!" });
-    //     } else if (isError) {
-    //         api.error({ message: "Add new room faile!" });
-    //     }
-    // }, [isSuccess, isError, data?.status]);
+    // console.log("roomTypes:", roomTypeMap);
 
     //create product
     const handleFinish = async () => {
         try {
-            const roomName = stateRoom.roomName;
-            const floor = Number(stateRoom.floor);
+            let hotelId = form.getFieldValue("hotel");
+            if (!hotelId) {
+                hotelId = stateRoom.hotel; // Lấy từ stateRoom nếu formBulk chưa có
+            }
 
+            if (!hotelId) {
+                api.error({ message: "⚠ Please select a hotel!" });
+                return;
+            }
+            const roomName = stateRoom.roomName;
+            setCurrentForm("single");
             // Kiểm tra xem phòng có tồn tại trên cùng một tầng không
             const isRoomExist = existingRooms.some(
-                (room) => room.RoomName === roomName && room.Floor === floor
+                (room) => room.RoomName === roomName
             );
 
             if (isRoomExist) {
                 api.error({
                     message: "Room Already Exists!",
-                    description: `Room "${roomName}" already exists on floor ${floor}.`,
+                    description: `The "${roomName}" name already exists`,
                 });
                 return;
             }
@@ -100,10 +119,13 @@ const AddRoomForm = ({ initialValues }) => {
                 RoomName: roomName,
                 Price: Number(stateRoom.price),
                 roomtype: stateRoom.roomType,
-                Floor: floor,
+                Floor: stateRoom.floor,
+                hotel: stateRoom.hotel,
                 Image: stateRoom.image,
                 Description: stateRoom.description,
             };
+            console.log("roomParams:", roomParams);
+
 
             const roomResponse = await mutationCreate.mutateAsync(roomParams);
 
@@ -248,6 +270,7 @@ const AddRoomForm = ({ initialValues }) => {
                 />
             ),
         },
+        { title: "Hotel", dataIndex: "Hotel", key: "Hotel", render: (hotelId) => hotelsMap[hotelId] || "N/A", },
         { title: "Room Name", dataIndex: "RoomName", key: "RoomName" },
         { title: "Price", dataIndex: "Price", key: "Price", render: (text) => convertPrice(text) },
         { title: "Room Type", dataIndex: "RoomType", key: "RoomType", render: (roomTypeId) => roomTypeMap[roomTypeId] || "N/A", },
@@ -276,81 +299,97 @@ const AddRoomForm = ({ initialValues }) => {
     ];
 
     const handleBulkAdd = () => {
-        const roomName = formBulk.getFieldValue("roomName").trim();
-        const floor = formBulk.getFieldValue("floor");
-
-        if (!roomName) {
-            api.error({ message: "⚠ Room name is required!" });
-            return;
-        }
-
-        const quantity = formBulk.getFieldValue("quantity") || 1;
-        const selectedAmenities = [...new Set(formBulk.getFieldValue("amenities") || [])];
-
-        // 📌 Chuẩn hóa roomName: Nếu R1, R2... thì chuyển thành R01, R02...
-        const match = roomName.match(/^([A-Za-z]+)(\d+)$/);
-        let prefix = roomName;
-        let baseNumber = 0;
-
-        if (match) {
-            prefix = match[1];
-            baseNumber = parseInt(match[2], 10);
-            if (baseNumber < 10) {
-                baseNumber = `0${baseNumber}`; // Nếu R1 → R01
+        setCurrentForm("bulk");
+        setTimeout(() => {
+            let hotelId = formBulk.getFieldValue("hotel");
+            if (!hotelId) {
+                hotelId = stateRoom.hotel; // Lấy từ stateRoom nếu formBulk chưa có
             }
-        }
 
-        // 📌 Lấy danh sách số phòng trên tầng hiện tại (bao gồm cả những phòng đã queue)
-        const roomsOnSameFloor = [...existingRooms, ...rooms]
-            .filter(room => room.Floor === floor)
-            .map(room => room.RoomName);
+            if (!hotelId) {
+                api.error({ message: "⚠ Please select a hotel!" });
+                return;
+            }
 
-        let existingNumbers = roomsOnSameFloor
-            .map(name => {
-                const match = name.match(new RegExp(`^${prefix}(\\d+)$`));
-                return match ? parseInt(match[1], 10) : null;
-            })
-            .filter(num => num !== null)
-            .sort((a, b) => a - b);
+            const roomName = formBulk.getFieldValue("roomName").trim();
+            // const floor = formBulk.getFieldValue("floor");
 
-        let newRooms = [];
-        let numberToUse = existingNumbers.length > 0 ? Math.max(...existingNumbers) + 1 : parseInt(`${baseNumber}01`, 10);
+            if (!roomName) {
+                api.error({ message: "⚠ Room name is required!" });
+                return;
+            }
 
-        for (let i = 0; i < quantity; i++) {
-            while (existingNumbers.includes(numberToUse)) {
+            const quantity = formBulk.getFieldValue("quantity") || 1;
+            const selectedAmenities = [...new Set(formBulk.getFieldValue("amenities") || [])];
+
+            // 📌 Chuẩn hóa roomName: Nếu R1, R2... thì chuyển thành R01, R02...
+            const match = roomName.match(/^([A-Za-z]+)(\d+)$/);
+            let prefix = roomName;
+            let baseNumber = 0;
+
+            if (match) {
+                prefix = match[1];
+                baseNumber = parseInt(match[2], 10);
+                if (baseNumber < 10) {
+                    baseNumber = `0${baseNumber}`; // Nếu R1 → R01
+                }
+            }
+
+            // 📌 Lấy danh sách số phòng trên tầng hiện tại (bao gồm cả những phòng đã queue)
+            const roomsOnSameFloor = [...existingRooms, ...rooms]
+                // .filter(room => room.Floor === floor)
+                .map(room => room.RoomName);
+
+            let existingNumbers = roomsOnSameFloor
+                .map(name => {
+                    const match = name.match(new RegExp(`^${prefix}(\\d+)$`));
+                    return match ? parseInt(match[1], 10) : null;
+                })
+                .filter(num => num !== null)
+                .sort((a, b) => a - b);
+
+            let newRooms = [];
+            let numberToUse = existingNumbers.length > 0 ? Math.max(...existingNumbers) + 1 : parseInt(`${baseNumber}01`, 10);
+
+            for (let i = 0; i < quantity; i++) {
+                while (existingNumbers.includes(numberToUse)) {
+                    numberToUse++;
+                }
+
+                let newRoomName = `${prefix}${numberToUse}`;
+                existingNumbers.push(numberToUse);
+                existingNumbers.sort((a, b) => a - b);
+
+                let newRoom = {
+                    key: newRoomName,
+                    RoomName: newRoomName,
+                    Price: formBulk.getFieldValue("Price"),
+                    RoomType: formBulk.getFieldValue("roomtype"),
+                    Floor: formBulk.getFieldValue("floor"),
+                    Hotel: formBulk.getFieldValue("hotel"),
+                    Description: formBulk.getFieldValue("description"),
+                    Image: imageList.length > 0 ? imageList[0].url : "",
+                    roomAmenities: selectedAmenities.map(amenityId => ({
+                        amenityId,
+                        quantity: amenitiesQuantity[amenityId] || 1,
+                    })),
+                };
+                console.log("Hotel value from formBulk:", formBulk.getFieldValue("hotel"));
+
+
+                newRooms.push(newRoom);
                 numberToUse++;
             }
 
-            let newRoomName = `${prefix}${numberToUse}`;
-            existingNumbers.push(numberToUse);
-            existingNumbers.sort((a, b) => a - b);
+            if (newRooms.length === 0) {
+                api.error({ message: "⚠ No valid rooms to add!" });
+                return;
+            }
 
-            let newRoom = {
-                key: newRoomName,
-                RoomName: newRoomName,
-                Price: formBulk.getFieldValue("Price"),
-                RoomType: formBulk.getFieldValue("roomtype"),
-                Floor: floor,
-                Description: formBulk.getFieldValue("description"),
-                Image: imageList.length > 0 ? imageList[0].url : "",
-                roomAmenities: selectedAmenities.map(amenityId => ({
-                    amenityId,
-                    quantity: amenitiesQuantity[amenityId] || 1,
-                })),
-            };
-
-            newRooms.push(newRoom);
-            numberToUse++;
-        }
-
-        if (newRooms.length === 0) {
-            api.error({ message: "⚠ No valid rooms to add!" });
-            return;
-        }
-
-        console.log("🚀 New rooms added:", newRooms);
-        setRooms(prevRooms => [...prevRooms, ...newRooms]); // Cập nhật danh sách phòng queue
-        api.success({ message: `✅ ${newRooms.length} rooms added successfully!` });
+            console.log("🚀 New rooms added:", newRooms);
+            setRooms(prevRooms => [...prevRooms, ...newRooms]); // Cập nhật danh sách phòng queue
+            api.success({ message: `✅ ${newRooms.length} rooms added successfully!` });
+        }, 1500);
     };
 
     const handleSubmitBulk = async () => {
@@ -367,9 +406,11 @@ const AddRoomForm = ({ initialValues }) => {
                         Price: Number(room.Price),
                         roomtype: room.RoomType,
                         Floor: Number(room.Floor),
+                        hotel: room.Hotel,
                         Image: room.Image || "",
                         Description: room.Description,
                     };
+                    console.log("roomParams; ", roomParams)
 
                     const roomResponse = await mutationCreate.mutateAsync(roomParams);
 
@@ -428,14 +469,43 @@ const AddRoomForm = ({ initialValues }) => {
     return (
         <>
             {contextHolder}
-            <StyledRadioGroup value={mode} onChange={(e) => setMode(e.target.value)}>
-                <StyledRadioButton value="single" selected={mode === "single"}>
-                    Add a Room
-                </StyledRadioButton>
-                <StyledRadioButton value="bulk" selected={mode === "bulk"}>
-                    Add Multiple Rooms
-                </StyledRadioButton>
-            </StyledRadioGroup>
+            <Row gutter={24}>
+                <Col span={7}>
+                    <Form.Item label="Hotel" name="hotel" rules={[{ required: true, message: "Please select hotel" }]}>
+                        <Select value={stateRoom.hotel}
+                            onChange={(value) => {
+                                handleOnChangeSelect("hotel", value);
+
+                                if (currentForm === "bulk") {
+                                    form.setFieldsValue({ hotel: value });
+                                } else {
+                                    formBulk.setFieldsValue({ hotel: value });
+                                }
+                            }}
+                            placeholder="Select Hotel"
+                        >
+                            {hotels?.map((h) => (
+                                <Option key={h._id} value={h._id}>{h.NameHotel}</Option>
+                            ))}
+                        </Select>
+                        {mutationCreate.data?.status === "ERR" && (
+                            <span style={{ color: "red" }}>*{mutationCreate.data?.message}</span>
+                        )}
+                    </Form.Item>
+                </Col>
+                <Col span={7}>
+                    <StyledRadioGroup value={mode} onChange={(e) => setMode(e.target.value)}>
+                        <StyledRadioButton value="single" selected={mode === "single"}>
+                            Add a Room
+                        </StyledRadioButton>
+                        <StyledRadioButton value="bulk" selected={mode === "bulk"}>
+                            Add Multiple Rooms
+                        </StyledRadioButton>
+                    </StyledRadioGroup>
+                </Col>
+            </Row>
+
+
             {/* ADD SINGLE ROOM */}
             {mode === "single" && (
                 <RoomFormContainer>

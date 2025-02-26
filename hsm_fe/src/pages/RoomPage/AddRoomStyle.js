@@ -34,6 +34,12 @@ export const MainImagePreviewImg = styled.img`
     border-radius: 8px;
 `;
 
+export const UploadWrapper = styled.div`
+    display: flex;
+    justify-content: flex-start;
+    width: 100%;
+`;
+
 export const ThumbnailContainer = styled.div`
     display: flex;
     flex-wrap: wrap;

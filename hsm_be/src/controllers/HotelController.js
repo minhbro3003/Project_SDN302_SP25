@@ -48,13 +48,13 @@ const getHotelById = async (req, res) => {
 const createHotel = async (req, res) => {
     try {
         const {
-            CodeHotel, NameHotel, Introduce, Title, LocationHotel,
-            Note, images, rooms, Active, IsDelete
+            CodeHotel, NameHotel, Introduce, LocationHotel,
+            images, Active, IsDelete
         } = req.body;
         console.log("req.body.hotel: ", req.body);
 
         if (
-            !CodeHotel || !NameHotel || !Introduce || !LocationHotel || !rooms
+            !CodeHotel || !NameHotel || !Introduce || !LocationHotel
         ) {
             return res
                 .status(200)

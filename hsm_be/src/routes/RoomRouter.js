@@ -7,9 +7,6 @@ const {
     authUserMiddleware,
 } = require("../middleware/authMiddleware");
 
-//router get rooms by type
-router.get("/by-type", roomsController.getRoomsGroupedByTypeController);
-
 //router get all rooms
 router.get("/", roomsController.getAllRooms);
 

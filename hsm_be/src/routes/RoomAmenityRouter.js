@@ -19,5 +19,9 @@ router.put("/:id"/*,authMiddleware*/, RoomAmenityController.updateRoomAmenity);
 // Delete a booking by ID
 router.delete("/:id"/*,authMiddleware*/, RoomAmenityController.deleteRoomAmenity);
 
+//get all amenities in room
+router.get("/:roomId/amenities", RoomAmenityController.getAmenitiesByRoomIdController)
 
+//update room amenity by room id
+router.put("/:roomId/amenities", RoomAmenityController.updateRoomAmenitiesByRoomIdController)
 module.exports = router;
