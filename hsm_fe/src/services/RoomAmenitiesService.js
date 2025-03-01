@@ -59,7 +59,7 @@ export const getAmenitiesByRoomId = async (roomId) => {
     const res = await axios.get(
         `${process.env.REACT_APP_API_URL_BACKEND}/roomamenities/${roomId}/amenities`
     );
-    console.log("res getAmenitiesByRoomId:", res);
+    // console.log("res getAmenitiesByRoomId:", res);
     return res.data;
 };
 

@@ -6,6 +6,7 @@ import { Form, Input, InputNumber, Select, Button, Upload, Row, Col, Space, Tabl
 import * as RoomService from "../../services/RoomService";
 import * as HotelService from "../../services/HotelService";
 import * as AmenityService from "../../services/AmenityService";
+import * as RoomAmenityService from "../../services/RoomAmenitiesService";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router";
 import ModalComponent from "../../components/ModalComponent/ModalComponent";
@@ -25,10 +26,11 @@ const RoomList = () => {
     const [rowSelected, setRowSelected] = useState("");
     const navigate = useNavigate();
     const [amenities, setAmenities] = useState([]);
+    const [amenitiesStatus, setAmenitiesStatus] = useState({});
     const [selectedAmenityId, setSelectedAmenityId] = useState(null);
     const [amenitiesQuantity, setAmenitiesQuantity] = useState({});
     const [api, contextHolder] = notification.useNotification();
-
+    const [stateAmenitiesRoom, setStateAmenitiesRoom] = useState([]);
 
     const handleSearch = (selectedKeys, confirm, dataIndex) => {
         confirm();
@@ -264,6 +266,10 @@ const RoomList = () => {
         RoomName: "", Price: "", roomtype: "", Floor: "", Image: "", Description: "", Status: "", hotel: ""
     });
 
+    // const [stateAmenitiesRoom, setStateAmenitiesRoom] = useState({
+    //     room: "", amenity: "", quantity: "", status: ""
+    // });
+
     const mutationUpdate = useMutation({
         mutationFn: async ({ id, data }) => {
             return await RoomService.updateRoom(id, data);
@@ -292,7 +298,7 @@ const RoomList = () => {
     }, []);
 
     //✅ Lấy danh sách Room Types
-    const { data: dataRoomTypes, isLoading } = useQuery({
+    const { data: dataRoomTypes } = useQuery({
         queryKey: ["roomTypes"],
         queryFn: RoomService.getAllRoomType,
     });
@@ -317,14 +323,14 @@ const RoomList = () => {
     });
 
     const { isLoading: isLoadingRoom, data: rooms = [] } = queryRoom;
-    const { isLoading: isLoadingUpdate, data: dataUpdate } = mutationUpdate;
+    // const { isLoading: isLoadingUpdate, data: dataUpdate } = mutationUpdate;
 
     const dataTable =
         rooms?.data?.length &&
         rooms?.data?.map((p) => {
             return { ...p, key: p._id };
         });
-    console.log("dataTable", dataTable);
+    // console.log("dataTable", dataTable);
 
     // Hàm giúp chuyển đổi dữ liệu API thành format hợp lệ
     const mapRoomData = (data) => ({
@@ -333,11 +339,48 @@ const RoomList = () => {
         Price: data.Price || "",
         Floor: data.Floor || "",
         Description: data.Description || "",
-        room_amenities: data.room_amenities || "",
         Image: data.Image || "",
         hotel: data.hotel || "",
         roomtype: data.roomtype || "",
     });
+    console.log("stateAmenities", stateAmenitiesRoom);
+    //fetch room amenities by room id
+    const fetchGetRoomAmenities = async (roomId) => {
+        if (!roomId) return;
+        try {
+            const res = await RoomAmenityService.getAmenitiesByRoomId(roomId);
+            if (res?.data) {
+                console.log("Amenities Data from API:", res.data); // Debug API response
+
+                // Lưu danh sách amenities vào stateAmenitiesRoom
+                setStateAmenitiesRoom(res.data);
+
+                // Lấy danh sách ID amenities để cập nhật stateRoom
+                setStateRoom((prev) => ({
+                    ...prev,
+                    amenities: res.data.map((item) => item._id),
+                }));
+
+                // Cập nhật số lượng cho từng tiện ích
+                const quantityMap = {};
+                res.data.forEach((item) => {
+                    quantityMap[item._id] = item.quantity;
+                });
+                setAmenitiesQuantity(quantityMap);
+
+                // Cập nhật form Ant Design
+                form.setFieldsValue({
+                    amenities: res.data.map((item) => item._id),
+                    status: res.data[0]?.status || "", // Lấy trạng thái đầu tiên nếu có
+                });
+            }
+        } catch (error) {
+            console.error("Failed to fetch Room Amenities:", error);
+        }
+    };
+
+
+    // Xử lý form update room
 
     //Hàm lấy chi tiết Room
     const fetchGetDetailsRoom = async (roomId) => {
@@ -353,10 +396,12 @@ const RoomList = () => {
         }
     };
 
+
     //Tự động lấy chi tiết phòng khi chọn
     useEffect(() => {
         if (rowSelected) {
             fetchGetDetailsRoom(rowSelected)
+            fetchGetRoomAmenities(rowSelected)
         }
     }, [rowSelected]);
 
@@ -372,7 +417,6 @@ const RoomList = () => {
                 Image: stateRoom.Image,
                 hotel: stateRoom.hotel,
                 roomtype: stateRoom.roomtype,
-                room_amenities: stateRoom.room_amenities,
             });
         }
     }, [stateRoom, form]);
@@ -636,7 +680,7 @@ const RoomList = () => {
                                         <Select
                                             mode="multiple"
                                             placeholder="Select amenities"
-                                            value={stateRoom.amenities}
+                                            value={stateAmenitiesRoom.map((item) => item._id)} // Dùng _id để bind value
                                             onChange={(selectedValues) => {
                                                 setStateRoom({ ...stateRoom, amenities: selectedValues });
 
@@ -651,30 +695,30 @@ const RoomList = () => {
                                                     return updatedQuantities;
                                                 });
 
-                                                // Cập nhật `selectedAmenityId` là tiện ích cuối cùng được chọn
                                                 setSelectedAmenityId(selectedValues[selectedValues.length - 1] || null);
                                             }}
                                         >
-                                            {amenities?.map((amenity) => {
+                                            {stateAmenitiesRoom.map((amenity) => {
                                                 const quantity = amenitiesQuantity[amenity._id] || 1;
+                                                const status = amenity.status;
                                                 return (
                                                     <Option key={amenity._id} value={amenity._id}>
-                                                        {`${amenity.AmenitiesName} (${quantity})`}
+                                                        {`${amenity.AmenitiesName} (${quantity}): ${status}`}  {/* Hiển thị tên + số lượng */}
                                                     </Option>
                                                 );
                                             })}
                                         </Select>
+
                                     </Form.Item>
                                 </Col>
                                 <Col span={6} style={{ marginTop: "-15px" }}>
-                                    <Form.Item label="Status" name="Status">
-                                        <Input name="Status" placeholder="Enter status"
-                                        // value={stateRoom.RoomName} onChange={(e) => handleOnChange(e.target.value, "RoomName")}
+                                    <Form.Item label="Status" name="status">
+                                        <Input name="status" placeholder="Enter status"
+                                            value={stateAmenitiesRoom.length > 0 ? stateAmenitiesRoom.status : ""}
+                                            onChange={(e) => handleOnChange(e.target.value, "status")}
                                         />
-
                                     </Form.Item>
                                 </Col>
-
                             </Row>
 
                             <Form.Item label="Room Description" name="Description">

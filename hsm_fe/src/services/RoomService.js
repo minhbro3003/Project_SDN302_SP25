@@ -15,7 +15,7 @@ export const getRoomById = async (id) => {
     const res = await axios.get(
         `${process.env.REACT_APP_API_URL_BACKEND}/rooms/${id}`
     );
-    console.log("res getRoomById:", res);
+    // console.log("res getRoomById:", res);
     return res.data;
 };
 

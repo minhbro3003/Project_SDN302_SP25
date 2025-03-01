@@ -6,7 +6,7 @@ export const getAllAmenities = async (data) => {
         data
 
     );
-    console.log("res getAllAmenities:", res);
+    // console.log("res getAllAmenities:", res);
     return res.data;
 };
 
