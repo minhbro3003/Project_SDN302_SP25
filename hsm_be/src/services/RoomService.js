@@ -170,11 +170,46 @@ const getAvailableRooms = async () => {
         };
     }
 };
+
+
+const getAvailableRooms_ = async (startDate, endDate) => {
+    try {
+        // Find rooms that have conflicting bookings
+        const bookedRooms = await Booking.find({
+            $or: [
+                { "Time.Checkin": { $lt: endDate }, "Time.Checkout": { $gt: startDate } }
+            ]
+        }).distinct("rooms"); // Get distinct booked room IDs
+
+        // Get all rooms that are NOT in the bookedRooms list
+        const availableRooms = await Room.find({
+            _id: { $nin: bookedRooms },
+            IsDelete: false
+        });
+
+        return {
+            status: "OK",
+            message: "Available rooms retrieved successfully",
+            data: availableRooms,
+        };
+    } catch (error) {
+        console.error("Error in getAvailableRooms:", error.message);
+        return {
+            status: "ERR",
+            message: "Failed to retrieve available rooms",
+            error: error.message,
+        };
+    }
+};
+
+
+
 module.exports = {
     getAllRoomsService,
     createRoomService,
     updateRoomService,
     deleteRoomService,
     getRoomByRoomIdService,
+    getAvailableRooms_,
     getAvailableRooms,
 };

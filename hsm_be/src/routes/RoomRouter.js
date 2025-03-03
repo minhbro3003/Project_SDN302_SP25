@@ -14,6 +14,8 @@ router.get("/", roomsController.getAllRooms);
 //router get available rooms
 router.get("/getavail", roomsController.getAvailableRooms);
 
+router.get("/getavail_", roomsController.getAvailableRooms_);
+
 //router create new room
 router.post("/", roomsController.createRooms);
 //router update by id

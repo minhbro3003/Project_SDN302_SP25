@@ -9,6 +9,7 @@ import { createPaymentLink } from "../../services/VNPayService";
 import { CopyrightCircleTwoTone } from '@ant-design/icons';
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
+import Statistic from "antd/es/statistic/Statistic";
 const { RangePicker } = DatePicker;
 
 const ReservationPage = () => {
@@ -91,44 +92,6 @@ const ReservationPage = () => {
     const handlePaymentTypeChange = (value) => {
         setPaymentType(value);
     };
-
-    // const handleGeneratePaymentLink = async () => {
-    //     if (!paymentType) {
-    //         alert("Please select a payment type.");
-    //         return;
-    //     }
-
-
-    //     // Construct the order info string
-    //     const selectedRoomNames = selectedRooms.join(", ");
-    //     const selectedServiceNames = selectedServices.map(service => `${service.serviceName} (x${service.quantity})`).join(", ");
-    //     const paymentDescription = paymentType === "Partial Pay" ? "Partial Payment (30%)" : "Full Payment";
-    //     const paymentAmount = paymentType === "Partial Pay" ? finalPrice * 0.30 : finalPrice;  // 30% for partial, full amount for full payment
-    //     const orderInfo = `Order for Rooms: ${selectedRoomNames}. Services: ${selectedServiceNames}. Payment Type: ${paymentDescription}`;
-
-    //     try {
-    //         // Call the createPaymentLink function with the orderInfo description and the amount (e.g., total amount)
-    //         const amount = paymentAmount;  // For example, this could be the total amount from selected rooms and services
-    //         const response = await createPaymentLink(amount, orderInfo);
-
-    //         if (response.paymentUrl) {
-    //             setPaymentLink(response.paymentUrl);  // Set the payment link from the response
-    //             api.success({
-    //                 message: " Generate Link success",
-    //                 description: "Generate Complete",
-    //             });
-    //         } else {
-    //             api.error({
-    //                 message: "Failed to generate",
-    //                 description: "Something went wrong",
-    //             });
-    //         }
-    //     } catch (error) {
-    //         console.error('Error generating payment link:', error);
-    //         alert('An error occurred while generating the payment link.');
-    //     }
-    // };
-
 
     const handleFieldChange = async (changedValue) => {
         const { phone, cccd } = changedValue;
@@ -500,7 +463,16 @@ const ReservationPage = () => {
                         </Col>
                     </Row>
                 )} */}
-
+                <Card title="Total Summary" bordered={false} style={{ width: "100%", textAlign: "center" }}>
+                    <Statistic title="Room Price" value={totalRoomPrice} prefix="$" />
+                    <Statistic title="Service Price" value={totalServicePrice} prefix="$" />
+                    <Statistic
+                        title="Final Price"
+                        value={finalPrice}
+                        prefix="$"
+                        valueStyle={{ color: "#3f8600", fontWeight: "bold" }}
+                    />
+                </Card>
 
                 <Button
                     type="primary"

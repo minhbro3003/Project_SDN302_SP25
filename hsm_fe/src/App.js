@@ -6,7 +6,6 @@ import { BrowserRouter as Router, Route, Routes, Link, useNavigate, useLocation,
 import * as AccountService from "./services/accountService";
 import { isJsonString } from "./utils";
 import { jwtDecode } from "jwt-decode";
-import * as UserService from "./services/UserSevice";
 import { useDispatch, useSelector } from "react-redux";
 import { routes } from './routes/routes';
 import NotFoundPage from './pages/NotFoundPage/NotFoundPage';
@@ -169,6 +168,7 @@ const App = () => {
                                                             style={{
                                                                 background: "#79D7BE",
                                                                 height: "100vh", // Full height
+                                                                minWidth: "60px",
                                                                 overflowY: "auto", // Scroll inside sidebar if needed
                                                                 position: "sticky",
                                                                 top: 0

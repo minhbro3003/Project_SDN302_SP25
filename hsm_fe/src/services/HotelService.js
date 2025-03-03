@@ -5,7 +5,6 @@ export const getAllHotel = async (data) => {
         `${process.env.REACT_APP_API_URL_BACKEND}/hotel`,
         data
     );
-    console.log("res getAllHotel:", res);
     return res.data;
 };
 
@@ -15,6 +14,5 @@ export const createHotel = async (data) => {
         data
 
     );
-    console.log("res createHotel:", res);
     return res.data;
 };

@@ -1,15 +1,18 @@
 import React, { useState, useEffect } from "react";
-import { Table, Button, Modal, Descriptions, message } from "antd";
-
+import { Table, Button, Modal, Descriptions, message, Select, Tag, Space, Input } from "antd";
 import moment from "moment";
-import { CopyOutlined } from "@ant-design/icons";
+import { CopyOutlined, SearchOutlined } from "@ant-design/icons";
 import { getAllTransactions } from "../../services/TransactionService";
+
+const { Option } = Select;
 
 const ReservationList = () => {
     const [transactions, setTransactions] = useState([]);
     const [loading, setLoading] = useState(false);
     const [selectedTransaction, setSelectedTransaction] = useState(null);
     const [isModalVisible, setIsModalVisible] = useState(false);
+    const [recentFilter, setRecentFilter] = useState("today");
+    const [searchText, setSearchText] = useState("");
 
     useEffect(() => {
         fetchTransactions();
@@ -36,38 +39,94 @@ const ReservationList = () => {
         message.success("Copied to clipboard");
     };
 
+    const getStatusTag = (status) => {
+        const colorMap = { Completed: "green", Pending: "orange", Cancelled: "red" };
+        return <Tag color={colorMap[status] || "default"}>{status}</Tag>;
+    };
+
+    const getPaymentTag = (paymentStatus) => {
+        const colorMap = { Paid: "green", Partial: "gold", Unpaid: "red" };
+        return <Tag color={colorMap[paymentStatus] || "default"}>{paymentStatus}</Tag>;
+    };
+
+    const today = moment().startOf("day");
+    const thisWeek = moment().startOf("week");
+
+    const filteredRecentTransactions = transactions.filter((t) => {
+        const updatedAt = moment(t.updatedAt);
+        return recentFilter === "today"
+            ? updatedAt.isSame(today, "day")
+            : updatedAt.isSameOrAfter(thisWeek, "day");
+    });
+
+    const unpaidTransactions = transactions.filter((t) => t.Pay === "Unpaid");
+    const partialTransactions = transactions.filter((t) => t.Pay === "Partial");
+
+    const filteredTransactions = transactions.filter(
+        (t) =>
+            t._id.toLowerCase().includes(searchText.toLowerCase()) ||
+            t.Status.toLowerCase().includes(searchText.toLowerCase()) ||
+            t.Pay.toLowerCase().includes(searchText.toLowerCase())
+    );
+
     const columns = [
         {
             title: "Transaction ID",
             dataIndex: "_id",
             key: "_id",
+            sorter: (a, b) => a._id.localeCompare(b._id),
+            filterDropdown: ({ setSelectedKeys, selectedKeys, confirm }) => (
+                <div style={{ padding: 8 }}>
+                    <Input
+                        placeholder="Search Transaction ID"
+                        value={selectedKeys[0]}
+                        onChange={(e) => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+                        onPressEnter={confirm}
+                        style={{ width: 188, marginBottom: 8, display: "block" }}
+                    />
+                    <Button
+                        type="primary"
+                        onClick={confirm}
+                        icon={<SearchOutlined />}
+                        size="small"
+                        style={{ width: 90 }}
+                    >
+                        Search
+                    </Button>
+                </div>
+            ),
         },
         {
             title: "Final Price",
             dataIndex: "FinalPrice",
             key: "FinalPrice",
+            sorter: (a, b) => a.FinalPrice - b.FinalPrice,
             render: (price) => `${price.toLocaleString()} VND`,
         },
         {
             title: "Paid Amount",
             dataIndex: "PaidAmount",
             key: "PaidAmount",
+            sorter: (a, b) => a.PaidAmount - b.PaidAmount,
             render: (amount) => `${amount.toLocaleString()} VND`,
         },
         {
             title: "Payment Status",
             dataIndex: "Pay",
             key: "Pay",
+            render: (status) => getPaymentTag(status),
         },
         {
             title: "Status",
             dataIndex: "Status",
             key: "Status",
+            render: (status) => getStatusTag(status),
         },
         {
             title: "Updated At",
             dataIndex: "updatedAt",
             key: "updatedAt",
+            sorter: (a, b) => new Date(a.updatedAt) - new Date(b.updatedAt),
             render: (date) => moment(date).format("YYYY-MM-DD HH:mm"),
         },
         {
@@ -83,7 +142,36 @@ const ReservationList = () => {
 
     return (
         <div>
-            <Table columns={columns} dataSource={transactions} rowKey="id" loading={loading} />
+            {/* Search Bar */}
+            <Input
+                placeholder="Search by ID, Status, Payment"
+                value={searchText}
+                onChange={(e) => setSearchText(e.target.value)}
+                prefix={<SearchOutlined />}
+                style={{ marginBottom: 16, width: 300 }}
+            />
+
+            {/* All Reservations */}
+            <h2>All Reservations</h2>
+            <Table columns={columns} dataSource={filteredTransactions} rowKey="_id" loading={loading} />
+
+            {/* Recent Reservations */}
+            <h2>Recent Reservations</h2>
+            <Select value={recentFilter} onChange={setRecentFilter} style={{ width: 150, marginBottom: 10 }}>
+                <Option value="today">Today</Option>
+                <Option value="week">This Week</Option>
+            </Select>
+            <Table columns={columns} dataSource={filteredRecentTransactions} rowKey="_id" loading={loading} />
+
+            {/* Unpaid Transactions */}
+            <h2 style={{ color: "red", marginTop: 20 }}>Unpaid Transactions</h2>
+            <Table columns={columns} dataSource={unpaidTransactions} rowKey="_id" loading={loading} />
+
+            {/* Partial Payments */}
+            <h2 style={{ color: "gold", marginTop: 20 }}>Partial Payments</h2>
+            <Table columns={columns} dataSource={partialTransactions} rowKey="_id" loading={loading} />
+
+            {/* Transaction Details Modal */}
             <Modal
                 title="Transaction Details"
                 open={isModalVisible}
@@ -102,10 +190,10 @@ const ReservationList = () => {
                             {selectedTransaction.PaidAmount.toLocaleString()} VND
                         </Descriptions.Item>
                         <Descriptions.Item label="Payment Status">
-                            {selectedTransaction.Pay}
+                            {getPaymentTag(selectedTransaction.Pay)}
                         </Descriptions.Item>
                         <Descriptions.Item label="Status">
-                            {selectedTransaction.Status}
+                            {getStatusTag(selectedTransaction.Status)}
                         </Descriptions.Item>
                         <Descriptions.Item label="Payment Method">
                             {selectedTransaction.PaymentMethod}
@@ -122,6 +210,8 @@ const ReservationList = () => {
                         </Descriptions.Item>
                     </Descriptions>
                 )}
+
+                {/* 🔥 Buttons Restored Here */}
                 <div style={{ marginTop: 20, textAlign: "center" }}>
                     <Button type="primary" style={{ marginRight: 10 }}>
                         Add Extra Service
@@ -132,6 +222,7 @@ const ReservationList = () => {
                     <Button type="dashed">Edit Information</Button>
                 </div>
             </Modal>
+
         </div>
     );
 };

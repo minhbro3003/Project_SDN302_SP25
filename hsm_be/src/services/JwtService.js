@@ -54,7 +54,7 @@ const refreshTokenJwtService = async (token) => {
                 try {
                     const access_token = await generateAccessToken({
                         id: user.id,
-                        isAdmin: user.isAdmin || false, 
+                        isAdmin: user.isAdmin || false,
                     });
 
                     return resolve({

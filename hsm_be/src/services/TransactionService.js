@@ -9,8 +9,16 @@ const { createPaymentLinkAD } = require("../utils");
 const getAllTransactions = async () => {
     try {
         const allTransactions = await Transaction.find()
-            .populate("bookings") // Populate booking details
-            .populate("services"); // Populate service details
+            .populate({
+                path: "bookings",
+                populate: {
+                    path: "rooms",
+                    model: "Room",  // Explicitly define the model
+                    select: "RoomName", // Only fetch RoomName
+                }
+            })
+            .populate("services") // Populate service details
+            .populate("customers");
 
         return {
             status: "OK",
