@@ -1,25 +1,13 @@
 const Rooms = require("../models/RoomModel");
 const RoomType = require("../models/RoomTypeModel");
 //get all rooms
-// const getAllRoomsService = () => {
-//     return new Promise(async (resolve, reject) => {
-//         try {
-//             const allRooms = await Rooms.find();
-//             resolve({
-//                 status: "OK",
-//                 message: " All rooms successfully",
-//                 data: allRooms,
-//             });
-//         } catch (e) {
-//             console.log("Error: ", e.message);
-//             reject(e);
-//         }
-//     });
-// };
+
 const getAllRoomsService = () => {
     return new Promise(async (resolve, reject) => {
         try {
-            const allRooms = await Rooms.find().populate("roomtype");
+            const allRooms = await Rooms.find({},)//"-Image"
+                .populate("roomtype")
+                .populate("hotel", "CodeHotel NameHotel Introduce LocationHotel ")
             resolve({
                 status: "OK",
                 message: "All rooms successfully",
@@ -37,7 +25,7 @@ const getAllRoomsService = () => {
 const getRoomByRoomIdService = (id) => {
     return new Promise(async (resolve, reject) => {
         try {
-            const room = await Rooms.findById(id);
+            const room = await Rooms.findById(id); // ,"-Image"
             if (!room) {
                 resolve({
                     status: "ERR",
@@ -60,24 +48,23 @@ const getRoomByRoomIdService = (id) => {
 const createRoomService = async (newRoom) => {
     try {
         const {
-            RoomName, Price, Status, Floor, Active,
-            typerooms, room_amenities, Description, Image, IsDelete,
+            RoomName, Price, Status, Floor, Active, hotel,
+            roomtype, Description, Image, IsDelete,
         } = newRoom;
 
         const checkRoomName = await Rooms.findOne({
-            RoomName,
+            RoomName: { $regex: `^${RoomName.trim()}$`, $options: "i" },
         });
         if (checkRoomName) {
             return {
                 status: "ERR",
-                message: "The name of product is already",
+                message: "The room name already exists",
             };
         }
-
         //create room
         const newedRoomData = new Rooms({
-            RoomName, Price, Status, Floor, Active,
-            typerooms, room_amenities, Description, Image, IsDelete,
+            RoomName, Price, Status, Floor, Active, hotel,
+            roomtype, Description, Image, IsDelete,
         });
         //save database
         const savedRoom = await newedRoomData.save();

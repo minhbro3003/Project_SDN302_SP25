@@ -169,7 +169,7 @@ export const routes = [
                 permissions: ["Admin", "Receptionist", "Janitor"],
             },
             {
-                path: "/rooms/add-room",
+                path: "/rooms",
                 name: "Add Room",
                 isShowHeader: true,
                 icon: <PlusCircleOutlined />,

@@ -7,7 +7,7 @@ const getAllRoomsTypeService = () => {
             const allRoomsTypes = await RoomTypes.find();
             resolve({
                 status: "OK",
-                message: " All rooms successfully",
+                message: " All roomtype successfully",
                 data: allRoomsTypes,
             });
         } catch (e) {
