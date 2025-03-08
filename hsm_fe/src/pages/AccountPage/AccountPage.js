@@ -55,7 +55,7 @@ const AccountPage = () => {
                 <Form.Item
                     label="Họ và Tên"
                     name="FullName"
-                    // rules={[{ required: true, message: "Vui lòng nhập họ tên!" }]}
+                // rules={[{ required: true, message: "Vui lòng nhập họ tên!" }]}
                 >
                     <Input
                         placeholder="Nhập họ tên"
@@ -92,7 +92,7 @@ const AccountPage = () => {
                         value={formData.Email}
                         onChange={handleOnChange}
                     />
-                    
+
                 </Form.Item>
 
                 <Form.Item
@@ -108,8 +108,8 @@ const AccountPage = () => {
                     />
                 </Form.Item>
                 {data?.status === "ERR" && (
-                        <span style={{ color: "red" }}>{data?.message}</span>
-                    )}
+                    <span style={{ color: "red" }}>{data?.message}</span>
+                )}
                 <Form.Item>
                     <Button
                         type="primary"
