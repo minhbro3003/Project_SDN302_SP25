@@ -1,11 +1,18 @@
 import React, { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
-import { Card, Row, Col, Table, Statistic, List, Typography, Spin } from 'antd';
+import { Card, Row, Col, Table, Statistic, List, Typography, Spin, Tag, Timeline, Progress, Badge } from 'antd';
 import { getDashboardData } from '../../services/DashboardService';
-import { LoadingOutlined } from '@ant-design/icons';
+import {
+  LoadingOutlined,
+  DollarOutlined,
+  TeamOutlined,
+  HomeOutlined,
+  CheckCircleOutlined,
+  ClockCircleOutlined,
+  WarningOutlined
+} from '@ant-design/icons';
 
-const { Title } = Typography;
-
+const { Title, Text } = Typography;
 const antIcon = <LoadingOutlined style={{ fontSize: 24 }} spin />;
 
 const Dashboard = () => {
@@ -15,25 +22,15 @@ const Dashboard = () => {
 
   useEffect(() => {
     const fetchDashboardData = async () => {
-      console.log("Current account state:", account);
-      console.log("Employee data:", account?.employee);
-      console.log("Permissions:", account?.permissions);
-
       if (!account?.employee?.id) {
-        console.log("No employee ID found");
         setLoading(false);
         return;
       }
 
       try {
-        console.log("Fetching dashboard data for employee:", account.employee.id);
         const response = await getDashboardData(account.employee.id);
-        console.log("Dashboard API response:", response);
-
         if (response.status === "OK") {
           setDashboardData(response.data);
-        } else {
-          console.error("Error in dashboard response:", response.message);
         }
       } catch (error) {
         console.error("Error fetching dashboard data:", error);
@@ -47,63 +44,10 @@ const Dashboard = () => {
 
   if (loading) {
     return (
-      <div style={{
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        minHeight: '80vh',
-        background: '#f0f2f5'
-      }}>
-        <Card
-          style={{
-            width: 300,
-            textAlign: 'center',
-            borderRadius: '8px',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
-          }}
-        >
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '80vh' }}>
+        <Card style={{ width: 300, textAlign: 'center' }}>
           <Spin indicator={antIcon} />
-          <Title level={4} style={{ marginTop: 16, marginBottom: 8 }}>Loading Dashboard</Title>
-          <div style={{ color: '#666', fontSize: '14px' }}>
-            Preparing your personalized dashboard...
-          </div>
-          {!account?.employee?.id && (
-            <div style={{
-              marginTop: 16,
-              padding: '8px',
-              background: '#fff7e6',
-              border: '1px solid #ffd591',
-              borderRadius: '4px',
-              fontSize: '12px',
-              color: '#d46b08'
-            }}>
-              Verifying account permissions...
-            </div>
-          )}
-        </Card>
-      </div>
-    );
-  }
-
-  if (!account?.employee?.id) {
-    return (
-      <div style={{
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        minHeight: '80vh',
-        background: '#f0f2f5'
-      }}>
-        <Card
-          style={{
-            width: 300,
-            textAlign: 'center',
-            borderRadius: '8px',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
-          }}
-        >
-          <Title level={4} style={{ color: '#cf1322' }}>Access Error</Title>
-          <p style={{ color: '#666' }}>No employee data found</p>
+          <Title level={4}>Loading Dashboard</Title>
         </Card>
       </div>
     );
@@ -111,23 +55,10 @@ const Dashboard = () => {
 
   if (!dashboardData) {
     return (
-      <div style={{
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        minHeight: '80vh',
-        background: '#f0f2f5'
-      }}>
-        <Card
-          style={{
-            width: 300,
-            textAlign: 'center',
-            borderRadius: '8px',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
-          }}
-        >
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '80vh' }}>
+        <Card style={{ width: 300, textAlign: 'center' }}>
           <Title level={4} style={{ color: '#cf1322' }}>Data Error</Title>
-          <p style={{ color: '#666' }}>Could not load dashboard data</p>
+          <p>Could not load dashboard data</p>
         </Card>
       </div>
     );
@@ -138,50 +69,84 @@ const Dashboard = () => {
     return (
       <div style={{ padding: '24px' }}>
         <Title level={2}>Admin Dashboard</Title>
+
+        {/* Key Metrics */}
         <Row gutter={[16, 16]}>
           <Col span={6}>
             <Card>
-              <Statistic title="Total Hotels" value={dashboardData.metrics.totalHotels} />
+              <Statistic
+                title="Total Hotels"
+                value={dashboardData.metrics.totalHotels}
+                prefix={<HomeOutlined />}
+              />
             </Card>
           </Col>
           <Col span={6}>
             <Card>
-              <Statistic title="Total Rooms" value={dashboardData.metrics.totalRooms} />
+              <Statistic
+                title="Monthly Revenue"
+                value={dashboardData.metrics.monthlyRevenue}
+                prefix={<DollarOutlined />}
+                suffix="VND"
+              />
             </Card>
           </Col>
           <Col span={6}>
             <Card>
-              <Statistic title="Total Employees" value={dashboardData.metrics.totalEmployees} />
+              <Statistic
+                title="Total Employees"
+                value={dashboardData.metrics.totalEmployees}
+                prefix={<TeamOutlined />}
+              />
             </Card>
           </Col>
           <Col span={6}>
             <Card>
-              <Statistic title="Total Bookings" value={dashboardData.metrics.totalBookings} />
+              <Statistic
+                title="Average Occupancy"
+                value={dashboardData.metrics.averageOccupancyRate}
+                suffix="%"
+              />
             </Card>
           </Col>
         </Row>
 
+        {/* Hotel Performance */}
         <Row gutter={[16, 16]} style={{ marginTop: '24px' }}>
           <Col span={12}>
-            <Card title="Hotel Statistics">
+            <Card title="Hotel Performance">
               <Table
-                dataSource={dashboardData.hotelStats}
+                dataSource={dashboardData.statistics.hotelPerformance}
                 columns={[
-                  { title: 'Hotel Name', dataIndex: 'name', key: 'name' },
-                  { title: 'Total Rooms', dataIndex: 'totalRooms', key: 'totalRooms' },
-                  { title: 'Available Rooms', dataIndex: 'availableRooms', key: 'availableRooms' }
+                  { title: 'Hotel', dataIndex: 'name', key: 'name' },
+                  {
+                    title: 'Occupancy Rate',
+                    dataIndex: 'occupancyRate',
+                    key: 'occupancyRate',
+                    render: (rate) => (
+                      <div>
+                        <Progress percent={parseFloat(rate)} size="small" />
+                      </div>
+                    )
+                  },
+                  {
+                    title: 'Revenue',
+                    dataIndex: 'revenue',
+                    key: 'revenue',
+                    render: (value) => `${value.toLocaleString()} VND`
+                  }
                 ]}
                 pagination={false}
               />
             </Card>
           </Col>
           <Col span={12}>
-            <Card title="Employee Statistics">
+            <Card title="Staff Distribution">
               <List
                 dataSource={[
-                  { title: 'Hotel Managers', value: dashboardData.employeeStats.byRole.managers },
-                  { title: 'Receptionists', value: dashboardData.employeeStats.byRole.receptionists },
-                  { title: 'Janitors', value: dashboardData.employeeStats.byRole.janitors }
+                  { title: 'Hotel Managers', value: dashboardData.statistics.employeeStats.managers },
+                  { title: 'Receptionists', value: dashboardData.statistics.employeeStats.receptionists },
+                  { title: 'Janitors', value: dashboardData.statistics.employeeStats.janitors }
                 ]}
                 renderItem={item => (
                   <List.Item>
@@ -195,6 +160,37 @@ const Dashboard = () => {
             </Card>
           </Col>
         </Row>
+
+        {/* Recent Activity */}
+        <Card title="Recent Transactions" style={{ marginTop: '24px' }}>
+          <Table
+            dataSource={dashboardData.recentActivity}
+            columns={[
+              {
+                title: 'Transaction ID',
+                dataIndex: '_id',
+                key: '_id'
+              },
+              {
+                title: 'Amount',
+                dataIndex: 'FinalPrice',
+                key: 'amount',
+                render: (amount) => `${amount.toLocaleString()} VND`
+              },
+              {
+                title: 'Status',
+                dataIndex: 'Status',
+                key: 'status',
+                render: (status) => (
+                  <Tag color={status === 'Completed' ? 'green' : status === 'Pending' ? 'gold' : 'red'}>
+                    {status}
+                  </Tag>
+                )
+              }
+            ]}
+            pagination={{ pageSize: 5 }}
+          />
+        </Card>
       </div>
     );
   }
@@ -204,56 +200,100 @@ const Dashboard = () => {
     return (
       <div style={{ padding: '24px' }}>
         <Title level={2}>Hotel Manager Dashboard</Title>
+
+        {/* Key Metrics */}
         <Row gutter={[16, 16]}>
-          <Col span={8}>
+          <Col span={6}>
             <Card>
-              <Statistic title="Total Rooms" value={dashboardData.metrics.totalRooms} />
+              <Statistic
+                title="Total Rooms"
+                value={dashboardData.metrics.totalRooms}
+                prefix={<HomeOutlined />}
+              />
             </Card>
           </Col>
-          <Col span={8}>
+          <Col span={6}>
             <Card>
-              <Statistic title="Total Employees" value={dashboardData.metrics.totalEmployees} />
+              <Statistic
+                title="Occupied Rooms"
+                value={dashboardData.metrics.occupiedRooms}
+                suffix={`/ ${dashboardData.metrics.totalRooms}`}
+              />
             </Card>
           </Col>
-          <Col span={8}>
+          <Col span={6}>
             <Card>
-              <Statistic title="Total Bookings" value={dashboardData.metrics.totalBookings} />
+              <Statistic
+                title="Monthly Revenue"
+                value={dashboardData.metrics.monthlyRevenue}
+                prefix={<DollarOutlined />}
+                suffix="VND"
+              />
+            </Card>
+          </Col>
+          <Col span={6}>
+            <Card>
+              <Statistic
+                title="Total Staff"
+                value={dashboardData.metrics.totalEmployees}
+                prefix={<TeamOutlined />}
+              />
             </Card>
           </Col>
         </Row>
 
+        {/* Today's Activity */}
         <Row gutter={[16, 16]} style={{ marginTop: '24px' }}>
+          <Col span={12}>
+            <Card title="Today's Activity">
+              <Row gutter={[16, 16]}>
+                <Col span={12}>
+                  <Statistic
+                    title="Check-ins"
+                    value={dashboardData.statistics.todayActivity.checkIns}
+                    prefix={<CheckCircleOutlined style={{ color: '#52c41a' }} />}
+                  />
+                </Col>
+                <Col span={12}>
+                  <Statistic
+                    title="Check-outs"
+                    value={dashboardData.statistics.todayActivity.checkOuts}
+                    prefix={<ClockCircleOutlined style={{ color: '#1890ff' }} />}
+                  />
+                </Col>
+              </Row>
+            </Card>
+          </Col>
           <Col span={12}>
             <Card title="Room Status">
               <List
                 dataSource={[
-                  { title: 'Available Rooms', value: dashboardData.roomStatus.available },
-                  { title: 'Needs Cleaning', value: dashboardData.roomStatus.needCleaning },
-                  { title: 'Currently Cleaning', value: dashboardData.roomStatus.cleaning }
+                  {
+                    title: 'Available',
+                    value: dashboardData.statistics.roomStatus.available,
+                    color: '#52c41a'
+                  },
+                  {
+                    title: 'Needs Cleaning',
+                    value: dashboardData.statistics.roomStatus.needCleaning,
+                    color: '#faad14'
+                  },
+                  {
+                    title: 'Being Cleaned',
+                    value: dashboardData.statistics.roomStatus.cleaning,
+                    color: '#1890ff'
+                  }
                 ]}
                 renderItem={item => (
                   <List.Item>
                     <List.Item.Meta
-                      title={item.title}
-                      description={`Count: ${item.value}`}
-                    />
-                  </List.Item>
-                )}
-              />
-            </Card>
-          </Col>
-          <Col span={12}>
-            <Card title="Staff Overview">
-              <List
-                dataSource={[
-                  { title: 'Receptionists', value: dashboardData.employeeStats.byRole.receptionists },
-                  { title: 'Janitors', value: dashboardData.employeeStats.byRole.janitors }
-                ]}
-                renderItem={item => (
-                  <List.Item>
-                    <List.Item.Meta
-                      title={item.title}
-                      description={`Total: ${item.value}`}
+                      title={
+                        <span>
+                          <Badge color={item.color} />
+                          {item.title}
+                        </span>
+                      }
+                      description={`${item.value} rooms`}
                     />
                   </List.Item>
                 )}
@@ -261,6 +301,32 @@ const Dashboard = () => {
             </Card>
           </Col>
         </Row>
+
+        {/* Upcoming Checkouts */}
+        <Card title="Upcoming Checkouts" style={{ marginTop: '24px' }}>
+          <Table
+            dataSource={dashboardData.statistics.upcomingCheckouts}
+            columns={[
+              {
+                title: 'Room',
+                dataIndex: ['rooms', 'RoomName'],
+                key: 'room'
+              },
+              {
+                title: 'Guest',
+                dataIndex: ['customers', 'full_name'],
+                key: 'guest'
+              },
+              {
+                title: 'Checkout Time',
+                dataIndex: ['Time', 'Checkout'],
+                key: 'checkout',
+                render: (time) => new Date(time).toLocaleString()
+              }
+            ]}
+            pagination={false}
+          />
+        </Card>
       </div>
     );
   }
@@ -270,40 +336,96 @@ const Dashboard = () => {
     return (
       <div style={{ padding: '24px' }}>
         <Title level={2}>Receptionist Dashboard</Title>
+
+        {/* Key Metrics */}
         <Row gutter={[16, 16]}>
-          <Col span={8}>
+          <Col span={6}>
             <Card>
-              <Statistic title="Total Rooms" value={dashboardData.metrics.totalRooms} />
+              <Statistic
+                title="Today's Check-ins"
+                value={dashboardData.metrics.todayCheckIns}
+                prefix={<CheckCircleOutlined style={{ color: '#52c41a' }} />}
+              />
             </Card>
           </Col>
-          <Col span={8}>
+          <Col span={6}>
             <Card>
-              <Statistic title="Available Rooms" value={dashboardData.metrics.availableRooms} />
+              <Statistic
+                title="Today's Check-outs"
+                value={dashboardData.metrics.todayCheckOuts}
+                prefix={<ClockCircleOutlined style={{ color: '#1890ff' }} />}
+              />
             </Card>
           </Col>
-          <Col span={8}>
+          <Col span={6}>
             <Card>
-              <Statistic title="Today's Check-ins" value={dashboardData.metrics.todayCheckIns} />
+              <Statistic
+                title="Available Rooms"
+                value={dashboardData.metrics.availableRooms}
+                prefix={<HomeOutlined />}
+              />
+            </Card>
+          </Col>
+          <Col span={6}>
+            <Card>
+              <Statistic
+                title="Pending Bookings"
+                value={dashboardData.metrics.pendingBookings}
+                prefix={<WarningOutlined style={{ color: '#faad14' }} />}
+              />
             </Card>
           </Col>
         </Row>
 
+        {/* Today's Schedule */}
         <Row gutter={[16, 16]} style={{ marginTop: '24px' }}>
-          <Col span={24}>
-            <Card title="Recent Bookings">
+          <Col span={12}>
+            <Card title="Today's Check-ins">
               <Table
-                dataSource={dashboardData.recentBookings}
+                dataSource={dashboardData.statistics.todayActivity.checkIns}
                 columns={[
-                  { title: 'Booking ID', dataIndex: '_id', key: '_id' },
                   {
-                    title: 'Check-in', dataIndex: ['Time', 'Checkin'], key: 'checkin',
-                    render: (text) => new Date(text).toLocaleDateString()
+                    title: 'Room',
+                    dataIndex: ['rooms', 'RoomName'],
+                    key: 'room'
                   },
                   {
-                    title: 'Check-out', dataIndex: ['Time', 'Checkout'], key: 'checkout',
-                    render: (text) => new Date(text).toLocaleDateString()
+                    title: 'Guest',
+                    dataIndex: ['customers', 'full_name'],
+                    key: 'guest'
                   },
-                  { title: 'Status', dataIndex: 'Status', key: 'status' }
+                  {
+                    title: 'Check-in Time',
+                    dataIndex: ['Time', 'Checkin'],
+                    key: 'checkin',
+                    render: (time) => new Date(time).toLocaleString()
+                  }
+                ]}
+                pagination={false}
+              />
+            </Card>
+          </Col>
+          <Col span={12}>
+            <Card title="Today's Check-outs">
+              <Table
+                dataSource={dashboardData.statistics.todayActivity.checkOuts}
+                columns={[
+                  {
+                    title: 'Room',
+                    dataIndex: ['rooms', 'RoomName'],
+                    key: 'room'
+                  },
+                  {
+                    title: 'Guest',
+                    dataIndex: ['customers', 'full_name'],
+                    key: 'guest'
+                  },
+                  {
+                    title: 'Check-out Time',
+                    dataIndex: ['Time', 'Checkout'],
+                    key: 'checkout',
+                    render: (time) => new Date(time).toLocaleString()
+                  }
                 ]}
                 pagination={false}
               />
@@ -318,31 +440,85 @@ const Dashboard = () => {
   if (account?.permissions?.includes("Janitor")) {
     return (
       <div style={{ padding: '24px' }}>
-        <Title level={2}>Cleaning Dashboard</Title>
+        <Title level={2}>Housekeeping Dashboard</Title>
+
+        {/* Key Metrics */}
         <Row gutter={[16, 16]}>
-          <Col span={12}>
+          <Col span={6}>
             <Card>
-              <Statistic title="Rooms To Clean" value={dashboardData.metrics.totalRoomsToClean} />
+              <Statistic
+                title="Rooms To Clean"
+                value={dashboardData.metrics.totalRoomsToClean}
+                prefix={<WarningOutlined style={{ color: '#faad14' }} />}
+              />
             </Card>
           </Col>
-          <Col span={12}>
+          <Col span={6}>
             <Card>
-              <Statistic title="Rooms Being Cleaned" value={dashboardData.metrics.roomsCleaning} />
+              <Statistic
+                title="Rooms Being Cleaned"
+                value={dashboardData.metrics.roomsCleaning}
+                prefix={<ClockCircleOutlined style={{ color: '#1890ff' }} />}
+              />
+            </Card>
+          </Col>
+          <Col span={6}>
+            <Card>
+              <Statistic
+                title="Upcoming Checkouts"
+                value={dashboardData.metrics.upcomingCheckouts}
+                prefix={<ClockCircleOutlined />}
+              />
+            </Card>
+          </Col>
+          <Col span={6}>
+            <Card>
+              <Statistic
+                title="Completed Today"
+                value={dashboardData.metrics.completedToday}
+                prefix={<CheckCircleOutlined style={{ color: '#52c41a' }} />}
+              />
             </Card>
           </Col>
         </Row>
 
+        {/* Rooms Needing Cleaning */}
         <Row gutter={[16, 16]} style={{ marginTop: '24px' }}>
-          <Col span={24}>
+          <Col span={12}>
             <Card title="Rooms Needing Cleaning">
               <Table
-                dataSource={dashboardData.roomsNeedingCleaning}
+                dataSource={dashboardData.statistics.roomsNeedingCleaning}
                 columns={[
-                  { title: 'Room Name', dataIndex: 'RoomName', key: 'roomName' },
-                  { title: 'Floor', dataIndex: 'Floor', key: 'floor' }
+                  {
+                    title: 'Room',
+                    dataIndex: 'roomName',
+                    key: 'room'
+                  },
+                  {
+                    title: 'Floor',
+                    dataIndex: 'floor',
+                    key: 'floor'
+                  },
+                  {
+                    title: 'Hotel',
+                    dataIndex: 'hotel',
+                    key: 'hotel'
+                  }
                 ]}
                 pagination={false}
               />
+            </Card>
+          </Col>
+          <Col span={12}>
+            <Card title="Upcoming Checkouts">
+              <Timeline>
+                {dashboardData.statistics.upcomingCheckouts.map((checkout, index) => (
+                  <Timeline.Item key={index}>
+                    <p>{checkout.roomName}</p>
+                    <p>{new Date(checkout.checkoutTime).toLocaleString()}</p>
+                  </Timeline.Item>
+                ))}
+              </Timeline>
             </Card>
           </Col>
         </Row>
@@ -350,7 +526,14 @@ const Dashboard = () => {
     );
   }
 
-  return <div>Access Denied - No valid permission found. Current permissions: {JSON.stringify(account?.permissions)}</div>;
+  return (
+    <div style={{ padding: '24px' }}>
+      <Card>
+        <Title level={4}>Access Error</Title>
+        <p>You don't have permission to view the dashboard.</p>
+      </Card>
+    </div>
+  );
 };
 
 export default Dashboard;

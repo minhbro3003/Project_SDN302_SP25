@@ -103,12 +103,13 @@ export const getAvailableRooms = async () => {
     }
 };
 
-export const checkRoomAvailability = async (startDate, endDate) => {
+export const checkRoomAvailability = async (startDate, endDate, hotelId) => {
     try {
         const response = await axios.get(`${process.env.REACT_APP_API_URL_BACKEND}/rooms/getavail_`, {
             params: {
                 startDate,
-                endDate
+                endDate,
+                hotelId
             }
         });
         return response.data;

@@ -92,14 +92,6 @@ export const routes = [
         permissions: ["Admin", "Receptionist"],
     },
     {
-        path: "/booking-log",
-        name: "Booking Log",
-        page: BookingPage,
-        isShowHeader: true,
-        icon: <SettingOutlined />,
-        permissions: ["Admin", "Receptionist"],
-    },
-    {
         path: "/hotel",
         name: "Hotel",
         isShowHeader: true,
@@ -133,7 +125,7 @@ export const routes = [
         children: [
             {
                 path: "/booking/booking-calendar",
-                name: "Booking Log",
+                name: "Booking Calendar",
                 isShowHeader: true,
                 icon: <ProfileOutlined />,
                 page: BookingPage,

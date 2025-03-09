@@ -1,6 +1,7 @@
 const Booking = require("../models/BookingModelRFA");
 const Customers = require("../models/CustomerModel");
 const Room = require("../models/RoomModel");
+const Hotel = require("../models/HotelModel");
 // Get all bookings
 const getAllBookings = async () => {
     try {
@@ -208,7 +209,11 @@ const getBookingsByDateRange = async (startDate, endDate) => {
             })
             .populate({
                 path: 'rooms',
-                select: 'RoomName Price'
+                select: 'RoomName Price',
+                populate: {
+                    path: 'hotel',
+                    select: 'NameHotel'
+                }
             })
             .sort({ 'Time.Checkin': 1 });
 
