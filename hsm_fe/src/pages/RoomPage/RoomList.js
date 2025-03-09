@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import {
     DeleteOutlined, EditOutlined, MinusOutlined, PlusOutlined, SearchOutlined, UploadOutlined, ToolOutlined
 } from "@ant-design/icons";
-import { Form, Input, InputNumber, Select, Button, Upload, Row, Col, Space, Table, notification, Tag } from "antd";
+import { Form, Input, InputNumber, Select, Button, Upload, Row, Col, Space, Table, notification, Spin } from "antd";
 import * as RoomService from "../../services/RoomService";
 import * as HotelService from "../../services/HotelService";
 import * as AmenityService from "../../services/AmenityService";
@@ -33,6 +33,7 @@ const RoomList = () => {
     const [stateAmenitiesRoom, setStateAmenitiesRoom] = useState([]);
     const [isAmenitiesDrawerOpen, setIsAmenitiesDrawerOpen] = useState(false);
     const [amenitiesForm] = Form.useForm();
+    const [loading, setLoading] = useState(false);
 
     const handleSearch = (selectedKeys, confirm, dataIndex) => {
         confirm();
@@ -130,11 +131,13 @@ const RoomList = () => {
                 }}
             />
         ),
-        onFilter: (value, record) =>
-            record[dataIndex]
-                .toString()
-                .toLowerCase()
-                .includes(value.toLowerCase()),
+        onFilter: (value, record) => {
+            const fieldValue = dataIndex
+                .split(".") // Tách trường thành mảng ["hotel", "NameHotel"]
+                .reduce((obj, key) => (obj ? obj[key] : undefined), record); // Lấy giá trị thực tế
+
+            return fieldValue ? fieldValue.toString().toLowerCase().includes(value.toLowerCase()) : false;
+        },
         filterDropdownProps: {
             onOpenChange(open) {
                 if (open) {
@@ -208,16 +211,24 @@ const RoomList = () => {
             key: "hotel",
             width: "15%",
             ...getColumnSearchProps("hotel.NameHotel"),
-            sorter: (a, b) => a.hotel?.NameHotel.length - b.hotel?.NameHotel.length,
+            sorter: (a, b) => (a.hotel?.NameHotel.length || 0) - b.hotel?.NameHotel.length,
             render: (hotel) => hotel?.NameHotel || "No hotel"
         },
         {
             title: "Room Name",
             dataIndex: "RoomName",
             key: "roomName",
-            width: "15%",
+            width: "12%",
             ...getColumnSearchProps("roomName"),
-            sorter: (a, b) => a.RoomName.length - b.RoomName.length,
+            sorter: (a, b) => {
+                const extractNumber = (roomName) => {
+                    const match = roomName.match(/^([A-Za-z]+)(\d+)$/);
+                    return match ? parseInt(match[2], 10) : 0; // Trả về số nếu có, nếu không thì 0
+                };
+
+                return extractNumber(a.RoomName) - extractNumber(b.RoomName);
+            },
+            sortDirections: ["descend", "ascend"],
         },
         {
             title: "Price",
@@ -225,7 +236,7 @@ const RoomList = () => {
             key: "price",
             width: "10%",
             render: (Price) => convertPrice(Price),
-            ...getColumnSearchProps("price"),
+            ...getColumnSearchProps("Price"),
             sorter: (a, b) => a.Price - b.Price,
             sortDirections: ["descend", "ascend"],
         },
@@ -359,9 +370,13 @@ const RoomList = () => {
 
     //✅ Lấy danh sách Rooms
     const getAllRooms = async () => {
-        const res = await RoomService.getAllRoom();
-        // console.log("data rooms: ", res);
-        return res;
+        setLoading(true); // Bật loading
+        try {
+            const res = await RoomService.getAllRoom();
+            return res;
+        } finally {
+            setLoading(false); // Tắt loading khi xong
+        }
     };
     const queryRoom = useQuery({
         queryKey: ["rooms"],
@@ -617,16 +632,19 @@ const RoomList = () => {
                 </div>
             </Button>
 
-            <Table columns={columns} dataSource={dataTable}
-                onRow={(record, rowIndex) => {
-                    return {
-                        onClick: (event) => {
-                            console.log("Record Selected:", record);
-                            setRowSelected(record._id);
-                        }
-                    };
-                }}
-            />
+            <Spin spinning={loading}>
+                <Table columns={columns} dataSource={dataTable}
+                    loading={isLoadingRoom}
+                    onRow={(record, rowIndex) => {
+                        return {
+                            onClick: (event) => {
+                                console.log("Record Selected:", record);
+                                setRowSelected(record._id);
+                            }
+                        };
+                    }}
+                />
+            </Spin>
 
             <DrawerComponent
                 title="Update Room"

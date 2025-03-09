@@ -303,7 +303,7 @@ const AddRoomForm = ({ initialValues }) => {
         setTimeout(() => {
             let hotelId = formBulk.getFieldValue("hotel");
             if (!hotelId) {
-                hotelId = stateRoom.hotel; // Lấy từ stateRoom nếu formBulk chưa có
+                hotelId = stateRoom.hotel;
             }
 
             if (!hotelId) {
@@ -312,8 +312,6 @@ const AddRoomForm = ({ initialValues }) => {
             }
 
             const roomName = formBulk.getFieldValue("roomName").trim();
-            // const floor = formBulk.getFieldValue("floor");
-
             if (!roomName) {
                 api.error({ message: "⚠ Room name is required!" });
                 return;
@@ -322,24 +320,27 @@ const AddRoomForm = ({ initialValues }) => {
             const quantity = formBulk.getFieldValue("quantity") || 1;
             const selectedAmenities = [...new Set(formBulk.getFieldValue("amenities") || [])];
 
-            // 📌 Chuẩn hóa roomName: Nếu R1, R2... thì chuyển thành R01, R02...
+            // 📌 Kiểm tra roomName có dạng "R + số" không
             const match = roomName.match(/^([A-Za-z]+)(\d+)$/);
             let prefix = roomName;
-            let baseNumber = 0;
+            let baseNumber = 1;
 
             if (match) {
-                prefix = match[1];
-                baseNumber = parseInt(match[2], 10);
+                prefix = match[1]; // Lấy phần chữ (R)
+                baseNumber = parseInt(match[2], 10); // Lấy số (1 hoặc 10)
+
+                // 📌 Nếu số nhỏ hơn 10, nhân 100 (R1 → 100, R2 → 200)
                 if (baseNumber < 10) {
-                    baseNumber = `0${baseNumber}`; // Nếu R1 → R01
+                    baseNumber = baseNumber * 100;
+                } else {
+                    baseNumber = baseNumber * 10; // Nếu >= 10, nhân 10 (R10 → 100, R11 → 110)
                 }
+
+                baseNumber += 1; // Bắt đầu từ 1 (R100 → R101, R200 → R201)
             }
 
-            // 📌 Lấy danh sách số phòng trên tầng hiện tại (bao gồm cả những phòng đã queue)
-            const roomsOnSameFloor = [...existingRooms, ...rooms]
-                // .filter(room => room.Floor === floor)
-                .map(room => room.RoomName);
-
+            // 📌 Lấy danh sách phòng đã có
+            const roomsOnSameFloor = [...existingRooms, ...rooms].map(room => room.RoomName);
             let existingNumbers = roomsOnSameFloor
                 .map(name => {
                     const match = name.match(new RegExp(`^${prefix}(\\d+)$`));
@@ -349,16 +350,16 @@ const AddRoomForm = ({ initialValues }) => {
                 .sort((a, b) => a - b);
 
             let newRooms = [];
-            let numberToUse = existingNumbers.length > 0 ? Math.max(...existingNumbers) + 1 : parseInt(`${baseNumber}01`, 10);
+            let usedNumbers = new Set(existingNumbers);
+            let numberToUse = baseNumber;
 
             for (let i = 0; i < quantity; i++) {
-                while (existingNumbers.includes(numberToUse)) {
+                while (usedNumbers.has(numberToUse)) {
                     numberToUse++;
                 }
 
                 let newRoomName = `${prefix}${numberToUse}`;
-                existingNumbers.push(numberToUse);
-                existingNumbers.sort((a, b) => a - b);
+                usedNumbers.add(numberToUse);
 
                 let newRoom = {
                     key: newRoomName,
@@ -374,8 +375,6 @@ const AddRoomForm = ({ initialValues }) => {
                         quantity: amenitiesQuantity[amenityId] || 1,
                     })),
                 };
-                console.log("Hotel value from formBulk:", formBulk.getFieldValue("hotel"));
-
 
                 newRooms.push(newRoom);
                 numberToUse++;
@@ -387,10 +386,11 @@ const AddRoomForm = ({ initialValues }) => {
             }
 
             console.log("🚀 New rooms added:", newRooms);
-            setRooms(prevRooms => [...prevRooms, ...newRooms]); // Cập nhật danh sách phòng queue
+            setRooms(prevRooms => [...prevRooms, ...newRooms]);
             api.success({ message: `✅ ${newRooms.length} rooms added successfully!` });
         }, 1500);
     };
+
 
     const handleSubmitBulk = async () => {
         if (rooms.length === 0) {
