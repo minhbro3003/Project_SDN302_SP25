@@ -11,27 +11,37 @@ const roomAmenitySchema = new mongoose.Schema({
         ref: "Amenity", // Reference to the 'amenities' collection
         required: true,
     },
-    quantity: { type: Number, required: true },
-    status: { type: String, required: true },
+    quantity: {
+        type: Number,
+        required: true,
+        default: 1,
+        min: 1
+    },
+    status: {
+        type: String,
+        required: true,
+        enum: ['Functioning', 'Broken', 'Missing', 'Other'],
+        default: 'Functioning'
+    },
 }, {
+    timestamps: true,
     toJSON: {
         virtuals: true,
         transform: function (doc, ret) {
-            if (ret.room) {
-                ret.RoomName = ret.room.RoomName;
-                ret.Status = ret.room.Status;
-                ret.Floor = ret.room.Floor;
-            }
             if (ret.amenity) {
                 ret.AmenitiesName = ret.amenity.AmenitiesName;
+                ret.Note = ret.amenity.Note;
             }
-            delete ret.room;
+            ret._id = ret.amenity._id; // Use amenity ID as the main ID
             delete ret.amenity;
+            delete ret.room;
             return ret;
         },
     },
-    timestamps: true,
 });
+
+// Add compound index to prevent duplicate amenities for a room
+roomAmenitySchema.index({ room: 1, amenity: 1 }, { unique: true });
 
 const RoomAmenity = mongoose.model("RoomAmenity", roomAmenitySchema);
 

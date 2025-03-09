@@ -10,6 +10,8 @@ import { CopyrightCircleTwoTone } from '@ant-design/icons';
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import Statistic from "antd/es/statistic/Statistic";
+import { getAllHotel } from "../../services/HotelService";
+
 const { RangePicker } = DatePicker;
 
 const ReservationPage = () => {
@@ -35,11 +37,27 @@ const ReservationPage = () => {
     const navigate = useNavigate();
     // Initialize notification hook
     const [api, contextHolder] = notification.useNotification();
+    const [hotels, setHotels] = useState([]);
+    const [selectedHotel, setSelectedHotel] = useState(null);
+    const isAdmin = account?.permissions?.includes("Admin");
+    const userHotels = account?.employee?.hotels || [];
 
     useEffect(() => {
-        fetchAvailableRooms();
-        fetchServices();
-    }, []);
+        const initializePage = async () => {
+            await fetchAvailableRooms();
+            await fetchServices();
+
+            if (isAdmin) {
+                console.log("User is admin, fetching all hotels");
+                await fetchAllHotels();
+            } else if (userHotels.length > 0) {
+                console.log("Setting default hotel for non-admin user:", userHotels[0]);
+                setSelectedHotel(userHotels[0]._id);
+            }
+        };
+
+        initializePage();
+    }, [isAdmin, userHotels]);
 
     const fetchAvailableRooms = async () => {
         try {
@@ -64,6 +82,25 @@ const ReservationPage = () => {
             }
         } catch (e) {
             console.error("Error fetching services:", e);
+        }
+    };
+
+    const fetchAllHotels = async () => {
+        try {
+            console.log("Fetching all hotels...");
+            const response = await getAllHotel();
+            console.log("Hotels response:", response);
+
+            if (response.status === "OK") {
+                setHotels(response.data);
+                if (response.data.length > 0) {
+                    setSelectedHotel(response.data[0]._id);
+                }
+            } else {
+                console.error("Failed to fetch hotels:", response.message);
+            }
+        } catch (error) {
+            console.error("Error fetching hotels:", error);
         }
     };
 
@@ -185,11 +222,20 @@ const ReservationPage = () => {
             return;
         }
 
+        if (!selectedHotel) {
+            api.error({
+                message: "Select Hotel",
+                description: "Please select a hotel before checking room availability.",
+            });
+            return;
+        }
+
         setCheckingAvailability(true);
         try {
             const result = await checkRoomAvailability(
                 dates[0].format("YYYY-MM-DD HH:mm:ss"),
-                dates[1].format("YYYY-MM-DD HH:mm:ss")
+                dates[1].format("YYYY-MM-DD HH:mm:ss"),
+                selectedHotel
             );
 
             if (result.status === "OK") {
@@ -501,9 +547,9 @@ const ReservationPage = () => {
                     />
                 )}
 
-                {/* Date Picker with Check Availability Button */}
+                {/* Date Picker and Hotel Selection */}
                 <Row gutter={16}>
-                    <Col span={18}>
+                    <Col span={isAdmin ? 12 : 18}>
                         <Form.Item label="Check-in/Check-out Time" name="dates">
                             <RangePicker
                                 format="YYYY-MM-DD HH:mm"
@@ -522,6 +568,23 @@ const ReservationPage = () => {
                             />
                         </Form.Item>
                     </Col>
+                    {isAdmin && (
+                        <Col span={6}>
+                            <Form.Item label="Select Hotel" name="hotel">
+                                <Select
+                                    value={selectedHotel}
+                                    onChange={setSelectedHotel}
+                                    placeholder="Select a hotel"
+                                >
+                                    {hotels.map(hotel => (
+                                        <Select.Option key={hotel._id} value={hotel._id}>
+                                            {hotel.NameHotel}
+                                        </Select.Option>
+                                    ))}
+                                </Select>
+                            </Form.Item>
+                        </Col>
+                    )}
                     <Col span={6}>
                         <Form.Item>
                             <Button

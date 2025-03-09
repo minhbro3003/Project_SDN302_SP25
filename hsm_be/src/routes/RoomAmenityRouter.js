@@ -3,29 +3,28 @@ const router = express.Router();
 const RoomAmenityController = require("../controllers/RoomAmenityController");
 const { authMiddleware } = require("../middleware/authMiddleware");
 
-// Get all bookings
-router.get("/"/*,authMiddleware*/, RoomAmenityController.getAllRoomAmenities);
+// Get all room amenities
+router.get("/", RoomAmenityController.getAllRoomAmenities);
 
-router.get("/not-functioning"/*,authMiddleware*/, RoomAmenityController.getNotFunctioningRoomAmenities);
-// Get a single booking by ID
-router.get("/:id"/*,authMiddleware*/, RoomAmenityController.getRoomAmenityById);
+// Get not functioning room amenities
+router.get("/not-functioning", RoomAmenityController.getNotFunctioningRoomAmenities);
 
-// Create a new booking
-router.post("/"/*,authMiddleware*/, RoomAmenityController.createRoomAmenity);
+// Get a single room amenity by ID
+router.get("/:id", RoomAmenityController.getRoomAmenityById);
 
-// Update a booking by ID
-router.put("/:id"/*,authMiddleware*/, RoomAmenityController.updateRoomAmenity);
+// Create a new room amenity
+router.post("/", RoomAmenityController.createRoomAmenity);
 
-// Delete a booking by ID
-router.delete("/:id"/*,authMiddleware*/, RoomAmenityController.deleteRoomAmenity);
+// Update a room amenity by ID
+router.put("/:id", RoomAmenityController.updateRoomAmenity);
 
-router.post("/:id", RoomAmenityController.getRoomAmenitiesByRoomId);
+// Delete a room amenity by ID
+router.delete("/:id", RoomAmenityController.deleteRoomAmenity);
 
-router.post("/:id", RoomAmenityController.updateRoomAmenities);
+// Get amenities for a specific room
+router.get("/:roomId/amenities", RoomAmenityController.getAmenitiesByRoomIdController);
 
-//get all amenities in room
-router.get("/:roomId/amenities", RoomAmenityController.getAmenitiesByRoomIdController)
+// Update amenities for a specific room
+router.put("/:roomId/amenities", RoomAmenityController.updateRoomAmenitiesByRoomIdController);
 
-//update room amenity by room id
-router.put("/:roomId/amenities", RoomAmenityController.updateRoomAmenitiesByRoomIdController)
 module.exports = router;

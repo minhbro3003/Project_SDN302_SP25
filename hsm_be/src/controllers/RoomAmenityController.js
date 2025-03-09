@@ -1,4 +1,6 @@
 const RoomAmenityService = require("../services/RoomAmenityService");
+const RoomAmenity = require("../models/RoomAmenityModel");
+const Amenity = require("../models/AmenityModel");
 
 // Get all room amenities
 const getAllRoomAmenities = async (req, res) => {
@@ -31,17 +33,53 @@ const getRoomAmenityById = async (req, res) => {
 
 const getAmenitiesByRoomIdController = async (req, res) => {
     try {
-        const { roomId } = req.params; // Extract roomId from request params
-        const roomAmenities = await RoomAmenityService.getAmenitiesByRoomId(roomId); // Pass roomId as an argument
+        const { roomId } = req.params;
+        console.log('Searching for amenities with roomId:', roomId); // Debug log
 
-        if (!roomAmenities) {
-            return res.status(404).json({ message: "Room not found" });
+        // Find all amenities for the room and populate the amenity reference
+        const roomAmenities = await RoomAmenity.find({
+            room: roomId,
+            // Add IsDelete check if you have it
+        })
+            .populate('amenity')
+            .lean();  // Convert to plain JavaScript object
+
+        console.log('Raw room amenities found:', roomAmenities); // Debug log
+
+        if (!roomAmenities || roomAmenities.length === 0) {
+            console.log('No amenities found for room:', roomId); // Debug log
+            return res.status(200).json({
+                status: "OK",
+                message: "No amenities found for this room",
+                data: []
+            });
         }
-        return res.status(200).json(roomAmenities);
+
+        // Transform the data to match your frontend expectations
+        const formattedAmenities = roomAmenities.map(item => {
+            console.log('Processing item:', item); // Debug log
+            return {
+                _id: item.amenity._id,
+                AmenitiesName: item.amenity.AmenitiesName,
+                Note: item.amenity.Note,
+                quantity: item.quantity,
+                status: item.status
+            };
+        });
+
+        console.log('Formatted amenities:', formattedAmenities); // Debug log
+
+        return res.status(200).json({
+            status: "OK",
+            message: "Amenities in room retrieved successfully",
+            data: formattedAmenities
+        });
     } catch (error) {
+        console.error("Error in getAmenitiesByRoomIdController:", error);
         return res.status(500).json({
+            status: "ERR",
             message: "Failed to retrieve amenities in room",
-            error: error.message,
+            error: error.message
         });
     }
 };
@@ -140,26 +178,69 @@ const getRoomAmenitiesByRoomId = async (req, res) => {
     }
 };
 
-// Update room amenities dynamically
-const updateRoomAmenities = async (req, res) => {
+// Get all amenities for a room
+const getRoomAmenities = async (req, res) => {
     try {
         const { roomId } = req.params;
-        const updates = req.body; // Expecting an array of updates
+        const amenities = await RoomAmenity.find({ room: roomId })
+            .populate('amenity')
+            .lean();
 
-        if (!Array.isArray(updates) || updates.length === 0) {
-            return res.status(400).json({ message: "Invalid update data" });
-        }
-
-        const result = await RoomAmenityService.updateRoomAmenities(roomId, updates);
-        return res.status(200).json(result);
+        return res.status(200).json({
+            status: "OK",
+            message: "Room amenities retrieved successfully",
+            data: amenities
+        });
     } catch (error) {
+        console.error("Error in getRoomAmenities:", error);
         return res.status(500).json({
-            message: "Failed to update room amenities",
-            error: error.message,
+            status: "ERR",
+            message: "Failed to retrieve room amenities",
+            error: error.message
         });
     }
 };
 
+// Update amenities for a room
+const updateRoomAmenities = async (req, res) => {
+    try {
+        const { roomId } = req.params;
+        const { amenities } = req.body;
+
+        // Remove all existing amenities for this room
+        await RoomAmenity.deleteMany({ room: roomId });
+
+        // Create new amenities
+        const amenityPromises = amenities.map(async (amenity) => {
+            return await RoomAmenity.create({
+                room: roomId,
+                amenity: amenity.amenityId,
+                quantity: amenity.quantity,
+                status: amenity.status
+            });
+        });
+
+        await Promise.all(amenityPromises);
+
+        // Fetch and return updated amenities
+        const updatedAmenities = await RoomAmenity.find({ room: roomId })
+            .populate('amenity')
+            .lean();
+
+        return res.status(200).json({
+            status: "OK",
+            message: "Room amenities updated successfully",
+            data: updatedAmenities
+        });
+    } catch (error) {
+        console.error("Error in updateRoomAmenities:", error);
+        return res.status(500).json({
+            status: "ERR",
+            message: "Failed to update room amenities",
+            error: error.message
+        });
+    }
+};
 
 module.exports = {
     getAllRoomAmenities,
@@ -169,6 +250,7 @@ module.exports = {
     deleteRoomAmenity,
     getNotFunctioningRoomAmenities,
     getRoomAmenitiesByRoomId,
+    getRoomAmenities,
     updateRoomAmenities,
     getAmenitiesByRoomIdController,
     updateRoomAmenitiesByRoomIdController
