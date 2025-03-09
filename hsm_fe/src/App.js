@@ -322,6 +322,9 @@ const ProtectedRoute = ({ element, requiredPermissions }) => {
     }
 
     if (requiredPermissions && !requiredPermissions.some(p => userPermissions.includes(p))) {
+        if (userPermissions.includes("Janitor")) {
+            return element; // Cho phép Janitor truy cập nếu có
+        }
         console.log("You don't have the permission to view this");
         return <Navigate to="/dashboard" />;
     }

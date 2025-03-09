@@ -2,11 +2,16 @@ const mongoose = require("mongoose");
 
 const roomAmenitiesSchema = new mongoose.Schema(
     {
-        AmenitiesName: { type: String, required: true, trim: true },
-        Note: { type: String, required: true, trim: true }
+        room: { type: mongoose.Schema.Types.ObjectId, ref: "Room", required: true },
+        amenity: { type: mongoose.Schema.Types.ObjectId, ref: "Amenity", required: true },
+        quantity: { type: Number, required: true, min: 1 },
+        status: { type: String, enum: ["Functioning", "Broken", "Under Maintenance"], default: "Functioning" }
+    },
+    {
+        timestamps: true,
     }
 );
 
-const RoomAmenities = mongoose.model("room_amenities", roomAmenitiesSchema);
+const RoomAmenity = mongoose.model("roomamenities", roomAmenitiesSchema);
 
-module.exports = RoomAmenities;
+module.exports = RoomAmenity;

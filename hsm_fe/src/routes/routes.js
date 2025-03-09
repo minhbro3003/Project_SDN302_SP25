@@ -15,7 +15,8 @@ import EmployeesPage from "../pages/EmployeesPage/EmployeesPage";
 import EmployeeDetail from "../pages/EmployeesPage/EmployeeDetail/EmployeeDetail";
 import AddHotel from "../pages/HotelPage/AddHotel";
 import HotelList from "../pages/HotelPage/HotelList";
-
+import Housekeeping from "../pages/HouseKeepingPage/HouseKeepingPage";
+import HousekeepingHistory from "../pages/HouseKeepingPage/House History/HouseHistoryPage";
 
 
 export const routes = [
@@ -32,7 +33,7 @@ export const routes = [
         page: Dashboard,
         isShowHeader: true,
         icon: <HomeOutlined />,
-        permissions: ["Admin", "Receptionist", "Janitor"], // Accessible by all
+        permissions: ["Admin", "Receptionist"], // Accessible by all
     },
     {
         path: "/login",
@@ -79,7 +80,7 @@ export const routes = [
         page: RevenuePage,
         isShowHeader: true,
         icon: <SettingOutlined />,
-        permissions: ["Admin", "Receptionist", "Janitor"],
+        permissions: ["Admin", "Receptionist"],
     },
     {
         path: "/booking-log",
@@ -87,13 +88,13 @@ export const routes = [
         page: BookingPage,
         isShowHeader: true,
         icon: <SettingOutlined />,
-        permissions: ["Admin", "Receptionist", "Janitor"],
+        permissions: ["Admin", "Receptionist"],
     },
     {
         path: "/hotel",
         name: "Hotel",
         isShowHeader: true,
-        roles: ["Admin"],
+        permissions: ["Admin"],
         icon: <BankOutlined />,
         children: [
             {
@@ -118,7 +119,7 @@ export const routes = [
         path: "/rooms",
         name: "Rooms",
         isShowHeader: true,
-        permissions: ["Admin", "Receptionist", "Janitor"],
+        permissions: ["Admin", "Receptionist"],
         icon: <BarChartOutlined />,
         children: [
             {
@@ -127,7 +128,7 @@ export const routes = [
                 isShowHeader: true,
                 page: RoomDashboard,
                 icon: <LineChartOutlined />,
-                permissions: ["Admin", "Receptionist", "Janitor"],
+                permissions: ["Admin", "Receptionist"],
             },
             {
                 path: "/rooms/room-list",
@@ -135,7 +136,7 @@ export const routes = [
                 isShowHeader: true,
                 page: RoomList,
                 icon: <TableOutlined />,
-                permissions: ["Admin", "Receptionist", "Janitor"],
+                permissions: ["Admin", "Receptionist"],
             },
             {
                 path: "/rooms/add-room",
@@ -143,9 +144,25 @@ export const routes = [
                 isShowHeader: true,
                 icon: <PlusCircleOutlined />,
                 page: AddRoom,
-                permissions: ["Admin", "Receptionist", "Janitor"],
+                permissions: ["Admin", "Receptionist"],
             },
         ],
+    },
+    {
+        path: "/housekeepinghistory",
+        name: "House Keeping History",
+        page: HousekeepingHistory,
+        isShowHeader: true,
+        icon: <TableOutlined />,
+        permissions: ["Admin"],
+    },
+    {
+        path: "/housekeeping",
+        name: "House Keeping",
+        page: Housekeeping,
+        isShowHeader: true,
+        icon: <TableOutlined />,
+        permissions: ["Janitor"],
     },
     {
         path: "/profile",
@@ -169,7 +186,7 @@ export const routes = [
         page: AccountPage,
         isShowHeader: true,
         icon: <HomeOutlined />,
-        permissions: ["Admin", "Receptionist", "Janitor"],
+        permissions: ["Admin", "Receptionist"],
     },
     {
         path: "*",

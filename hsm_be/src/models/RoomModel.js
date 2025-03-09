@@ -7,7 +7,7 @@ const roomSchema = new mongoose.Schema(
         Price: { type: Number, required: true, min: 0 },
         Status: {
             type: String,
-            enum: ["Available", "Booked"],
+            enum: ["Available", "Available - Need Cleaning", "Available - Cleaning"],
             default: "Available",
         },
         Floor: { type: Number, required: true },
@@ -21,7 +21,7 @@ const roomSchema = new mongoose.Schema(
             {
                 room_amenitiesID: {
                     type: mongoose.Schema.Types.ObjectId,
-                    ref: "room_amenities",
+                    ref: "roomamenities",
                     required: true,
                 },
                 quantity: { type: Number, required: true },

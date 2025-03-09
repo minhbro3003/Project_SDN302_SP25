@@ -22,7 +22,8 @@ const employeeSchema = new mongoose.Schema(
             type: mongoose.Schema.Types.ObjectId, 
                         ref: "Account", 
                         required: true 
-        }
+        },
+        permission: {type: mongoose.Schema.Types.ObjectId, ref: "permissions", require: true}
 
     },
     {
