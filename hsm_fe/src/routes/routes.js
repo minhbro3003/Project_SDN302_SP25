@@ -21,6 +21,7 @@ import VerificationPage from "../pages/ReservationPage/VerificationPayment";
 import ServicePage from "../pages/ServicePage/ServicePage";
 import Housekeeping from "../pages/HouseKeepingPage/HouseKeepingPage";
 import HousekeepingHistory from "../pages/HouseKeepingPage/House History/HouseHistoryPage";
+import BookingLogs from "../pages/BookingPage/BookingLogs";
 
 
 export const routes = [
@@ -125,6 +126,31 @@ export const routes = [
         ],
     },
     {
+        path: "/booking",
+        name: "Booking",
+        isShowHeader: true,
+        permissions: ["Admin"],
+        icon: <BankOutlined />,
+        children: [
+            {
+                path: "/booking/booking-calendar",
+                name: "Booking Log",
+                isShowHeader: true,
+                icon: <ProfileOutlined />,
+                page: BookingPage,
+                roles: ["Admin"],
+            },
+            {
+                path: "/booking/booking-list",
+                name: "Booking List",
+                isShowHeader: true,
+                icon: <ProfileOutlined />,
+                page: BookingLogs,
+                roles: ["Admin"],
+            },
+        ],
+    },
+    {
         path: "/reservations",
         name: "Reservation",
         isShowHeader: true,
@@ -195,22 +221,6 @@ export const routes = [
         isShowHeader: true,
         icon: <TableOutlined />,
         permissions: ["Janitor"],
-    },
-    {
-        path: "/profile",
-        name: "Profile",
-        page: ProfilePage,
-        isShowHeader: true,
-        icon: <HomeOutlined />,
-        permissions: ["Admin", "Receptionist", "Janitor"],
-    },
-    {
-        path: "/home",
-        name: "Home",
-        page: HomePage,
-        isShowHeader: true,
-        icon: <HomeOutlined />,
-        permissions: ["Admin", "Receptionist", "Janitor"],
     },
     {
         path: "/account",

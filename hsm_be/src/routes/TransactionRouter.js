@@ -23,6 +23,15 @@ router.put("/:id"/*,authMiddleware*/, TransactionController.updateTransaction);
 // Delete a transaction by ID
 router.delete("/:id"/*,authMiddleware*/, TransactionController.deleteTransaction);
 
+// Add extra services to a transaction
+router.post("/:id/add-services"/*,authMiddleware*/, TransactionController.addExtraServices);
+
+// Update booking status
+router.put("/:id/status"/*,authMiddleware*/, TransactionController.updateBookingStatus);
+
+// Update transaction information
+router.put("/:id/information"/*,authMiddleware*/, TransactionController.updateTransactionInfo);
+
 router.post('/create_payment_url', createPaymentLink);
 
 

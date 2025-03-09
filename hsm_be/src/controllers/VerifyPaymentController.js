@@ -3,8 +3,12 @@ const Transaction = require("../models/TransactionModel");
 const verifyPayment = async (req, res) => {
     try {
         const vnp_Params = req.query;
-        console.log("VNPay Response Params:", vnp_Params);
-
+        if (toString(vnp_Params.vnp_Params) !== "01") {
+            return res.json({
+                status: "Err",
+                message: "Customer cancel or system error in transaction",
+            });
+        }
         // Ensure correct transactionID extraction
         let transactionID = vnp_Params.transactionID;
         if (transactionID.includes("?")) {

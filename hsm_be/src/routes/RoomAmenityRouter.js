@@ -19,6 +19,10 @@ router.put("/:id"/*,authMiddleware*/, RoomAmenityController.updateRoomAmenity);
 // Delete a booking by ID
 router.delete("/:id"/*,authMiddleware*/, RoomAmenityController.deleteRoomAmenity);
 
+router.post("/:id", RoomAmenityController.getRoomAmenitiesByRoomId);
+
+router.post("/:id", RoomAmenityController.updateRoomAmenities);
+
 //get all amenities in room
 router.get("/:roomId/amenities", RoomAmenityController.getAmenitiesByRoomIdController)
 

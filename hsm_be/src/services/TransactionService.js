@@ -9,8 +9,16 @@ const { createPaymentLinkAD } = require("../utils");
 const getAllTransactions = async () => {
     try {
         const allTransactions = await Transaction.find()
-            .populate("bookings") // Populate booking details
-            .populate("services"); // Populate service details
+            .populate({
+                path: "bookings",
+                populate: {
+                    path: "rooms",
+                    model: "Room",  // Explicitly define the model
+                    select: "RoomName", // Only fetch RoomName
+                }
+            })
+            .populate("services") // Populate service details
+            .populate("customers");
 
         return {
             status: "OK",
@@ -226,8 +234,8 @@ const createBookingAndTransaction = async (bookingData, transactionData) => {
             throw new Error('At least one room must be selected');
         }
 
+        // Find or create customer
         let existingCustomer = await Customer.findOne({ $or: [{ cccd }, { phone }] });
-
         if (existingCustomer) {
             if (existingCustomer.full_name !== full_name) {
                 const newCustomer = new Customer({ full_name, phone, cccd });
@@ -238,45 +246,46 @@ const createBookingAndTransaction = async (bookingData, transactionData) => {
             existingCustomer = await newCustomer.save();
         }
 
-        // **Step 1: Update Room Status to "Booked"**
-        await Room.updateMany(
-            { _id: { $in: rooms }, Status: "Available" },
-            { $set: { Status: "Available" } }
-        );
+        // Create a booking for each room
+        const bookingPromises = rooms.map(async (roomId) => {
+            const room = await Room.findById(roomId);
+            if (!room) {
+                throw new Error(`Room ${roomId} not found`);
+            }
 
-        // **Step 2: Create a Booking**
-        const newBooking = new Booking({
-            customers: existingCustomer._id,
-            SumPrice,
-            Status,
-            Time: {
-                Checkin: new Date(checkin),
-                Checkout: new Date(checkout),
-            },
-            rooms,
+            const booking = new Booking({
+                customers: existingCustomer._id,
+                rooms: roomId, // Single room per booking
+                Time: {
+                    Checkin: new Date(checkin),
+                    Checkout: new Date(checkout),
+                },
+                SumPrice: room.Price, // Use the room's price
+                Status: Status || "Pending",
+                hotel: room.hotel // Link to the hotel
+            });
+
+            return booking.save();
         });
 
-        await newBooking.save();
+        // Wait for all bookings to be created
+        const savedBookings = await Promise.all(bookingPromises);
+        console.log('Created bookings:', savedBookings.map(b => b._id));
 
-        // **Step 3: Calculate Total Service Price**
+        // Calculate total service price
         let totalServicePrice = 0;
         const transactionServices = [];
 
         for (const service of transactionData.services || []) {
             const serviceDetails = await Service.findById(service.serviceId);
-
             if (!serviceDetails) {
-                throw new Error(`Service ${serviceDetails?.ServiceName || "Unknown"} is unavailable.`);
+                throw new Error(`Service ${service.serviceId} not found`);
             }
 
             const pricePerUnit = serviceDetails.Price;
             const totalPrice = pricePerUnit * service.quantity;
 
             totalServicePrice += totalPrice;
-
-            serviceDetails.Quantity -= service.quantity;
-            await serviceDetails.save();
-
             transactionServices.push({
                 serviceId: service.serviceId,
                 quantity: service.quantity,
@@ -285,16 +294,15 @@ const createBookingAndTransaction = async (bookingData, transactionData) => {
             });
         }
 
-        // **Step 4: Create a Transaction**
-        const finalPrice = (transactionData.FinalPrice || newBooking.SumPrice) + totalServicePrice;
+        // Create transaction with all bookings
+        const finalPrice = transactionData.FinalPrice || (SumPrice + totalServicePrice);
         const paidAmount = transactionData.PaidAmount || 0;
-        const paymentType = transactionData.paymentType;
         let payStatus = "Unpaid";
         if (paidAmount >= finalPrice) payStatus = "Paid";
         else if (paidAmount > 0) payStatus = "Partial";
 
         const newTransaction = new Transaction({
-            bookings: [newBooking._id],
+            bookings: savedBookings.map(b => b._id), // Array of booking IDs
             services: transactionServices,
             BuyTime: new Date(),
             FinalPrice: finalPrice,
@@ -305,13 +313,12 @@ const createBookingAndTransaction = async (bookingData, transactionData) => {
             CreatedBy: transactionData.CreatedBy,
         });
 
-        const savedTransaction = await newTransaction.save(); // Save and get the transactionID
+        const savedTransaction = await newTransaction.save();
         const transactionID = savedTransaction._id;
 
-        // **Step 5: Generate Payment Link (Only if Credit Card)**
+        // Generate payment link if credit card
         if (transactionData.PaymentMethod === "Credit Card") {
             let payAmount = finalPrice;
-
             if (transactionData.paymentType === "Partial Pay") {
                 payAmount = Math.ceil(finalPrice * 0.3); // 30% of FinalPrice, rounded up
             }
@@ -323,7 +330,6 @@ const createBookingAndTransaction = async (bookingData, transactionData) => {
                 transactionID
             );
 
-            // **Step 6: Update Transaction with Payment Link**
             savedTransaction.PaymentReference = paymentLink;
             await savedTransaction.save();
         }
@@ -332,13 +338,13 @@ const createBookingAndTransaction = async (bookingData, transactionData) => {
             status: "OK",
             message: "Booking and transaction created successfully",
             data: {
-                booking: newBooking,
+                bookings: savedBookings,
                 transaction: savedTransaction,
                 transactionID
             },
         };
     } catch (error) {
-        console.error("Error in createBookingAndTransaction:", error.message);
+        console.error("Error in createBookingAndTransaction:", error);
         return {
             status: "ERR",
             message: "Failed to create booking and transaction",
@@ -347,10 +353,157 @@ const createBookingAndTransaction = async (bookingData, transactionData) => {
     }
 };
 
+const addExtraServices = async (transactionId, newServices) => {
+    try {
+        const transaction = await Transaction.findById(transactionId)
+            .populate('services.serviceId');
+        if (!transaction) {
+            return {
+                status: "ERR",
+                message: "Transaction not found"
+            };
+        }
 
+        // Fetch full service details for each new service
+        const servicePromises = newServices.map(async (service) => {
+            const fullService = await Service.findById(service.serviceId);
+            if (!fullService) {
+                throw new Error(`Service with ID ${service.serviceId} not found`);
+            }
+            return {
+                serviceId: service.serviceId,
+                quantity: service.quantity,
+                pricePerUnit: fullService.Price,
+                totalPrice: fullService.Price * service.quantity
+            };
+        });
 
+        const formattedServices = await Promise.all(servicePromises);
+        const additionalCost = formattedServices.reduce((sum, service) => sum + service.totalPrice, 0);
 
+        // Update transaction with new services and price
+        transaction.services.push(...formattedServices);
+        transaction.FinalPrice = (transaction.FinalPrice || 0) + additionalCost;
+        transaction.Status = "Pending"; // Set status to Pending when adding services
 
+        // Update payment status if needed
+        if (transaction.PaidAmount < transaction.FinalPrice) {
+            transaction.Pay = transaction.PaidAmount > 0 ? "Partial" : "Unpaid";
+        }
+
+        await transaction.save();
+
+        return {
+            status: "OK",
+            message: "Extra services added successfully",
+            data: transaction
+        };
+    } catch (error) {
+        console.error("Error in addExtraServices:", error.message);
+        return {
+            status: "ERR",
+            message: "Failed to add extra services",
+            error: error.message
+        };
+    }
+};
+
+const updateBookingStatus = async (transactionId, newStatus) => {
+    try {
+        const transaction = await Transaction.findById(transactionId);
+        if (!transaction) {
+            return {
+                status: "ERR",
+                message: "Transaction not found"
+            };
+        }
+
+        // Validate status
+        const validStatuses = ["Pending", "Completed", "Cancelled"];
+        if (!validStatuses.includes(newStatus)) {
+            return {
+                status: "ERR",
+                message: "Invalid status provided"
+            };
+        }
+
+        transaction.Status = newStatus;
+        await transaction.save();
+
+        // If transaction is completed, update related bookings
+        if (newStatus === "Completed") {
+            await Booking.updateMany(
+                { _id: { $in: transaction.bookings } },
+                { $set: { Status: "Completed" } }
+            );
+        }
+
+        return {
+            status: "OK",
+            message: "Status updated successfully",
+            data: transaction
+        };
+    } catch (error) {
+        console.error("Error in updateBookingStatus:", error.message);
+        return {
+            status: "ERR",
+            message: "Failed to update status",
+            error: error.message
+        };
+    }
+};
+
+const updateTransactionInfo = async (transactionId, updateData) => {
+    try {
+        const transaction = await Transaction.findById(transactionId);
+        if (!transaction) {
+            return {
+                status: "ERR",
+                message: "Transaction not found"
+            };
+        }
+
+        // Update allowed fields
+        const allowedUpdates = [
+            "PaidAmount",
+            "PaymentMethod",
+            "PaymentReference",
+            "UpdatedBy"
+        ];
+
+        Object.keys(updateData).forEach(key => {
+            if (allowedUpdates.includes(key)) {
+                transaction[key] = updateData[key];
+            }
+        });
+
+        // Recalculate payment status if PaidAmount is updated
+        if (updateData.PaidAmount !== undefined) {
+            if (updateData.PaidAmount >= transaction.FinalPrice) {
+                transaction.Pay = "Paid";
+            } else if (updateData.PaidAmount > 0) {
+                transaction.Pay = "Partial";
+            } else {
+                transaction.Pay = "Unpaid";
+            }
+        }
+
+        await transaction.save();
+
+        return {
+            status: "OK",
+            message: "Transaction information updated successfully",
+            data: transaction
+        };
+    } catch (error) {
+        console.error("Error in updateTransactionInfo:", error.message);
+        return {
+            status: "ERR",
+            message: "Failed to update transaction information",
+            error: error.message
+        };
+    }
+};
 
 module.exports = {
     getAllTransactions,
@@ -360,4 +513,7 @@ module.exports = {
     updateTransaction,
     deleteTransaction,
     createBookingAndTransaction,
+    addExtraServices,
+    updateBookingStatus,
+    updateTransactionInfo
 };
