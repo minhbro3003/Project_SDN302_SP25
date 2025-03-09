@@ -18,7 +18,7 @@ import HotelList from "../pages/HotelPage/HotelList";
 import ReservationPage from "../pages/ReservationPage/ReservationPage";
 import ReservationList from "../pages/ReservationPage/ReservationListPage";
 import VerificationPage from "../pages/ReservationPage/VerificationPayment";
-
+import ServicePage from "../pages/ServicePage/ServicePage";
 
 
 export const routes = [
@@ -201,6 +201,14 @@ export const routes = [
         isShowHeader: true,
         icon: <HomeOutlined />,
         permissions: ["Admin", "Receptionist", "Janitor"],
+    },
+    {
+        path: "/service",
+        name: "Service",
+        page: ServicePage,
+        isShowHeader: true,
+        icon: <HomeOutlined />,
+        permissions: ["Admin"],
     },
     {
         path: "*",
