@@ -2,7 +2,6 @@ const Employee = require("../models/EmployeeModel");
 const Hotel = require("../models/HotelModel");
 const EmployeeType = require("../models/EmployeeTypeModel");
 const Permission = require("../models/PermissionModel");
-const WorkingShift = require("../models/WorkingShiftModel");
 const Account = require("../models/AccountModel");
 
 const getAllEmployeeType = () => {
@@ -28,21 +27,6 @@ const getAllPermission = () => {
                 status: "OK",
                 message: " All permission successfully",
                 data: allPermission,
-            });
-        } catch (e) {
-            reject(e);
-        }
-    });
-};
-
-const getAllWorkingShift = () => {
-    return new Promise(async (resolve, reject) => {
-        try {
-            const allWorkingShift = await WorkingShift.find();
-            resolve({
-                status: "OK",
-                message: " All WorkingShift successfully",
-                data: allWorkingShift,
             });
         } catch (e) {
             reject(e);
@@ -100,18 +84,18 @@ const getListEmployees = async () => {
             model: "permissions",
         },
     }); // Load thông tin khách sạn từ bảng hotels
-    
+
     return employees.map(emp => ({
         fullname: emp.FullName,
         email: emp.Email,
         phone: emp.Phone,
 
-        position: emp.accountId && emp.accountId.permissions.length > 0 
-            ? emp.accountId.permissions.map(p => `${p.PermissionName}`).join(", ") 
+        position: emp.accountId && emp.accountId.permissions.length > 0
+            ? emp.accountId.permissions.map(p => `${p.PermissionName}`).join(", ")
             : "No Position Assigned",
 
-        area: emp.hotels.length > 0 
-            ? `${emp.hotels[0].NameHotel} - ${emp.hotels[0].LocationHotel}` 
+        area: emp.hotels.length > 0
+            ? `${emp.hotels[0].NameHotel} - ${emp.hotels[0].LocationHotel}`
             : "No Hotel Assigned"
     }));
 };
@@ -120,6 +104,5 @@ module.exports = {
     getAllEmployeeType,
     getAllPermission,
     createEmployee,
-    getAllWorkingShift,
     getListEmployees
 };

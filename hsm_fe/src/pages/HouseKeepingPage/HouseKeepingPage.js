@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
-import { Card, message, Dropdown, Menu, Modal } from "antd";
+import { Card, message, Dropdown, Menu, Modal, notification } from "antd";
 import { ClearOutlined, MoreOutlined } from "@ant-design/icons";
-import { ToastContainer, toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
+// import { ToastContainer, toast as api } from "react-toastify";
+// import "react-toastify/dist/ReactToastify.css";
 import {
   getAllRoom,
   updateHousekeepingTask,
@@ -16,6 +16,7 @@ const Housekeeping = () => {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [tasks, setTasks] = useState([]);
   const [currentEmployeeId, setCurrentEmployeeId] = useState(null);
+  const [api, contextHolder] = notification.useNotification();
 
   useEffect(() => {
     fetchRooms();
@@ -34,7 +35,7 @@ const Housekeeping = () => {
       const parsedData = JSON.parse(persistedData);
       const accountData = parsedData.account ? JSON.parse(parsedData.account) : null;
       const employeeId = accountData ? accountData.id : null;
-      
+
       setCurrentEmployeeId(employeeId);
       return employeeId;
     } catch (error) {
@@ -100,7 +101,7 @@ const Housekeeping = () => {
     const persistedData = localStorage.getItem("persist:root");
     if (!persistedData) {
       console.error("Không tìm thấy dữ liệu tài khoản. Hãy đăng nhập lại.");
-      toast.error("Không tìm thấy dữ liệu tài khoản. Hãy đăng nhập lại.", { autoClose: 3000 });
+      api.error("Không tìm thấy dữ liệu tài khoản. Hãy đăng nhập lại.", { autoClose: 3000 });
       return;
     }
 
@@ -112,10 +113,10 @@ const Housekeeping = () => {
       const employeeId = accountData ? accountData.id : null;
 
       if (!employeeId) {
-        toast.error("Không tìm thấy ID nhân viên. Hãy đăng nhập lại.", { autoClose: 3000 });
+        api.error("Không tìm thấy ID nhân viên. Hãy đăng nhập lại.", { autoClose: 3000 });
         return;
       }
-      
+
       const response = await axios.post(
         `${process.env.REACT_APP_API_URL_BACKEND}/housekeeping/create`,
         {
@@ -136,7 +137,7 @@ const Housekeeping = () => {
           )
         );
 
-        toast.success("Registration successful", { autoClose: 3000 });
+        api.success("Registration successful", { autoClose: 3000 });
       }
       await fetchTasks();
       await fetchRooms();
@@ -144,9 +145,9 @@ const Housekeeping = () => {
       console.error("Lỗi khi tạo housekeeping task:", error);
       // ⚠️ Hiển thị cảnh báo khi nhân viên đã có task
       if (error.response && error.response.data) {
-        toast.warning(error.response.data.message, { autoClose: 3000 });
+        api.warning(error.response.data.message, { autoClose: 3000 });
       } else {
-        toast.error("Failed to create housekeeping task", { autoClose: 3000 });
+        api.error("Failed to create housekeeping task", { autoClose: 3000 });
       }
     }
   };
@@ -179,13 +180,13 @@ const Housekeeping = () => {
       );
 
       if (!housekeepingTask) {
-        toast.error("Không tìm thấy công việc dọn phòng.", { autoClose: 3000 });
+        api.error("Không tìm thấy công việc dọn phòng.", { autoClose: 3000 });
         return;
       }
 
       // Kiểm tra quyền truy cập
       if (housekeepingTask.assignedTo._id !== currentEmployeeId) {
-        toast.error("Bạn không phải là nhân viên được giao nhiệm vụ dọn phòng này!", { autoClose: 3000 });
+        api.error("Bạn không phải là nhân viên được giao nhiệm vụ dọn phòng này!", { autoClose: 3000 });
         return;
       }
 
@@ -194,7 +195,7 @@ const Housekeeping = () => {
 
       if (key === "cleaned") {
         await updateHousekeepingTask(housekeepingTask._id, "Completed");
-        toast.success("Room cleaned successfully", { autoClose: 3000 });
+        api.success("Room cleaned successfully", { autoClose: 3000 });
       } else if (key === "canceled") {
         const note = prompt("Reason for cancellation of room cleaning?");
         if (!note) {
@@ -202,17 +203,17 @@ const Housekeeping = () => {
         }
 
         await updateHousekeepingTask(housekeepingTask._id, "Cancelled", note);
-        toast.warning("Room cleaning task canceled", { autoClose: 3000 });
+        api.warning("Room cleaning task canceled", { autoClose: 3000 });
       }
-      
+
       setRooms((prevRooms) =>
         prevRooms.map((room) =>
           room.id === selectedRoom.id
             ? {
-                ...room,
-                status:
-                  key === "cleaned" ? "Available" : "Available - Need Cleaning",
-              }
+              ...room,
+              status:
+                key === "cleaned" ? "Available" : "Available - Need Cleaning",
+            }
             : room
         )
       );
@@ -228,15 +229,15 @@ const Housekeeping = () => {
 
   const handleMoreClick = (room, e) => {
     e.stopPropagation();
-    
+
     // Kiểm tra quyền truy cập
     const hasPermission = checkAssignmentPermission(room.id);
-    
+
     if (!hasPermission) {
-      toast.error("Bạn không phải là nhân viên được giao nhiệm vụ dọn phòng này!", { autoClose: 3000 });
+      api.error("Bạn không phải là nhân viên được giao nhiệm vụ dọn phòng này!", { autoClose: 3000 });
       return;
     }
-    
+
     setSelectedRoom(room);
   };
 
@@ -249,7 +250,7 @@ const Housekeeping = () => {
 
   return (
     <div style={{ padding: "24px" }}>
-      <ToastContainer />
+      {contextHolder}
       <h1
         style={{ fontSize: "20px", fontWeight: "bold", marginBottom: "16px" }}
       >
@@ -267,7 +268,7 @@ const Housekeeping = () => {
           const cleaningTask = tasks.find(
             (task) => task.room._id === room.id && task.status === "In Progress"
           );
-          
+
           // Kiểm tra quyền truy cập
           const hasPermission = cleaningTask && cleaningTask.assignedTo._id === currentEmployeeId;
 
@@ -316,9 +317,9 @@ const Housekeeping = () => {
 
                   {/* Hiển thị dropdown chỉ khi có quyền truy cập */}
                   {selectedRoom && selectedRoom.id === room.id && hasPermission && (
-                    <Dropdown 
-                      overlay={menu} 
-                      trigger={["click"]} 
+                    <Dropdown
+                      overlay={menu}
+                      trigger={["click"]}
                       visible={selectedRoom && selectedRoom.id === room.id}
                       onVisibleChange={(visible) => !visible && setSelectedRoom(null)}
                     >

@@ -31,21 +31,6 @@ const getAllPermission = async (req, res) => {
 };
 
 
-const getAllWorkingShift = async (req, res) => {
-    try {
-        const working_shift = await EmployeeService.getAllWorkingShift();
-        return res.status(200).json(working_shift);
-    } catch (e) {
-        return res.status(404).json({
-            message: "WorkingShift not found",
-            error: e.message,
-        });
-    }
-};
-
-
-
-
 const createEmployee = async (req, res) => {
     try {
         const {
@@ -131,7 +116,6 @@ module.exports = {
     getAllEmployeeType,
     getAllPermission,
     createEmployee,
-    getAllWorkingShift,
     listEmployees,
     getEmployeeByAccountId
 };
