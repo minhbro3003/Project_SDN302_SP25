@@ -23,4 +23,7 @@ router.delete("/:id", roomsController.deleteRoom);
 //router get room by id
 router.get("/:id", roomsController.getRoomByRoomId);
 
+// Get rooms by hotel
+router.get("/hotel/:hotelId", roomsController.getRoomsByHotel);
+
 module.exports = router;
