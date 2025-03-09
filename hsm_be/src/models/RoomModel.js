@@ -6,7 +6,7 @@ const roomSchema = new mongoose.Schema(
         Price: { type: Number, required: true, min: 0 },
         Status: {
             type: String,
-            enum: ["Available", "Booked"],
+            enum: ["Available", "Available - Need Cleaning", "Available - Cleaning"],
             default: "Available",
         },
         Floor: { type: Number, required: true },
