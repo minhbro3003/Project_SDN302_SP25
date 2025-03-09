@@ -1,8 +1,9 @@
 const Employee = require("../models/EmployeeModel");
-
+const Hotel = require("../models/HotelModel");
 const EmployeeType = require("../models/EmployeeTypeModel");
 const Permission = require("../models/PermissionModel");
 const WorkingShift = require("../models/WorkingShiftModel");
+const Account = require("../models/AccountModel");
 
 const getAllEmployeeType = () => {
     return new Promise(async (resolve, reject) => {
@@ -90,11 +91,35 @@ const createEmployee = (newEmployee) => {
     });
 };
 
+const getListEmployees = async () => {
 
+    const employees = await Employee.find().populate("hotels").populate({
+        path: "accountId", // Lấy thông tin tài khoản
+        populate: {
+            path: "permissions", // Lấy thông tin quyền
+            model: "permissions",
+        },
+    }); // Load thông tin khách sạn từ bảng hotels
+    
+    return employees.map(emp => ({
+        fullname: emp.FullName,
+        email: emp.Email,
+        phone: emp.Phone,
+
+        position: emp.accountId && emp.accountId.permissions.length > 0 
+            ? emp.accountId.permissions.map(p => `${p.PermissionName}`).join(", ") 
+            : "No Position Assigned",
+
+        area: emp.hotels.length > 0 
+            ? `${emp.hotels[0].NameHotel} - ${emp.hotels[0].LocationHotel}` 
+            : "No Hotel Assigned"
+    }));
+};
 
 module.exports = {
     getAllEmployeeType,
     getAllPermission,
     createEmployee,
-    getAllWorkingShift
+    getAllWorkingShift,
+    getListEmployees
 };
