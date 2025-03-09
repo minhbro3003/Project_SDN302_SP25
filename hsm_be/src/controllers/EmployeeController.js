@@ -30,25 +30,10 @@ const getAllPermission = async (req, res) => {
 };
 
 
-const getAllWorkingShift = async (req, res) => {
-    try {
-        const working_shift = await EmployeeService.getAllWorkingShift();
-        return res.status(200).json(working_shift);
-    } catch (e) {
-        return res.status(404).json({
-            message: "WorkingShift not found",
-            error: e.message,
-        });
-    }
-};
-
-
-
-
 const createEmployee = async (req, res) => {
     try {
         const {
-            hotels, 
+            hotels,
             FullName,
             permissions,
             Phone,
@@ -56,17 +41,17 @@ const createEmployee = async (req, res) => {
             Gender,
             Image,
             Address,
-         
-             
+
+
         } = req.body;
         const mailformat = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/;
         const isCheckEmail = mailformat.test(Email);
         // console.log("req.body", req.body);
-        if (!FullName || !Phone || !Email || !Address ) {
+        if (!FullName || !Phone || !Email || !Address) {
             return res
                 .status(200)
                 .json({ status: "ERR", message: "The input is required." });
-        }else if (!isCheckEmail) {
+        } else if (!isCheckEmail) {
             return res
                 .status(200)
                 .json({ status: "ERR", message: "The input is email." });
@@ -95,6 +80,5 @@ module.exports = {
     getAllEmployeeType,
     getAllPermission,
     createEmployee,
-    getAllWorkingShift,
     listEmployees,
 };
