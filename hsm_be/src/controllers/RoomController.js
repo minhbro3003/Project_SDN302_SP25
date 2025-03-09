@@ -194,7 +194,26 @@ const getAvailableRooms_ = async (req, res) => {
     }
 };
 
+const getRoomsByHotel = async (req, res) => {
+    try {
+        const hotelId = req.params.hotelId;
+        if (!hotelId) {
+            return res.status(400).json({
+                status: "ERR",
+                message: "Hotel ID is required"
+            });
+        }
 
+        const response = await RoomService.getRoomsByHotelService(hotelId);
+        return res.status(200).json(response);
+    } catch (error) {
+        return res.status(500).json({
+            status: "ERR",
+            message: "Internal server error",
+            error: error.message
+        });
+    }
+};
 
 module.exports = {
     getAllRooms,
@@ -204,4 +223,5 @@ module.exports = {
     getRoomByRoomId,
     getAvailableRooms,
     getAvailableRooms_,
+    getRoomsByHotel
 };

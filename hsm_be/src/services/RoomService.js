@@ -222,7 +222,29 @@ const getAvailableRooms_ = async (startDate, endDate) => {
     }
 };
 
+const getRoomsByHotelService = async (hotelId) => {
+    try {
+        const rooms = await Rooms.find({
+            hotel: hotelId,
+            IsDelete: false
+        })
+            .populate("roomtype")
+            .populate("hotel", "CodeHotel NameHotel");
 
+        return {
+            status: "OK",
+            message: "Rooms retrieved successfully",
+            data: rooms
+        };
+    } catch (error) {
+        console.error("Error in getRoomsByHotelService:", error.message);
+        return {
+            status: "ERR",
+            message: "Failed to retrieve rooms",
+            error: error.message
+        };
+    }
+};
 
 module.exports = {
     getAllRoomsService,
@@ -232,4 +254,5 @@ module.exports = {
     getRoomByRoomIdService,
     getAvailableRooms_,
     getAvailableRooms,
+    getRoomsByHotelService
 };
