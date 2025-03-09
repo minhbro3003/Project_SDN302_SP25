@@ -7,5 +7,6 @@ const {
 } = require("../middleware/authMiddleware");
 
 router.post("/create-employee", employeeController.createEmployee);
+router.get("/list-employees", employeeController.listEmployees);
 
 module.exports = router;

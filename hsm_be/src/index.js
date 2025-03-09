@@ -4,6 +4,7 @@ const mongoose = require("mongoose");
 const routes = require("./routes");
 const bodyParser = require("body-parser");
 const cors = require("cors");
+const morgan = require("morgan");
 const cookieParser = require("cookie-parser");
 dotenv.config();
 const connectDB = require("../dbConnect/db");
@@ -15,13 +16,16 @@ const port = process.env.PORT || 9999;
 app.use(cors());
 app.use(express.json({ limit: "2000mb" }));
 app.use(express.urlencoded({ limit: "2000mb", extended: true }));
+app.use(morgan("dev"));
+app.use(express.json({ limit: "50mb" }));
+app.use(express.urlencoded({ limit: "50mb", extended: true }));
 app.use(bodyParser.json());
 app.use(cookieParser()); // Lưu trữ cookie
 
 routes(app);
 
 app.listen(port, () => {
-    console.log(`Server is running on port ${port}`);
+    console.log(`Server is running on port http://localhost:${port}/`);
     //Connect database
     connectDB();
 });

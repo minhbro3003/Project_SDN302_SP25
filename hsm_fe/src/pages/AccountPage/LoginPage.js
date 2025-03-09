@@ -5,12 +5,15 @@ import { useNavigate } from "react-router-dom";
 import { Card, Form, Input, Button } from "antd";
 import { updateAccount } from "../../redux/accountSlice";
 import { loginAccount } from "../../services/accountService";
+import "./Login.css";
 
 const LoginPage = () => {
     const [formData, setFormData] = useState({
         email: "", // Changed to lowercase "email"
         password: "", // Changed to lowercase "password"
     });
+
+    const [captcha,setCaptcha] = useState(false);
 
     const formRef = useRef(null);
     const dispatch = useDispatch();
@@ -47,15 +50,21 @@ const LoginPage = () => {
     };
 
     return (
+        <div className="login-page__container">
+
         <Card
-            title="Đăng Nhập"
-            style={{ width: 400, margin: "auto", marginTop: 50 }}
+            title={<>  
+                    <h2 className="title">Welcome to PHM System</h2>
+                    <p className="subtitle">Login to continue</p>
+                    </>
+                    }
+            style={{ width: 600, margin: "auto", marginTop: "15%",padding: "20px",borderRadius: "28px" }}
         >
             <Form ref={formRef} layout="vertical" onFinish={handleSubmit}>
                 <Form.Item
-                    label="Email"
+                    label="Username"
                     name="email" // Changed to "email"
-                    rules={[{ required: true, message: "Vui lòng nhập email!" }]}
+                    rules={[{ required: true, message: "Please enter your username!" }]}
                 >
                     <Input
                         placeholder="Nhập email"
@@ -66,12 +75,12 @@ const LoginPage = () => {
                 </Form.Item>
 
                 <Form.Item
-                    label="Mật khẩu"
+                    label="Password"
                     name="password" // Changed to "password"
-                    rules={[{ required: true, message: "Vui lòng nhập mật khẩu!" }]}
+                    rules={[{ required: true, message: "Please enter your password!" }]}
                 >
                     <Input.Password
-                        placeholder="Nhập mật khẩu"
+                        placeholder="Enter password"
                         name="password" // Changed to lowercase "password"
                         value={formData.password}
                         onChange={handleOnChange}
@@ -82,18 +91,38 @@ const LoginPage = () => {
                     <span style={{ color: "red" }}>{mutation?.data?.message}</span>
                 )}
 
+                <div className="forgot-password">
+                     <a href="#">Forgot password?</a>
+                </div>
+
+                <div className="captcha">
+                        <div className="captcha_checkbox">
+                            <input type="checkbox" className="captcha_checkbox_input" value={captcha} onChange={(e)=>{setCaptcha(e.target.checked)}}/>
+                            <span className="captcha_checkbox_span"> I'm not a robot</span></div>
+                        <img
+                        className="img-fluid"
+                        src={require("../../asset/img/recaptcha-icon.png")}
+                        width="60px"
+                        height="60px"
+                        alt=""
+                        
+                    />
+                </div>
+
                 <Form.Item>
                     <Button
                         type="primary"
                         htmlType="submit"
                         loading={mutation.isLoading}
                         block
+                        disabled={mutation.isLoading || !captcha}
                     >
-                        Đăng Nhập
+                       Login
                     </Button>
                 </Form.Item>
             </Form>
         </Card>
+        </div>
     );
 };
 
