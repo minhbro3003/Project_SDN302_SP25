@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Input, Button, Form, notification, Card, Row, Col, Table, Alert, DatePicker, InputNumber, Select } from "antd";
 import { checkCustomerExists } from "../../services/CustomerService";
-import { getAvailableRooms } from "../../services/RoomService";
+import { getAvailableRooms, checkRoomAvailability } from "../../services/RoomService";
 import moment from "moment";
 import { getAllServices } from "../../services/ServiceService";
 import { createTransaction } from "../../services/TransactionService";
@@ -26,6 +26,7 @@ const ReservationPage = () => {
     const [autoFill, setAutoFill] = useState(false);
     const [dates, setDates] = useState([null, null]); // For check-in and check-out dates
     const [paymentType, setPaymentType] = useState(""); // For Partial Pay / Full Pay
+    const [checkingAvailability, setCheckingAvailability] = useState(false);
     const totalRoomPrice = selectedRooms.reduce((total, room) => total + room.Price, 0);
     const totalServicePrice = selectedServices.reduce((total, service) => total + service.totalPrice, 0);
     const finalPrice = totalRoomPrice + totalServicePrice;
@@ -144,7 +145,45 @@ const ReservationPage = () => {
     };
 
     const handleDateChange = (value) => {
-        setDates(value); // Set the check-in and check-out dates
+        setDates(value); // Set the check-in and check-out dates with time
+    };
+
+    const handleCheckAvailability = async () => {
+        if (!dates[0] || !dates[1]) {
+            api.error({
+                message: "Select Dates First",
+                description: "Please select the check-in and check-out dates before checking availability.",
+            });
+            return;
+        }
+
+        setCheckingAvailability(true);
+        try {
+            const result = await checkRoomAvailability(
+                dates[0].format("YYYY-MM-DD HH:mm:ss"),
+                dates[1].format("YYYY-MM-DD HH:mm:ss")
+            );
+
+            if (result.status === "OK") {
+                setAvailableRooms(result.data);
+                api.success({
+                    message: "Availability Checked",
+                    description: "Room availability has been updated based on your selected dates.",
+                });
+            } else {
+                api.error({
+                    message: "Error",
+                    description: result.message || "Failed to check room availability",
+                });
+            }
+        } catch (error) {
+            api.error({
+                message: "Error",
+                description: "An error occurred while checking room availability.",
+            });
+        } finally {
+            setCheckingAvailability(false);
+        }
     };
 
     const availableColumns = [
@@ -210,8 +249,8 @@ const ReservationPage = () => {
                 </span>
             )
         },
-        { title: "Check-in", dataIndex: "checkin", key: "checkin", render: (text) => moment(text).format("YYYY-MM-DD") },
-        { title: "Check-out", dataIndex: "checkout", key: "checkout", render: (text) => moment(text).format("YYYY-MM-DD") },
+        { title: "Check-in", dataIndex: "checkin", key: "checkin", render: (text) => moment(text).format("YYYY-MM-DD HH:mm") },
+        { title: "Check-out", dataIndex: "checkout", key: "checkout", render: (text) => moment(text).format("YYYY-MM-DD HH:mm") },
         {
             title: "Action",
             key: "action",
@@ -393,14 +432,32 @@ const ReservationPage = () => {
                     />
                 )}
 
-                {/* Date Picker */}
-                <Form.Item label="Dates" name="dates">
-                    <RangePicker
-                        format="YYYY-MM-DD"
-                        onChange={handleDateChange}
-                        disabledDate={(current) => current && current < moment().endOf("day")} // Disable past dates
-                    />
-                </Form.Item>
+                {/* Date Picker with Check Availability Button */}
+                <Row gutter={16}>
+                    <Col span={18}>
+                        <Form.Item label="Check-in/Check-out Time" name="dates">
+                            <RangePicker
+                                format="YYYY-MM-DD HH:mm"
+                                showTime={{ format: 'HH:mm' }}
+                                onChange={handleDateChange}
+                                disabledDate={(current) => current && current < moment().endOf("day")}
+                                placeholder={['Check-in date & time', 'Check-out date & time']}
+                            />
+                        </Form.Item>
+                    </Col>
+                    <Col span={6}>
+                        <Form.Item>
+                            <Button
+                                type="primary"
+                                onClick={handleCheckAvailability}
+                                loading={checkingAvailability}
+                                style={{ marginTop: "29px" }}
+                            >
+                                Check Availability
+                            </Button>
+                        </Form.Item>
+                    </Col>
+                </Row>
 
                 {/* Available Rooms Table */}
                 <Table columns={availableColumns} dataSource={availableRooms} rowKey="_id" />
