@@ -125,6 +125,41 @@ const getNotFunctioningRoomAmenities = async (req, res) => {
     }
 };
 
+const getRoomAmenitiesByRoomId = async (req, res) => {
+    try {
+        const roomAmenities = await RoomAmenityService.getRoomAmenitiesByRoomId(req.params.roomId);
+        if (!roomAmenities.data || roomAmenities.data.length === 0) {
+            return res.status(404).json({ message: "No amenities found for this room" });
+        }
+        return res.status(200).json(roomAmenities);
+    } catch (error) {
+        return res.status(500).json({
+            message: "Failed to retrieve room amenities",
+            error: error.message,
+        });
+    }
+};
+
+// Update room amenities dynamically
+const updateRoomAmenities = async (req, res) => {
+    try {
+        const { roomId } = req.params;
+        const updates = req.body; // Expecting an array of updates
+
+        if (!Array.isArray(updates) || updates.length === 0) {
+            return res.status(400).json({ message: "Invalid update data" });
+        }
+
+        const result = await RoomAmenityService.updateRoomAmenities(roomId, updates);
+        return res.status(200).json(result);
+    } catch (error) {
+        return res.status(500).json({
+            message: "Failed to update room amenities",
+            error: error.message,
+        });
+    }
+};
+
 
 module.exports = {
     getAllRoomAmenities,
@@ -133,6 +168,8 @@ module.exports = {
     updateRoomAmenity,
     deleteRoomAmenity,
     getNotFunctioningRoomAmenities,
+    getRoomAmenitiesByRoomId,
+    updateRoomAmenities,
     getAmenitiesByRoomIdController,
     updateRoomAmenitiesByRoomIdController
 };

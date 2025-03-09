@@ -7,9 +7,9 @@ export const loginAccount = async (data) => {
         `${process.env.REACT_APP_API_URL_BACKEND}/account/login`,
         data
     );
-    
+
     return res.data;
-    
+
 };
 
 
@@ -58,4 +58,18 @@ export const refreshToken = async (refreshToken) => {
         }
     );
     return res.data;
+};
+
+export const getEmployeeByAccountId = async (id, access_token) => {
+    try {
+        const res = await axios.get(`${process.env.REACT_APP_API_URL_BACKEND}/employee/account/${id}`, {
+            headers: {
+                token: `Bearer ${access_token}`,
+            }
+        });
+        return res.data;
+    } catch (error) {
+        console.error("Error fetching employee details:", error);
+        return null;
+    }
 };

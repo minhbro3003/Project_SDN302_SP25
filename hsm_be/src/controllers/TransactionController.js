@@ -3,6 +3,7 @@ const Booking = require("../models/BookingModelRFA");
 const Service = require("../models/ServiceModel");
 const mongoose = require("mongoose");
 const { createBookingAndTransaction } = require("../services/TransactionService");
+const TransactionService = require("../services/TransactionService");
 
 // Create a new transaction with a booking
 const createBookingAndTransactionController = async (req, res) => {
@@ -154,10 +155,55 @@ const deleteTransaction = async (req, res) => {
     }
 };
 
+const addExtraServices = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { services } = req.body;
+        const result = await TransactionService.addExtraServices(id, services);
+        return res.status(200).json(result);
+    } catch (error) {
+        return res.status(500).json({
+            status: "ERR",
+            message: error.message
+        });
+    }
+};
+
+const updateBookingStatus = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { status } = req.body;
+        const result = await TransactionService.updateBookingStatus(id, status);
+        return res.status(200).json(result);
+    } catch (error) {
+        return res.status(500).json({
+            status: "ERR",
+            message: error.message
+        });
+    }
+};
+
+const updateTransactionInfo = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const updateData = req.body;
+        const result = await TransactionService.updateTransactionInfo(id, updateData);
+        return res.status(200).json(result);
+    } catch (error) {
+        return res.status(500).json({
+            status: "ERR",
+            message: error.message
+        });
+    }
+};
+
 module.exports = {
     createBookingAndTransactionController,
     getAllTransactions,
     getTransactionById,
     updateTransaction,
     deleteTransaction,
+    addExtraServices,
+    updateBookingStatus,
+    updateTransactionInfo
 };

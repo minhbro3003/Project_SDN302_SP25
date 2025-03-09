@@ -9,11 +9,11 @@ import "./Login.css";
 
 const LoginPage = () => {
     const [formData, setFormData] = useState({
-        email: "", // Changed to lowercase "email"
-        password: "", // Changed to lowercase "password"
+        email: "",
+        password: "",
     });
 
-    const [captcha,setCaptcha] = useState(false);
+    const [captcha, setCaptcha] = useState(false);
 
     const formRef = useRef(null);
     const dispatch = useDispatch();
@@ -24,9 +24,8 @@ const LoginPage = () => {
         onSuccess: (data) => {
             if (data.status === "OK") {
                 localStorage.setItem("access_token", data.access_token);
-                localStorage.setItem("refresh_token", data.refresh_token); 
+                localStorage.setItem("refresh_token", data.refresh_token);
                 dispatch(updateAccount({ ...data.user, access_token: data.access_token, refresh_token: data.refresh_token }));
-
                 navigate("/dashboard");
             } else {
                 console.error("Login failed:", data.message);
@@ -52,76 +51,76 @@ const LoginPage = () => {
     return (
         <div className="login-page__container">
 
-        <Card
-            title={<>  
+            <Card
+                title={<>
                     <h2 className="title">Welcome to PHM System</h2>
                     <p className="subtitle">Login to continue</p>
-                    </>
-                    }
-            style={{ width: 600, margin: "auto", marginTop: "15%",padding: "20px",borderRadius: "28px" }}
-        >
-            <Form ref={formRef} layout="vertical" onFinish={handleSubmit}>
-                <Form.Item
-                    label="Username"
-                    name="email" // Changed to "email"
-                    rules={[{ required: true, message: "Please enter your username!" }]}
-                >
-                    <Input
-                        placeholder="Nhập email"
-                        name="email" // Changed to lowercase "email"
-                        value={formData.email}
-                        onChange={handleOnChange}
-                    />
-                </Form.Item>
+                </>
+                }
+                style={{ width: 600, margin: "auto", marginTop: "15%", padding: "20px", borderRadius: "28px" }}
+            >
+                <Form ref={formRef} layout="vertical" onFinish={handleSubmit}>
+                    <Form.Item
+                        label="Username"
+                        name="email" // Changed to "email"
+                        rules={[{ required: true, message: "Please enter your username!" }]}
+                    >
+                        <Input
+                            placeholder="Nhập email"
+                            name="email" // Changed to lowercase "email"
+                            value={formData.email}
+                            onChange={handleOnChange}
+                        />
+                    </Form.Item>
 
-                <Form.Item
-                    label="Password"
-                    name="password" // Changed to "password"
-                    rules={[{ required: true, message: "Please enter your password!" }]}
-                >
-                    <Input.Password
-                        placeholder="Enter password"
-                        name="password" // Changed to lowercase "password"
-                        value={formData.password}
-                        onChange={handleOnChange}
-                    />
-                </Form.Item>
+                    <Form.Item
+                        label="Password"
+                        name="password" // Changed to "password"
+                        rules={[{ required: true, message: "Please enter your password!" }]}
+                    >
+                        <Input.Password
+                            placeholder="Enter password"
+                            name="password" // Changed to lowercase "password"
+                            value={formData.password}
+                            onChange={handleOnChange}
+                        />
+                    </Form.Item>
 
-                {mutation?.data?.status === "ERR" && (
-                    <span style={{ color: "red" }}>{mutation?.data?.message}</span>
-                )}
+                    {mutation?.data?.status === "ERR" && (
+                        <span style={{ color: "red" }}>{mutation?.data?.message}</span>
+                    )}
 
-                <div className="forgot-password">
-                     <a href="#">Forgot password?</a>
-                </div>
+                    <div className="forgot-password">
+                        <a href="#">Forgot password?</a>
+                    </div>
 
-                <div className="captcha">
+                    <div className="captcha">
                         <div className="captcha_checkbox">
-                            <input type="checkbox" className="captcha_checkbox_input" value={captcha} onChange={(e)=>{setCaptcha(e.target.checked)}}/>
+                            <input type="checkbox" className="captcha_checkbox_input" value={captcha} onChange={(e) => { setCaptcha(e.target.checked) }} />
                             <span className="captcha_checkbox_span"> I'm not a robot</span></div>
                         <img
-                        className="img-fluid"
-                        src={require("../../asset/img/recaptcha-icon.png")}
-                        width="60px"
-                        height="60px"
-                        alt=""
-                        
-                    />
-                </div>
+                            className="img-fluid"
+                            src={require("../../asset/img/recaptcha-icon.png")}
+                            width="60px"
+                            height="60px"
+                            alt=""
 
-                <Form.Item>
-                    <Button
-                        type="primary"
-                        htmlType="submit"
-                        loading={mutation.isLoading}
-                        block
-                        disabled={mutation.isLoading || !captcha}
-                    >
-                       Login
-                    </Button>
-                </Form.Item>
-            </Form>
-        </Card>
+                        />
+                    </div>
+
+                    <Form.Item>
+                        <Button
+                            type="primary"
+                            htmlType="submit"
+                            loading={mutation.isLoading}
+                            block
+                            disabled={mutation.isLoading || !captcha}
+                        >
+                            Login
+                        </Button>
+                    </Form.Item>
+                </Form>
+            </Card>
         </div>
     );
 };

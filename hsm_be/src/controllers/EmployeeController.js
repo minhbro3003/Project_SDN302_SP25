@@ -1,4 +1,5 @@
 const EmployeeService = require("../services/EmployeeService");
+const Employee = require("../models/EmployeeModel");
 
 
 //get emnployee type
@@ -48,7 +49,7 @@ const getAllWorkingShift = async (req, res) => {
 const createEmployee = async (req, res) => {
     try {
         const {
-            hotels, 
+            hotels,
             FullName,
             permissions,
             Phone,
@@ -56,17 +57,17 @@ const createEmployee = async (req, res) => {
             Gender,
             Image,
             Address,
-         
-             
+
+
         } = req.body;
         const mailformat = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/;
         const isCheckEmail = mailformat.test(Email);
         // console.log("req.body", req.body);
-        if (!FullName || !Phone || !Email || !Address ) {
+        if (!FullName || !Phone || !Email || !Address) {
             return res
                 .status(200)
                 .json({ status: "ERR", message: "The input is required." });
-        }else if (!isCheckEmail) {
+        } else if (!isCheckEmail) {
             return res
                 .status(200)
                 .json({ status: "ERR", message: "The input is email." });
@@ -91,10 +92,46 @@ const listEmployees = async (req, res) => {
     }
 };
 
+const getEmployeeByAccountId = async (req, res) => {
+    try {
+        const accountId = req.params.id;
+
+        const employee = await Employee.findOne({ accountId })
+            .populate({
+                path: 'hotels',
+                select: 'NameHotel'
+            })
+            .populate({
+                path: 'permission',
+                select: 'PermissionName'
+            });
+
+        if (!employee) {
+            return res.status(404).json({
+                status: "ERR",
+                message: "Employee not found"
+            });
+        }
+
+        return res.status(200).json({
+            status: "OK",
+            data: employee
+        });
+    } catch (error) {
+        console.error("Error in getEmployeeByAccountId:", error);
+        return res.status(500).json({
+            status: "ERR",
+            message: "Internal server error",
+            error: error.message
+        });
+    }
+};
+
 module.exports = {
     getAllEmployeeType,
     getAllPermission,
     createEmployee,
     getAllWorkingShift,
     listEmployees,
+    getEmployeeByAccountId
 };
