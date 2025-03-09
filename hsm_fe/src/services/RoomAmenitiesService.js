@@ -1,13 +1,15 @@
 import axios from "axios";
 
-export const getAllRoomAmenities = async (data) => {
-    const res = await axios.get(
-        `${process.env.REACT_APP_API_URL_BACKEND}/roomamenities`,
-        data
-
-    );
-    console.log("res getAllRoomAmenities:", res);
-    return res.data;
+export const getAllRoomAmenities = async () => {
+    try {
+        const res = await axios.get(
+            `${process.env.REACT_APP_API_URL_BACKEND}/roomamenities`
+        );
+        return res.data;
+    } catch (error) {
+        console.error("Error fetching all room amenities:", error);
+        throw error;
+    }
 };
 
 export const getRoomAmenityById = async (id) => {
@@ -56,11 +58,15 @@ export const deleteRoomAmenity = async (id, access_token) => {
 };
 
 export const getAmenitiesByRoomId = async (roomId) => {
-    const res = await axios.get(
-        `${process.env.REACT_APP_API_URL_BACKEND}/roomamenities/${roomId}/amenities`
-    );
-    // console.log("res getAmenitiesByRoomId:", res);
-    return res.data;
+    try {
+        const response = await axios.get(
+            `${process.env.REACT_APP_API_URL_BACKEND}/roomamenities/${roomId}/amenities`
+        );
+        return response.data;
+    } catch (error) {
+        console.error("Error fetching room amenities:", error);
+        throw error;
+    }
 };
 
 export const updateRoomAmenitiesByRoomId = async (roomId, amenities) => {
@@ -74,4 +80,17 @@ export const updateRoomAmenitiesByRoomId = async (roomId, amenities) => {
         // }
     );
     return res.data;
+};
+
+export const updateRoomAmenities = async (roomId, amenities) => {
+    try {
+        const response = await axios.put(
+            `${process.env.REACT_APP_API_URL_BACKEND}/roomamenities/${roomId}/amenities`,
+            { amenities }
+        );
+        return response.data;
+    } catch (error) {
+        console.error("Error updating room amenities:", error);
+        throw error;
+    }
 };
