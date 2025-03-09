@@ -57,20 +57,20 @@ const AddEmployees = () => {
             schedule:
                 prev.schedule.length > 0
                     ? [
-                          {
-                              ...prev.schedule[0],
-                              date: prev.schedule[0].date || today,
-                              [name]: value,
-                          },
-                      ]
+                        {
+                            ...prev.schedule[0],
+                            date: prev.schedule[0].date || today,
+                            [name]: value,
+                        },
+                    ]
                     : [
-                          {
-                              date: today,
-                              start_time: "",
-                              end_time: "",
-                              [name]: value,
-                          },
-                      ],
+                        {
+                            date: today,
+                            start_time: "",
+                            end_time: "",
+                            [name]: value,
+                        },
+                    ],
         }));
     };
 

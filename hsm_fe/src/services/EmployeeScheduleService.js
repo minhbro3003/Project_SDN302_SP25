@@ -11,4 +11,3 @@ export const createEmployeeSchedule = async (data) => {
         return { status: "ERR", message: error.response?.data?.message };
     }
 };
-console.log("API URL:", process.env.REACT_APP_API_URL_BACKEND);

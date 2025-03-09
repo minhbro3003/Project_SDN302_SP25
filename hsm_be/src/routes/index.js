@@ -1,7 +1,6 @@
 const AccountRouter = require("./AccountRouter");
 const RoomRouter = require("./RoomRouter");
 const RoomTypeRouter = require("./RoomTypeRouter");
-const RoomAmenitiesRouter = require("./RoomAmenitiesRouter");
 const EmployeeType = require("./EmployeeType");
 const Hotel = require("./HotelRouter");
 const Employee = require("./EmployeeRouter");
@@ -12,12 +11,12 @@ const TransactionRouter = require("./TransactionRouter");
 const CustomerRouter = require("./CustomerRouter");
 const AmenityRouter = require("./AmenityRouter");
 const RoomAmenityRouter = require("./RoomAmenityRouter");
+const HouseKeeping = require('./HouseKeepingRouter');
 
 const routes = (app) => {
     app.use("/api/account", AccountRouter);
     app.use("/api/rooms", RoomRouter);
-    app.use("/api/rooms-type", RoomTypeRouter);
-    app.use("/api/rooms-amenities", RoomAmenitiesRouter);
+    app.use("/api/roomtype", RoomTypeRouter);
     app.use("/api/employee-type", EmployeeType);
     app.use("/api/hotel", Hotel);
     app.use("/api/employee", Employee);
@@ -28,6 +27,7 @@ const routes = (app) => {
     app.use("/api/customers", CustomerRouter);
     app.use("/api/amenities", AmenityRouter);
     app.use("/api/roomamenities", RoomAmenityRouter);
+    app.use("/api/housekeeping", HouseKeeping);
 };
 
 module.exports = routes;

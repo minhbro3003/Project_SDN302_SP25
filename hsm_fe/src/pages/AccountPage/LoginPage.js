@@ -13,6 +13,8 @@ const LoginPage = () => {
         password: "",
     });
 
+    const [captcha, setCaptcha] = useState(false);
+
     const formRef = useRef(null);
     const dispatch = useDispatch();
     const navigate = useNavigate();
@@ -47,44 +49,78 @@ const LoginPage = () => {
     };
 
     return (
-        <div className="container">
-            <div className="login-box">
-                {/* Left Section (Image Placeholder) */}
-                <div className="image-section">
-                    <div className="image-placeholder">
+        <div className="login-page__container">
+
+            <Card
+                title={<>
+                    <h2 className="title">Welcome to PHM System</h2>
+                    <p className="subtitle">Login to continue</p>
+                </>
+                }
+                style={{ width: 600, margin: "auto", marginTop: "15%", padding: "20px", borderRadius: "28px" }}
+            >
+                <Form ref={formRef} layout="vertical" onFinish={handleSubmit}>
+                    <Form.Item
+                        label="Username"
+                        name="email" // Changed to "email"
+                        rules={[{ required: true, message: "Please enter your username!" }]}
+                    >
+                        <Input
+                            placeholder="Nhập email"
+                            name="email" // Changed to lowercase "email"
+                            value={formData.email}
+                            onChange={handleOnChange}
+                        />
+                    </Form.Item>
+
+                    <Form.Item
+                        label="Password"
+                        name="password" // Changed to "password"
+                        rules={[{ required: true, message: "Please enter your password!" }]}
+                    >
+                        <Input.Password
+                            placeholder="Enter password"
+                            name="password" // Changed to lowercase "password"
+                            value={formData.password}
+                            onChange={handleOnChange}
+                        />
+                    </Form.Item>
+
+                    {mutation?.data?.status === "ERR" && (
+                        <span style={{ color: "red" }}>{mutation?.data?.message}</span>
+                    )}
+
+                    <div className="forgot-password">
+                        <a href="#">Forgot password?</a>
+                    </div>
+
+                    <div className="captcha">
+                        <div className="captcha_checkbox">
+                            <input type="checkbox" className="captcha_checkbox_input" value={captcha} onChange={(e) => { setCaptcha(e.target.checked) }} />
+                            <span className="captcha_checkbox_span"> I'm not a robot</span></div>
                         <img
-                            src="https://du-lich.chudu24.com/f/m/2207/08/khach-san-lamor-boutique-10.jpg?w=550&c=1"
-                            alt="Placeholder"
-                            className="image-icon"
+                            className="img-fluid"
+                            src={require("../../asset/img/recaptcha-icon.png")}
+                            width="60px"
+                            height="60px"
+                            alt=""
+
                         />
                     </div>
-                    <h3 style={{ color: "red" }}>LẤY CÁI REPOSITORY MỚI NHẤT VỀ HỘ TÔI RỒI MỚI CODE ;V - Ở TRÊN BRANCH CỦA MÌNH - FETCH - OPEN IN COMMAND PROMPT - git merge develop </h3>
-                </div>
-                {/* Right Section (Login Form) */}
-                <div className="form-section">
-                    <Card title="Đăng Nhập" className="login-card">
-                        <Form ref={formRef} layout="vertical" onFinish={handleSubmit}>
-                            <Form.Item label="Email" name="email" rules={[{ required: true, message: "Vui lòng nhập email!" }]}>
-                                <Input placeholder="Nhập email" name="email" value={formData.email} onChange={handleOnChange} />
-                            </Form.Item>
 
-                            <Form.Item label="Mật khẩu" name="password" rules={[{ required: true, message: "Vui lòng nhập mật khẩu!" }]}>
-                                <Input.Password placeholder="Nhập mật khẩu" name="password" value={formData.password} onChange={handleOnChange} />
-                            </Form.Item>
-
-                            {mutation?.data?.status === "ERR" && (
-                                <span style={{ color: "red" }}>{mutation?.data?.message}</span>
-                            )}
-
-                            <Form.Item>
-                                <Button type="primary" htmlType="submit" loading={mutation.isLoading} block>
-                                    Đăng Nhập
-                                </Button>
-                            </Form.Item>
-                        </Form>
-                    </Card>
-                </div>
-            </div>
+                    <Form.Item>
+                        <Button
+                            type="primary"
+                            htmlType="submit"
+                            loading={mutation.isLoading}
+                            block
+                            disabled={mutation.isLoading || !captcha}
+                        >
+                            Login
+                        </Button>
+                    </Form.Item>
+                </Form>
+            </Card>
         </div>
     );
 };

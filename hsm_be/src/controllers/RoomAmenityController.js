@@ -29,6 +29,44 @@ const getRoomAmenityById = async (req, res) => {
     }
 };
 
+const getAmenitiesByRoomIdController = async (req, res) => {
+    try {
+        const { roomId } = req.params; // Extract roomId from request params
+        const roomAmenities = await RoomAmenityService.getAmenitiesByRoomId(roomId); // Pass roomId as an argument
+
+        if (!roomAmenities) {
+            return res.status(404).json({ message: "Room not found" });
+        }
+        return res.status(200).json(roomAmenities);
+    } catch (error) {
+        return res.status(500).json({
+            message: "Failed to retrieve amenities in room",
+            error: error.message,
+        });
+    }
+};
+
+const updateRoomAmenitiesByRoomIdController = async (req, res) => {
+    try {
+        const { roomId } = req.params;
+        const { amenities } = req.body; // Lấy danh sách amenities từ body
+
+        const updatedAmenities = await RoomAmenityService.updateRoomAmenitiesByRoomId(roomId, amenities);
+
+        if (!updatedAmenities || updatedAmenities.status === "ERR") {
+            return res.status(400).json(updatedAmenities);
+        }
+
+        return res.status(200).json(updatedAmenities);
+    } catch (error) {
+        return res.status(500).json({
+            message: "Failed to update room amenities",
+            error: error.message,
+        });
+    }
+};
+
+
 // Create a new room amenity
 const createRoomAmenity = async (req, res) => {
     try {
@@ -132,4 +170,6 @@ module.exports = {
     getNotFunctioningRoomAmenities,
     getRoomAmenitiesByRoomId,
     updateRoomAmenities,
+    getAmenitiesByRoomIdController,
+    updateRoomAmenitiesByRoomIdController
 };

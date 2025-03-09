@@ -23,5 +23,9 @@ router.post("/:id", RoomAmenityController.getRoomAmenitiesByRoomId);
 
 router.post("/:id", RoomAmenityController.updateRoomAmenities);
 
+//get all amenities in room
+router.get("/:roomId/amenities", RoomAmenityController.getAmenitiesByRoomIdController)
 
+//update room amenity by room id
+router.put("/:roomId/amenities", RoomAmenityController.updateRoomAmenitiesByRoomIdController)
 module.exports = router;

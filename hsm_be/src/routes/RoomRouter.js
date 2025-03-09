@@ -9,8 +9,6 @@ const {
 
 //router get all rooms
 router.get("/", roomsController.getAllRooms);
-//router create new room
-
 //router get available rooms
 router.get("/getavail", roomsController.getAvailableRooms);
 
@@ -24,6 +22,5 @@ router.put("/:id", roomsController.updateRoom);
 router.delete("/:id", roomsController.deleteRoom);
 //router get room by id
 router.get("/:id", roomsController.getRoomByRoomId);
-
 
 module.exports = router;

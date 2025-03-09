@@ -6,20 +6,29 @@ export const getAllRoom = async (data) => {
         data
 
     );
-    console.log("res getAllRoom:", res);
+    // console.log("res getAllRoom:", res);
     return res.data;
 };
 
-export const getHotelById = async (id) => {
+export const getRoomById = async (id) => {
     const res = await axios.get(
         `${process.env.REACT_APP_API_URL_BACKEND}/rooms/${id}`
-
     );
-    console.log("res getHotelById:", res);
+    // console.log("res getRoomById:", res);
     return res.data;
 };
 
-export const updateHotel = async (id, access_token, data) => {
+export const createRoom = async (data) => {
+    console.log("data createRoom:", data);
+    const res = await axios.post(
+        `${process.env.REACT_APP_API_URL_BACKEND}/rooms`,
+        data
+    );
+    console.log("res createrooms:", res);
+    return res.data;
+};
+
+export const updateRoom = async (id, data) => {
     const res = await axios.put(
         `${process.env.REACT_APP_API_URL_BACKEND}/rooms/${id}`,
         data,
@@ -29,11 +38,11 @@ export const updateHotel = async (id, access_token, data) => {
         //     },
         // }
     );
-    console.log("res updateHotel:", res);
+    console.log("Update API Response:", res.data)
     return res.data;
 };
 
-export const deleteHotel = async (id, access_token) => {
+export const deleteRoom = async (id, access_token) => {
     const res = await axios.delete(
         `${process.env.REACT_APP_API_URL_BACKEND}/rooms/${id}`,
         // {
@@ -42,7 +51,7 @@ export const deleteHotel = async (id, access_token) => {
         //     },
         // }
     );
-    console.log("res deleteHotel:", res);
+    console.log("res deleteRoom:", res);
     return res.data;
 };
 
@@ -59,11 +68,19 @@ export const deleteManyProduct = async (iddata, access_token) => {
     return res.data;
 };
 
-export const getAllRoomTyoe = async () => {
+export const getAllRoomType = async () => {
     const res = await axios.get(
-        `${process.env.REACT_APP_API_URL_BACKEND}/rooms-type`
+        `${process.env.REACT_APP_API_URL_BACKEND}/roomtype`
     );
-    console.log("res getAllRoomTyoe:", res);
+    // console.log("res getAllRoomType:", res);
+    return res.data;
+};
+
+export const getRoomsGroupedByType = async (data) => {
+    const res = await axios.get(
+        `${process.env.REACT_APP_API_URL_BACKEND}/rooms/by-type`, data
+    );
+    console.log("res getRoomsGroupedByType:", res);
     return res.data;
 };
 

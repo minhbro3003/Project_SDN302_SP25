@@ -1,7 +1,8 @@
+import { Radio } from "antd";
 import styled from "styled-components";
 
 export const RoomFormContainer = styled.div`
-    padding: 20px;
+    // padding: 0 15px;
     background: #fff;
     border-radius: 8px;
 `;
@@ -18,7 +19,7 @@ export const ImageUploadSection = styled.div`
 
 export const MainImagePreview = styled.div`
     width: 100%;
-    height: 300px;
+    height: 250px;
     background: #f0f0f0;
     display: flex;
     align-items: center;
@@ -31,6 +32,12 @@ export const MainImagePreviewImg = styled.img`
     max-width: 100%;
     max-height: 100%;
     border-radius: 8px;
+`;
+
+export const UploadWrapper = styled.div`
+    display: flex;
+    justify-content: flex-start;
+    width: 100%;
 `;
 
 export const ThumbnailContainer = styled.div`
@@ -75,4 +82,31 @@ export const SubmitBtn = styled.button`
     &:hover {
         background: #40a9ff;
     }
+`;
+
+export const StyledRadioGroup = styled(Radio.Group)`
+  margin-bottom: 15px;
+  font-weight: bold;
+`;
+
+export const StyledRadioButton = styled(Radio.Button)`
+  background-color: ${({ value, selected }) =>
+        selected ? (value === "single" ? "#ff7f50" : "#4682b4") : "#f0f0f0"};
+  color: ${({ selected }) => (selected ? "white" : "black")};
+  border-color: ${({ value, selected }) =>
+        selected ? (value === "single" ? "#ff4500" : "#1e90ff") : "#d9d9d9"};
+
+  &:hover {
+    background-color: ${({ value, selected }) =>
+        selected ? (value === "single" ? "#ff6347" : "#5a9bd3") : "#e6e6e6"};
+  }
+
+  // Giữ nền khi được chọn
+  &.ant-radio-button-wrapper-checked {
+    background-color: ${({ value }) =>
+        value === "single" ? "#4DA1A9" : "#2E5077"} !important;
+    color: white !important;
+    border-color: ${({ value }) =>
+        value === "single" ? "#2E5077" : "#4DA1A9"} !important;
+  }
 `;

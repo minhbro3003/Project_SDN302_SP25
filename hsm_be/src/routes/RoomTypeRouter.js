@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 // const productController = require("../controllers/ProductController");
-const roomsTypeController = require("../controllers/RoomTypesController");
+const roomsTypeController = require("../controllers/RoomTypeController");
 const {
     authMiddleware,
     authUserMiddleware,
