@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from "react";
-import { Table, Button, Modal, Descriptions, message, Select, Tag, Space, Input } from "antd";
+import { Table, Button, Modal, Descriptions, message, Select, Tag, Space, Input, Form, InputNumber, Divider } from "antd";
 import moment from "moment";
-import { CopyOutlined, SearchOutlined } from "@ant-design/icons";
+import { CopyOutlined, SearchOutlined, PlusOutlined } from "@ant-design/icons";
 import { getAllTransactions } from "../../services/TransactionService";
+import axios from "axios";
 
 const { Option } = Select;
+const API_URL = process.env.REACT_APP_API_URL_BACKEND;
 
 const ReservationList = () => {
     const [transactions, setTransactions] = useState([]);
@@ -14,9 +16,31 @@ const ReservationList = () => {
     const [recentFilter, setRecentFilter] = useState("today");
     const [searchText, setSearchText] = useState("");
 
+    // New state variables for modals
+    const [isServiceModalVisible, setIsServiceModalVisible] = useState(false);
+    const [isStatusModalVisible, setIsStatusModalVisible] = useState(false);
+    const [isInfoModalVisible, setIsInfoModalVisible] = useState(false);
+    const [availableServices, setAvailableServices] = useState([]);
+    const [form] = Form.useForm();
+    const [isGeneratingPayment, setIsGeneratingPayment] = useState(false);
+    const [isPaymentLinkModalVisible, setIsPaymentLinkModalVisible] = useState(false);
+    const [generatedPaymentLink, setGeneratedPaymentLink] = useState('');
+
     useEffect(() => {
         fetchTransactions();
+        fetchServices();
     }, []);
+
+    const fetchServices = async () => {
+        try {
+            const response = await axios.get(`${API_URL}/services`);
+            if (response.data.status === "OK") {
+                setAvailableServices(response.data.data);
+            }
+        } catch (error) {
+            message.error("Failed to fetch services");
+        }
+    };
 
     const fetchTransactions = async () => {
         setLoading(true);
@@ -140,6 +164,366 @@ const ReservationList = () => {
         },
     ];
 
+    const handleAddExtraService = async (values) => {
+        try {
+            const response = await axios.post(
+                `${API_URL}/transactions/${selectedTransaction._id}/add-services`,
+                { services: values.services }
+            );
+            if (response.data.status === "OK") {
+                message.success("Extra services added successfully");
+                setIsServiceModalVisible(false);
+                fetchTransactions();
+            } else {
+                message.error(response.data.message);
+            }
+        } catch (error) {
+            message.error("Failed to add extra services");
+        }
+    };
+
+    const handleStatusChange = async (values) => {
+        try {
+            const response = await axios.put(
+                `${API_URL}/transactions/${selectedTransaction._id}/status`,
+                { status: values.status }
+            );
+            if (response.data.status === "OK") {
+                message.success("Status updated successfully");
+                setIsStatusModalVisible(false);
+                fetchTransactions();
+            } else {
+                message.error(response.data.message);
+            }
+        } catch (error) {
+            message.error("Failed to update status");
+        }
+    };
+
+    const handleInfoUpdate = async (values) => {
+        try {
+            const response = await axios.put(
+                `${API_URL}/transactions/${selectedTransaction._id}/information`,
+                values
+            );
+            if (response.data.status === "OK") {
+                message.success("Information updated successfully");
+                setIsInfoModalVisible(false);
+                fetchTransactions();
+            } else {
+                message.error(response.data.message);
+            }
+        } catch (error) {
+            message.error("Failed to update information");
+        }
+    };
+
+    const handleGeneratePaymentLink = async () => {
+        try {
+            setIsGeneratingPayment(true);
+            const remainingAmount = selectedTransaction.FinalPrice - selectedTransaction.PaidAmount;
+
+            // Get client IP address
+            const ipResponse = await axios.get('https://api.ipify.org?format=json');
+            const ipAddr = ipResponse.data.ip;
+
+            const response = await axios.post(`${API_URL}/transactions/create_payment_url`, {
+                amount: remainingAmount,
+                description: `Payment for transaction ${selectedTransaction._id}`,
+                ipAddr: ipAddr,
+                transactionId: selectedTransaction._id
+            });
+
+            if (response.data.status === "OK" && response.data.paymentUrl) {
+                // Update the transaction with the new payment link
+                const updateResponse = await axios.put(
+                    `${API_URL}/transactions/${selectedTransaction._id}/information`,
+                    {
+                        PaymentReference: response.data.paymentUrl
+                    }
+                );
+
+                if (updateResponse.data.status === "OK") {
+                    message.success("Payment link generated successfully");
+                    // Set the payment link and show the modal
+                    setGeneratedPaymentLink(response.data.paymentUrl);
+                    setIsPaymentLinkModalVisible(true);
+                    // Update the selected transaction in state
+                    setSelectedTransaction({
+                        ...selectedTransaction,
+                        PaymentReference: response.data.paymentUrl
+                    });
+                    // Refresh the transactions list
+                    await fetchTransactions();
+                } else {
+                    message.error("Failed to update payment reference");
+                }
+            } else {
+                message.error(response.data.message || "Failed to generate payment link");
+            }
+        } catch (error) {
+            console.error("Error generating payment link:", error);
+            message.error("Failed to generate payment link");
+        } finally {
+            setIsGeneratingPayment(false);
+        }
+    };
+
+    const renderTransactionDetails = () => (
+        <>
+            <Descriptions column={1} bordered>
+                <Descriptions.Item label="Buy Time">
+                    {moment(selectedTransaction.BuyTime).format("YYYY-MM-DD HH:mm")}
+                </Descriptions.Item>
+                <Descriptions.Item label="Final Price">
+                    {selectedTransaction.FinalPrice.toLocaleString()} VND
+                </Descriptions.Item>
+                <Descriptions.Item label="Paid Amount">
+                    {selectedTransaction.PaidAmount.toLocaleString()} VND
+                </Descriptions.Item>
+                <Descriptions.Item label="Payment Status">
+                    {getPaymentTag(selectedTransaction.Pay)}
+                </Descriptions.Item>
+                <Descriptions.Item label="Status">
+                    {getStatusTag(selectedTransaction.Status)}
+                </Descriptions.Item>
+                <Descriptions.Item label="Payment Method">
+                    {selectedTransaction.PaymentMethod}
+                </Descriptions.Item>
+                {selectedTransaction.PaymentReference && (
+                    <Descriptions.Item label="Payment Reference">
+                        <a href={selectedTransaction.PaymentReference} target="_blank" rel="noopener noreferrer">
+                            Payment Link
+                        </a>
+                        <Button
+                            type="link"
+                            icon={<CopyOutlined />}
+                            onClick={() => handleCopy(selectedTransaction.PaymentReference)}
+                        />
+                    </Descriptions.Item>
+                )}
+            </Descriptions>
+
+            <div style={{ marginTop: 20, textAlign: "center" }}>
+                <Space>
+                    <Button
+                        type="primary"
+                        onClick={() => {
+                            setIsModalVisible(false);
+                            setIsServiceModalVisible(true);
+                        }}
+                    >
+                        Add Extra Service
+                    </Button>
+                    <Button
+                        type="default"
+                        onClick={() => {
+                            setIsModalVisible(false);
+                            setIsStatusModalVisible(true);
+                        }}
+                    >
+                        Change Booking Status
+                    </Button>
+                    <Button
+                        type="dashed"
+                        onClick={() => {
+                            setIsModalVisible(false);
+                            setIsInfoModalVisible(true);
+                        }}
+                    >
+                        Edit Information
+                    </Button>
+                </Space>
+            </div>
+            {selectedTransaction?.PaymentMethod === "Credit Card" && selectedTransaction?.Pay !== "Paid" && (
+                <div style={{ marginTop: 12, textAlign: "center" }}>
+                    <Button
+                        type="primary"
+                        ghost
+                        loading={isGeneratingPayment}
+                        onClick={handleGeneratePaymentLink}
+                        icon={<CopyOutlined />}
+                    >
+                        Generate New Payment Link
+                    </Button>
+                </div>
+            )}
+        </>
+    );
+
+    const renderExtraServicesModal = () => (
+        <Modal
+            title="Add Extra Services"
+            open={isServiceModalVisible}
+            onCancel={() => setIsServiceModalVisible(false)}
+            width={"1000px"}
+            footer={null}
+        >
+            {selectedTransaction && (
+                <>
+                    <h3>Existing Services</h3>
+                    <Table
+                        dataSource={selectedTransaction.services}
+                        columns={[
+                            {
+                                title: 'Service Name',
+                                dataIndex: ['serviceId', 'ServiceName'],
+                                key: 'serviceName',
+                            },
+                            {
+                                title: 'Quantity',
+                                dataIndex: 'quantity',
+                                key: 'quantity',
+                            },
+                            {
+                                title: 'Price per Unit',
+                                dataIndex: 'pricePerUnit',
+                                key: 'pricePerUnit',
+                                render: (price) => `${price?.toLocaleString()} VND`,
+                            },
+                            {
+                                title: 'Total Price',
+                                dataIndex: 'totalPrice',
+                                key: 'totalPrice',
+                                render: (price) => `${price?.toLocaleString()} VND`,
+                            },
+                        ]}
+                        pagination={false}
+                        rowKey={(record) => record.serviceId._id}
+                    />
+
+                    <Divider />
+                    <h3>Add New Services</h3>
+                    <Form onFinish={handleAddExtraService} form={form}>
+                        <Form.List name="services">
+                            {(fields, { add, remove }) => (
+                                <>
+                                    {fields.map((field, index) => (
+                                        <Space key={field.key} align="baseline">
+                                            <Form.Item
+                                                {...field}
+                                                name={[field.name, 'serviceId']}
+                                                rules={[{ required: true, message: 'Select a service' }]}
+                                            >
+                                                <Select style={{ width: 200 }} placeholder="Select service">
+                                                    {availableServices.map(service => (
+                                                        <Option key={service._id} value={service._id}>
+                                                            {service.ServiceName} - {service.Price} VND
+                                                        </Option>
+                                                    ))}
+                                                </Select>
+                                            </Form.Item>
+                                            <Form.Item
+                                                {...field}
+                                                name={[field.name, 'quantity']}
+                                                rules={[{ required: true, message: 'Input quantity' }]}
+                                            >
+                                                <InputNumber min={1} placeholder="Quantity" />
+                                            </Form.Item>
+                                            <Button onClick={() => remove(field.name)} danger>
+                                                Delete
+                                            </Button>
+                                        </Space>
+                                    ))}
+                                    <Form.Item>
+                                        <Button type="dashed" onClick={() => add()} block icon={<PlusOutlined />}>
+                                            Add Service
+                                        </Button>
+                                    </Form.Item>
+                                </>
+                            )}
+                        </Form.List>
+                        <Form.Item>
+                            <Button type="primary" htmlType="submit">
+                                Submit
+                            </Button>
+                        </Form.Item>
+                    </Form>
+                </>
+            )}
+        </Modal >
+    );
+
+    const renderStatusModal = () => (
+        <Modal
+            title="Change Booking Status"
+            open={isStatusModalVisible}
+            onCancel={() => setIsStatusModalVisible(false)}
+            footer={null}
+        >
+            <Form onFinish={handleStatusChange}>
+                <Form.Item
+                    name="status"
+                    rules={[{ required: true, message: 'Please select a status' }]}
+                >
+                    <Select placeholder="Select new status">
+                        <Option value="Pending">
+                            <Tag color="orange">Pending</Tag>
+                        </Option>
+                        <Option value="Completed">
+                            <Tag color="green">Completed</Tag>
+                        </Option>
+                        <Option value="Cancelled">
+                            <Tag color="red">Cancelled</Tag>
+                        </Option>
+                    </Select>
+                </Form.Item>
+                <Form.Item>
+                    <Button type="primary" htmlType="submit">
+                        Update Status
+                    </Button>
+                </Form.Item>
+            </Form>
+        </Modal>
+    );
+
+    const renderEditInfoModal = () => (
+        <Modal
+            title="Edit Transaction Information"
+            open={isInfoModalVisible}
+            onCancel={() => setIsInfoModalVisible(false)}
+            footer={null}
+        >
+            <Form
+                onFinish={handleInfoUpdate}
+                initialValues={{
+                    PaidAmount: selectedTransaction?.PaidAmount || 0,
+                    PaymentMethod: selectedTransaction?.PaymentMethod || 'Cash'
+                }}
+            >
+                <Form.Item
+                    name="PaidAmount"
+                    label="Paid Amount"
+                    rules={[{ required: true, message: 'Please input paid amount' }]}
+                >
+                    <InputNumber
+                        min={0}
+                        max={selectedTransaction?.FinalPrice || 0}
+                        style={{ width: '100%' }}
+                        formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                        parser={value => value.replace(/\$\s?|(,*)/g, '')}
+                        placeholder="Enter paid amount"
+                    />
+                </Form.Item>
+                <Form.Item
+                    name="PaymentMethod"
+                    label="Payment Method"
+                    rules={[{ required: true, message: 'Please select payment method' }]}
+                >
+                    <Select placeholder="Select payment method">
+                        <Option value="Cash">Cash</Option>
+                        <Option value="Credit Card">Credit Card</Option>
+                    </Select>
+                </Form.Item>
+                <Form.Item>
+                    <Button type="primary" htmlType="submit">
+                        Update Information
+                    </Button>
+                </Form.Item>
+            </Form>
+        </Modal>
+    );
+
     return (
         <div>
             {/* Search Bar */}
@@ -171,6 +555,10 @@ const ReservationList = () => {
             <h2 style={{ color: "gold", marginTop: 20 }}>Partial Payments</h2>
             <Table columns={columns} dataSource={partialTransactions} rowKey="_id" loading={loading} />
 
+            {renderExtraServicesModal()}
+            {renderStatusModal()}
+            {renderEditInfoModal()}
+
             {/* Transaction Details Modal */}
             <Modal
                 title="Transaction Details"
@@ -178,51 +566,39 @@ const ReservationList = () => {
                 onCancel={() => setIsModalVisible(false)}
                 footer={null}
             >
-                {selectedTransaction && (
-                    <Descriptions column={1} bordered>
-                        <Descriptions.Item label="Buy Time">
-                            {moment(selectedTransaction.BuyTime).format("YYYY-MM-DD HH:mm")}
-                        </Descriptions.Item>
-                        <Descriptions.Item label="Final Price">
-                            {selectedTransaction.FinalPrice.toLocaleString()} VND
-                        </Descriptions.Item>
-                        <Descriptions.Item label="Paid Amount">
-                            {selectedTransaction.PaidAmount.toLocaleString()} VND
-                        </Descriptions.Item>
-                        <Descriptions.Item label="Payment Status">
-                            {getPaymentTag(selectedTransaction.Pay)}
-                        </Descriptions.Item>
-                        <Descriptions.Item label="Status">
-                            {getStatusTag(selectedTransaction.Status)}
-                        </Descriptions.Item>
-                        <Descriptions.Item label="Payment Method">
-                            {selectedTransaction.PaymentMethod}
-                        </Descriptions.Item>
-                        <Descriptions.Item label="Payment Reference">
-                            <a href={selectedTransaction.PaymentReference} target="_blank" rel="noopener noreferrer">
-                                Payment Link
-                            </a>
-                            <Button
-                                type="link"
-                                icon={<CopyOutlined />}
-                                onClick={() => handleCopy(selectedTransaction.PaymentReference)}
-                            />
-                        </Descriptions.Item>
-                    </Descriptions>
-                )}
-
-                {/* 🔥 Buttons Restored Here */}
-                <div style={{ marginTop: 20, textAlign: "center" }}>
-                    <Button type="primary" style={{ marginRight: 10 }}>
-                        Add Extra Service
-                    </Button>
-                    <Button type="default" style={{ marginRight: 10 }}>
-                        Change Booking Status
-                    </Button>
-                    <Button type="dashed">Edit Information</Button>
-                </div>
+                {selectedTransaction && renderTransactionDetails()}
             </Modal>
 
+            {/* Payment Link Modal */}
+            <Modal
+                title="Generated Payment Link"
+                open={isPaymentLinkModalVisible}
+                onCancel={() => setIsPaymentLinkModalVisible(false)}
+                footer={[
+                    <Button key="close" onClick={() => setIsPaymentLinkModalVisible(false)}>
+                        Close
+                    </Button>,
+                    <Button
+                        key="copy"
+                        type="primary"
+                        icon={<CopyOutlined />}
+                        onClick={() => {
+                            navigator.clipboard.writeText(generatedPaymentLink);
+                            message.success("Payment link copied to clipboard");
+                        }}
+                    >
+                        Copy Link
+                    </Button>
+                ]}
+            >
+                <Input.TextArea
+                    value={generatedPaymentLink}
+                    readOnly
+                    autoSize={{ minRows: 3, maxRows: 6 }}
+                    style={{ marginBottom: 16 }}
+                />
+
+            </Modal>
         </div>
     );
 };

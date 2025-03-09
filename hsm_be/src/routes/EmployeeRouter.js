@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const  employeeController = require("../controllers/EmployeeController");
+const employeeController = require("../controllers/EmployeeController");
 const {
     authMiddleware,
     authUserMiddleware,
@@ -8,5 +8,6 @@ const {
 
 router.post("/create-employee", employeeController.createEmployee);
 router.get("/list-employees", employeeController.listEmployees);
+router.get("/account/:id", employeeController.getEmployeeByAccountId);
 
 module.exports = router;

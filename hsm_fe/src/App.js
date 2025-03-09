@@ -111,11 +111,23 @@ const App = () => {
             const res = await AccountService.getDetailsAccount(id, token);
 
             if (res?.data) {
+                // Fetch employee details if available
+                let employeeData = null;
+                try {
+                    const employeeRes = await AccountService.getEmployeeByAccountId(id, token);
+                    if (employeeRes?.data) {
+                        employeeData = employeeRes.data;
+                    }
+                } catch (error) {
+                    console.error("Error fetching employee details:", error);
+                }
+
                 dispatch(
                     updateAccount({
                         ...res.data,
                         access_token: token,
                         refreshToken: refreshToken,
+                        employee: employeeData
                     })
                 );
             }
@@ -142,7 +154,18 @@ const App = () => {
                                                 <Layout>
                                                     {/* HEADER */}
                                                     <Header style={{ background: "#79D7BE", display: "flex", justifyContent: "space-between", padding: "0 27px" }}>
-                                                        <div style={{ fontSize: "20px", fontWeight: "bold", color: "#00363D" }}>PHM System</div>
+                                                        <div style={{ fontSize: "20px", fontWeight: "bold", color: "#00363D", display: "flex", alignItems: "center", gap: "20px" }}>
+                                                            <span>HMS System</span>
+                                                            {account?.employee?.FullName && (
+                                                                <span style={{ fontWeight: "normal" }}>
+                                                                    | Hello {account.employee.FullName}
+                                                                    {account.employee.permission?.PermissionName &&
+                                                                        ` (${account.employee.permission.PermissionName})`}
+                                                                    {account.employee.hotels?.length > 0 &&
+                                                                        ` from ${account.employee.hotels.map(h => h.NameHotel).join(", ")}`}
+                                                                </span>
+                                                            )}
+                                                        </div>
                                                         <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
                                                             <Button
                                                                 type="text"
@@ -231,7 +254,18 @@ const App = () => {
                                             <Layout>
                                                 {/* HEADER */}
                                                 <Header style={{ background: "#79D7BE", display: "flex", justifyContent: "space-between", padding: "0 27px" }}>
-                                                    <div style={{ fontSize: "20px", fontWeight: "bold", color: "#00363D" }}>PHM System</div>
+                                                    <div style={{ fontSize: "20px", fontWeight: "bold", color: "#00363D", display: "flex", alignItems: "center", gap: "20px" }}>
+                                                        <span>HMS System</span>
+                                                        {account?.employee?.FullName && (
+                                                            <span style={{ fontWeight: "normal" }}>
+                                                                | Hello {account.employee.FullName}
+                                                                {account.employee.permission?.PermissionName &&
+                                                                    ` (${account.employee.permission.PermissionName})`}
+                                                                {account.employee.hotels?.length > 0 &&
+                                                                    ` from ${account.employee.hotels.map(h => h.NameHotel).join(", ")}`}
+                                                            </span>
+                                                        )}
+                                                    </div>
                                                     <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
                                                         <Button
                                                             type="text"

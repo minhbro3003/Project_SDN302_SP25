@@ -5,8 +5,15 @@ const Room = require("../models/RoomModel");
 const getAllBookings = async () => {
     try {
         const allBookings = await Booking.find()
-            .populate("customers") // Populate customer details
-            .populate("rooms"); // Populate room details
+            .populate({
+                path: 'customers',
+                select: 'full_name phone cccd'
+            })
+            .populate({
+                path: 'rooms',
+                select: 'RoomName Price'
+            })
+            .sort({ 'Time.Checkin': -1 });
 
         return {
             status: "OK",
@@ -195,8 +202,14 @@ const getBookingsByDateRange = async (startDate, endDate) => {
             'Time.Checkin': { $gte: new Date(startDate) },
             'Time.Checkout': { $lte: new Date(endDate) }
         })
-            .populate('customers')
-            .populate('rooms')
+            .populate({
+                path: 'customers',
+                select: 'full_name phone cccd'
+            })
+            .populate({
+                path: 'rooms',
+                select: 'RoomName Price'
+            })
             .sort({ 'Time.Checkin': 1 });
 
         return {
