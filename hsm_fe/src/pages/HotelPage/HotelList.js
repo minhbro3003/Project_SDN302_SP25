@@ -1,38 +1,72 @@
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
-    DeleteOutlined,
-    DownOutlined,
-    EditOutlined,
-    SearchOutlined,
+    DeleteOutlined, UploadOutlined, EditOutlined, PlusOutlined, SearchOutlined,
 } from "@ant-design/icons";
-import { Button, Dropdown, Input, Menu, Space, Table, Tag, Tooltip } from "antd";
+import { Button, Upload, Form, Input, Switch, Space, Table, Tag, notification } from "antd";
 import * as HotelService from "../../services/HotelService";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { getBase64 } from "../../utils";
+import { useNavigate } from "react-router";
+import DrawerComponent from "../../components/DrawerComponent/DrawerComponent";
+import ModalComponent from "../../components/ModalComponent/ModalComponent";
+import { RowContainer, FullWidthItem } from "./style";
 
 const HotelList = () => {
-    const [searchText, setSearchText] = useState("");
-    const [searchedColumn, setSearchedColumn] = useState("");
+    const [isOpenDrawer, setIsOpenDrawer] = useState(false);
+    const [isModalDelete, setIsModalDelete] = useState(false);
+    const [setSearchText] = useState("");
+    const [setSearchedColumn] = useState("");
     const searchInput = useRef(null);
+    const navigate = useNavigate();
+    const [form] = Form.useForm();
+    const [rowSelected, setRowSelected] = useState("");
+    const [api, contextHolder] = notification.useNotification();
+
+
+    const [stateHotelDetails, setStateHotelDetails] = useState({
+        CodeHotel: "",
+        NameHotel: "",
+        Introduce: "",
+        LocationHotel: "",
+        image: "",
+        Active: false,
+    });
+
+    const mutationUpdate = useMutation({
+        mutationFn: async ({ id, data }) => {
+            return await HotelService.updateHotel(id, data);
+        },
+    });
+
+    const mutationDelete = useMutation({
+        mutationFn: async ({ id }) => {
+            return await HotelService.deleteHotel(id);
+        },
+    });
 
     const getAllHotels = async () => {
         const res = await HotelService.getAllHotel();
-        console.log("data hotel: ", res);
+        // console.log("data hotel: ", res);
         return res;
     };
 
-    const queryProduct = useQuery({
+    const queryHotel = useQuery({
         queryKey: ["hotels"],
         queryFn: getAllHotels,
     });
 
-    const { isLoading: isLoadingProducts, data: hotels = [] } = queryProduct;
+    //delete product
+    const { isLoading: isLoadingHotels, data: hotels = [] } = queryHotel;
+    const { isLoading: isLoadingUpdate, data: dataUpdate } = mutationUpdate;
+    const { isLoading: isLoadingDelete, data: dataDeleted, isSuccess: isSuccessDeleted, isError: isErrorDeleted } = mutationDelete;
 
+    // console.log("data update: ", dataUpdate)
     const dataTable =
         hotels?.data?.length &&
         hotels?.data?.map((p) => {
             return { ...p, key: p._id };
         });
-    console.log("dataTable", dataTable);
+    // console.log("dataTable", dataTable);
 
     const handleSearch = (selectedKeys, confirm, dataIndex) => {
         confirm();
@@ -156,6 +190,143 @@ const HotelList = () => {
         //         text
         //     ),
     });
+
+    // ✨ Hàm giúp chuyển đổi dữ liệu API thành format hợp lệ
+    const mapHotelData = (data) => ({
+        _id: data._id,
+        CodeHotel: data.CodeHotel || "",
+        NameHotel: data.NameHotel || "",
+        Introduce: data.Introduce || "",
+        LocationHotel: data.LocationHotel || "",
+        Active: data.Active || false,
+        image: data.image,
+    });
+
+    const fetchGetDetailsHotel = async (hotelId) => {
+        if (!hotelId) return;
+        try {
+            const res = await HotelService.getHotelById(hotelId);
+            if (res?.data) {
+                console.log("Hotel Data from API:", res.data); // Debug API response
+                setStateHotelDetails(mapHotelData(res.data));
+            }
+        } catch (error) {
+            console.error("Failed to fetch hotel details:", error);
+        }
+    };
+
+    console.log("StateHotelDetails:", stateHotelDetails);
+
+    // Chỉ cập nhật khi có dữ liệu
+    useEffect(() => {
+        if (stateHotelDetails._id) {
+            // console.log("Updating form with stateHotelDetails:", stateHotelDetails);
+            form.setFieldsValue({
+                CodeHotel: stateHotelDetails.CodeHotel,
+                NameHotel: stateHotelDetails.NameHotel,
+                Introduce: stateHotelDetails.Introduce,
+                LocationHotel: stateHotelDetails.LocationHotel,
+                image: stateHotelDetails.image,
+                Active: stateHotelDetails.Active,
+            });
+        }
+    }, [stateHotelDetails, form]);
+
+    //delete hotel
+    useEffect(() => {
+        if (isSuccessDeleted && dataDeleted?.status === "OK") {
+            api.success({ message: "Xóa hotel thành công!" });
+            handleCancelDelete();
+        } else if (isErrorDeleted) {
+            api.error({ message: "Xóa hotel thất bại!" });
+        }
+    }, [isSuccessDeleted, isErrorDeleted, dataDeleted?.status]);
+
+    useEffect(() => {
+        if (rowSelected) {
+            fetchGetDetailsHotel(rowSelected)
+        }
+    }, [rowSelected]);
+
+    const handleDetailsHotel = () => {
+        if (rowSelected) {
+            fetchGetDetailsHotel(rowSelected)
+        }
+        console.log("rowSelected: ", rowSelected);
+        // setRowSelected(record);
+        setIsOpenDrawer(true);
+    };
+
+    const handleOnChangeDetail = (e) => {
+        const { name, value, type, checked } = e.target || {};
+        setStateHotelDetails((prev) => ({
+            ...prev,
+            [name]: type === "checkbox" ? checked : value, // Nếu là checkbox (Switch), lấy giá trị checked
+        }));
+    };
+
+    const onUpdateHotel = () => {
+        const updateData = {
+            CodeHotel: stateHotelDetails.CodeHotel,
+            NameHotel: stateHotelDetails.NameHotel,
+            Introduce: stateHotelDetails.Introduce,
+            LocationHotel: stateHotelDetails.LocationHotel,
+            Active: stateHotelDetails.Active,
+            image: stateHotelDetails.image,
+        };
+
+        // console.log("🔥 Dữ liệu gửi lên BE:", updateData);
+
+        mutationUpdate.mutate(
+            { id: rowSelected, data: updateData },
+            {
+                onSuccess: () => {
+                    api.success({ message: "Hotel updated successfully!" });
+                    setIsOpenDrawer(false);
+                    fetchGetDetailsHotel(rowSelected); // Lấy dữ liệu mới
+
+                },
+                onError: (error) => {
+                    console.error("Update Hotel Error:", error);
+                    api.error({ message: "Failed to update hotel!" });
+                },
+                onSettled: () => {
+                    queryHotel.refetch()
+                }
+            }
+        );
+    };
+
+    //delete hotel
+    const handleCancelDelete = () => {
+        setIsModalDelete(false);
+        // console.log("handleDeteleProduct", rowSelected);
+    };
+
+    //delete product
+    const handleDeleteHotel = () => {
+        mutationDelete.mutate(
+            { id: rowSelected },
+            {
+                onSettled: () => {
+                    queryHotel.refetch();
+                },
+            }
+        );
+    };
+
+    //get image product details
+    const handleOnChangeImageDetails = async ({ fileList }) => {
+        const file = fileList[0];
+        if (!file.url && !file.preview) {
+            file.preview = await getBase64(file.originFileObj);
+        }
+        setStateHotelDetails({
+            ...stateHotelDetails,
+            image: file.preview,
+        });
+    };
+
     const renderAction = () => {
         return (
             <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
@@ -165,7 +336,7 @@ const HotelList = () => {
                         fontSize: "20px",
                         cursor: "pointer",
                     }}
-                // onClick={() => setIsModalDelete(true)}
+                    onClick={() => setIsModalDelete(true)}
                 />
                 <EditOutlined
                     style={{
@@ -173,7 +344,7 @@ const HotelList = () => {
                         fontSize: "20px",
                         cursor: "pointer",
                     }}
-                // onClick={handleDetailsProduct}
+                    onClick={handleDetailsHotel}
                 />
             </div>
         );
@@ -181,21 +352,19 @@ const HotelList = () => {
     const columns = [
         {
             title: "Image Hotel",
-            dataIndex: "images",
-            key: "images",
-            // width: "20%",
-            ...getColumnSearchProps("images"),
-            render: (images) => (
-                images && images.length > 0 ? (
+            dataIndex: "image",
+            key: "image",
+            width: "8%",
+            render: (image) =>
+                image ? (
                     <img
-                        src={images[0].LinkImage}
+                        src={image}
                         alt="Hotel"
-                        style={{ width: 80, height: 50, objectFit: "cover", borderRadius: 5 }}
+                        style={{ width: "80%", height: 35, objectFit: "cover", borderRadius: 6 }}
                     />
                 ) : (
                     "No Image"
-                )
-            ),
+                ),
         },
         {
             title: "Hotel Code",
@@ -214,72 +383,12 @@ const HotelList = () => {
             sorter: (a, b) => a.NameHotel.length - b.NameHotel.length,
         },
         {
-            title: "Title",
-            dataIndex: "Title",
-            key: "Title",
-            ...getColumnSearchProps("Title"),
-            sorter: (a, b) => a.Title.length - b.Title.length,
-            sortDirections: ["descend", "ascend"],
-        },
-        {
             title: "LocationHotel",
             dataIndex: "LocationHotel",
             key: "LocationHotel",
             ...getColumnSearchProps("LocationHotel"),
             sorter: (a, b) => a.LocationHotel.length - b.LocationHotel.length,
             sortDirections: ["descend", "ascend"],
-        },
-        {
-            title: "Rooms",
-            dataIndex: "rooms",
-            key: "rooms",
-            ...getColumnSearchProps("rooms"),
-            sorter: (a, b) => a.rooms.length - b.rooms.length,
-            sortDirections: ["descend", "ascend"],
-            // render: (rooms) => {
-            //     if (!rooms || rooms.length === 0) {
-            //         return <span style={{ color: "gray" }}>No rooms</span>;
-            //     }
-
-            //     const menuItems = rooms.map((room) => ({
-            //         key: room._id,
-            //         label: room.NameRoom,
-            //     }));
-
-            //     return (
-            //         <Dropdown menu={{ items: menuItems }}>
-            //             <Button>
-            //                 View Rooms <DownOutlined />
-            //             </Button>
-            //         </Dropdown>
-            //     );
-            // },
-            render: (rooms) => {
-                if (!rooms || rooms.length === 0) {
-                    return <span style={{ color: "gray" }}>No rooms</span>;
-                };
-
-                const firstAmenity = rooms[0]; // Chỉ lấy 1 cái đầu tiên
-                const otherAmenities = rooms.slice(1); // Những cái còn lại
-
-                return (
-                    <Tooltip
-                        title={otherAmenities.map(a => a.NameRoom).join(" - ")}
-                        placement="top"
-                    >
-                        <Tag color="blue">{firstAmenity.NameRoom}</Tag>
-                        {otherAmenities.length > 0 && (
-                            <span style={{ color: "#f300f4", cursor: "pointer" }}>
-                                +{otherAmenities.length} more
-                            </span>
-                        )}
-                    </Tooltip>
-                );
-            },
-            onFilter: (value, record) =>
-                record.rooms?.some(room =>
-                    room.NameRoom.toLowerCase().includes(value.toLowerCase())
-                ),
         },
         {
             title: "Status",
@@ -305,7 +414,136 @@ const HotelList = () => {
     ];
     return (
         <>
-            <Table columns={columns} dataSource={dataTable} />
+            {contextHolder}
+            <Button
+                style={{
+                    height: "90px",
+                    width: "90px",
+                    borderRadius: "6px",
+                    borderStyle: "dashed",
+                    marginBottom: "15px",
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    justifyContent: "center",
+                }}
+                onClick={() => navigate('/hotel/add-hotel')}
+            >
+                <PlusOutlined style={{ fontSize: "35px" }} />
+                <div style={{ fontSize: "13px", fontWeight: "500" }}>
+                    Add Hotel
+                </div>
+            </Button>
+            <Table columns={columns} dataSource={dataTable}
+                onRow={(record, rowIndex) => {
+                    return {
+                        onClick: (event) => {
+                            // console.log("Record Selected:", record);
+                            setRowSelected(record._id);
+                        }
+                    };
+                }}
+            />
+
+            <DrawerComponent
+                title="Update Hotel"
+                isOpen={isOpenDrawer}
+                onClose={() => setIsOpenDrawer(false)}
+                width="65%"
+            >
+                {/* <Loading isLoading={isLoadingUpdate}> */}
+                <Form form={form} layout="vertical" onFinish={onUpdateHotel} autoComplete="on">
+
+                    {/* Image Upload - Full width */}
+                    <FullWidthItem>
+                        <Form.Item name="image" label="Image">
+                            <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+                                {/* Hiển thị ảnh đã chọn */}
+                                {stateHotelDetails?.image && (
+                                    <img
+                                        src={stateHotelDetails.image}
+                                        alt="Preview"
+                                        style={{
+                                            width: 100,
+                                            height: 100,
+                                            objectFit: "cover",
+                                            borderRadius: 8,
+                                            border: "1px solid #ddd",
+                                        }}
+                                    />
+                                )}
+
+                                {/* Nút Upload bên cạnh */}
+                                <Upload
+                                    listType="picture-card"
+                                    beforeUpload={() => false}
+                                    maxCount={1}
+                                    showUploadList={false}
+                                    onChange={handleOnChangeImageDetails}
+                                >
+                                    <div>
+                                        <UploadOutlined />
+                                        <div style={{ marginTop: 8 }}>Upload</div>
+                                    </div>
+                                </Upload>
+                            </div>
+                        </Form.Item>
+                    </FullWidthItem>
+
+                    {/* Hotel Code & Name on the same row */}
+                    <RowContainer>
+                        <Form.Item name="CodeHotel" label="Hotel Code" rules={[{ required: true, message: "Please enter hotel code" }]}>
+                            <Input value={stateHotelDetails.CodeHotel} onChange={handleOnChangeDetail} name="CodeHotel" placeholder="Enter hotel code" />
+                        </Form.Item>
+                        <Form.Item name="NameHotel" label="Hotel Name" rules={[{ required: true, message: "Please enter hotel name" }]}>
+                            <Input value={stateHotelDetails.NameHotel} onChange={handleOnChangeDetail} name="NameHotel" placeholder="Enter hotel name" />
+                        </Form.Item>
+                    </RowContainer>
+
+                    {/* Title & Location on the same row */}
+                    <RowContainer>
+                        <Form.Item name="LocationHotel" label="Location Hotel" rules={[{ required: true, message: "Please enter location" }]}>
+                            <Input value={stateHotelDetails.LocationHotel} onChange={handleOnChangeDetail} name="LocationHotel" placeholder="Enter location" />
+                        </Form.Item>
+                        <Form.Item name="Active" label="Status" valuePropName="checked">
+                            <Switch
+                                checked={stateHotelDetails.Active}
+                                onChange={(checked) =>
+                                    setStateHotelDetails((prev) => ({ ...prev, Active: checked }))
+                                }
+                            />
+                        </Form.Item>
+                    </RowContainer>
+
+                    {/* Introduction - Full width */}
+                    <FullWidthItem>
+                        <Form.Item name="Introduce" label="Introduction" rules={[{ required: true, message: "Please enter hotle introduction" }]}>
+                            <Input.TextArea value={stateHotelDetails.Introduce} onChange={handleOnChangeDetail} name="Introduce" placeholder="Enter introduction" />
+                        </Form.Item>
+                    </FullWidthItem>
+
+                    {/* Submit Button */}
+                    <FullWidthItem>
+                        <Button
+                            style={{ backgroundColor: "rgb(121, 215, 190)", borderColor: "rgb(121, 215, 190)", color: "black" }}
+                            htmlType="submit"
+                        >
+                            Update Hotel
+                        </Button>
+                    </FullWidthItem>
+
+                </Form>
+                {/* </Loading> */}
+            </DrawerComponent>
+
+            <ModalComponent
+                title="Delete Hotel"
+                open={isModalDelete}
+                onOk={handleDeleteHotel}
+                onCancel={handleCancelDelete}
+            >
+                <div>Are you sure you want to delete this hotel?</div>
+            </ModalComponent>
         </>
     );
 };
