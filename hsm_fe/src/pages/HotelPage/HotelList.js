@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import {
     DeleteOutlined, UploadOutlined, EditOutlined, PlusOutlined, SearchOutlined,
 } from "@ant-design/icons";
-import { Button, Upload, Form, Input, Switch, Space, Table, Tag, notification } from "antd";
+import { Button, Upload, Form, Input, Switch, Space, Table, Tag, notification, Spin } from "antd";
 import * as HotelService from "../../services/HotelService";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { getBase64 } from "../../utils";
@@ -14,14 +14,14 @@ import { RowContainer, FullWidthItem } from "./style";
 const HotelList = () => {
     const [isOpenDrawer, setIsOpenDrawer] = useState(false);
     const [isModalDelete, setIsModalDelete] = useState(false);
-    const [setSearchText] = useState("");
-    const [setSearchedColumn] = useState("");
+    const [searchText, setSearchText] = useState("");
+    const [searchedColumn, setSearchedColumn] = useState("");
     const searchInput = useRef(null);
     const navigate = useNavigate();
     const [form] = Form.useForm();
     const [rowSelected, setRowSelected] = useState("");
     const [api, contextHolder] = notification.useNotification();
-
+    const [loading, setLoading] = useState(false);
 
     const [stateHotelDetails, setStateHotelDetails] = useState({
         CodeHotel: "",
@@ -45,9 +45,13 @@ const HotelList = () => {
     });
 
     const getAllHotels = async () => {
-        const res = await HotelService.getAllHotel();
-        // console.log("data hotel: ", res);
-        return res;
+        setLoading(true); // Bật loading
+        try {
+            const res = await HotelService.getAllHotel();
+            return res;
+        } finally {
+            setLoading(false); // Tắt loading khi xong
+        }
     };
 
     const queryHotel = useQuery({
@@ -329,24 +333,44 @@ const HotelList = () => {
 
     const renderAction = () => {
         return (
-            <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
-                <DeleteOutlined
+            <div
+                style={{
+                    display: "flex",
+                    gap: "10px",
+                    alignItems: "center",
+                }}
+            >
+                <div
                     style={{
-                        color: "red",
-                        fontSize: "20px",
+                        background: "rgba(255, 165, 0, 0.2)", // Màu nền cam nhạt
+                        padding: "8px",
+                        borderRadius: "6px",
                         cursor: "pointer",
+                        transition: "background 0.3s",
                     }}
-                    onClick={() => setIsModalDelete(true)}
-                />
-                <EditOutlined
-                    style={{
-                        color: "orange",
-                        fontSize: "20px",
-                        cursor: "pointer",
-                    }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255, 165, 0, 0.4)")}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = "rgba(255, 165, 0, 0.2)")}
                     onClick={handleDetailsHotel}
-                />
+                >
+                    <EditOutlined style={{ color: "orange", fontSize: "20px" }} />
+                </div>
+
+                <div
+                    style={{
+                        background: "rgba(255, 0, 0, 0.2)", // Màu nền đỏ nhạt
+                        padding: "8px",
+                        borderRadius: "6px",
+                        cursor: "pointer",
+                        transition: "background 0.3s",
+                    }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255, 0, 0, 0.4)")}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = "rgba(255, 0, 0, 0.2)")}
+                    onClick={() => setIsModalDelete(true)}
+                >
+                    <DeleteOutlined style={{ color: "red", fontSize: "20px" }} />
+                </div>
             </div>
+
         );
     };
     const columns = [
@@ -394,7 +418,7 @@ const HotelList = () => {
             title: "Status",
             dataIndex: "Active",
             key: "Active",
-            ...getColumnSearchProps("Active"),
+            // ...getColumnSearchProps("Active"),
             render: (Active) => (
                 <Tag color={Active ? "green" : "volcano"}>
                     {Active ? "Active" : "Inactive"}
@@ -434,16 +458,20 @@ const HotelList = () => {
                     Add Hotel
                 </div>
             </Button>
-            <Table columns={columns} dataSource={dataTable}
-                onRow={(record, rowIndex) => {
-                    return {
-                        onClick: (event) => {
-                            // console.log("Record Selected:", record);
-                            setRowSelected(record._id);
-                        }
-                    };
-                }}
-            />
+            <Spin spinning={loading}>
+                <Table columns={columns} dataSource={dataTable}
+                    loading={isLoadingHotels || isLoadingUpdate || isLoadingDelete}
+                    onRow={(record, rowIndex) => {
+                        return {
+                            onClick: (event) => {
+                                // console.log("Record Selected:", record);
+                                setRowSelected(record._id);
+                            }
+                        };
+                    }}
+                />
+            </Spin>
+
 
             <DrawerComponent
                 title="Update Hotel"

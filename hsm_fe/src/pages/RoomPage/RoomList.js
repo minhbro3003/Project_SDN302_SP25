@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import {
     DeleteOutlined, EditOutlined, MinusOutlined, PlusOutlined, SearchOutlined, UploadOutlined
 } from "@ant-design/icons";
-import { Form, Input, InputNumber, Select, Button, Upload, Row, Col, Space, Table, notification, } from "antd";
+import { Form, Input, InputNumber, Select, Button, Upload, Row, Col, Space, Table, notification, Spin, } from "antd";
 import * as RoomService from "../../services/RoomService";
 import * as HotelService from "../../services/HotelService";
 import * as AmenityService from "../../services/AmenityService";
@@ -31,6 +31,7 @@ const RoomList = () => {
     const [amenitiesQuantity, setAmenitiesQuantity] = useState({});
     const [api, contextHolder] = notification.useNotification();
     const [stateAmenitiesRoom, setStateAmenitiesRoom] = useState([]);
+    const [loading, setLoading] = useState(false);
 
     const handleSearch = (selectedKeys, confirm, dataIndex) => {
         confirm();
@@ -209,8 +210,7 @@ const RoomList = () => {
             dataIndex: "hotel",
             key: "hotel",
             width: "17%",
-            ...getColumnSearchProps("hotel.NameHotel"),
-            sorter: (a, b) => a.hotel?.NameHotel.length - b.hotel?.NameHotel.length,
+            sorter: (a, b) => (a.hotel?.NameHotel.length || 0) - b.hotel?.NameHotel.length,
             render: (hotel) => hotel?.NameHotel || "No hotel"
         },
         {
@@ -218,15 +218,23 @@ const RoomList = () => {
             dataIndex: "RoomName",
             key: "roomName",
             width: "15%",
-            ...getColumnSearchProps("roomName"),
-            sorter: (a, b) => a.RoomName.length - b.RoomName.length,
+            ...getColumnSearchProps("RoomName"),
+            sorter: (a, b) => {
+                const extractNumber = (roomName) => {
+                    const match = roomName.match(/^([A-Za-z]+)(\d+)$/);
+                    return match ? parseInt(match[2], 10) : 0; // Trả về số nếu có, nếu không thì 0
+                };
+
+                return extractNumber(a.RoomName) - extractNumber(b.RoomName);
+            },
+            sortDirections: ["descend", "ascend"],
         },
         {
             title: "Price",
             dataIndex: "Price",
             key: "price",
             render: (Price) => convertPrice(Price),
-            ...getColumnSearchProps("price"),
+            ...getColumnSearchProps("Price"),
             sorter: (a, b) => a.Price - b.Price,
             sortDirections: ["descend", "ascend"],
         },
@@ -242,7 +250,7 @@ const RoomList = () => {
             width: "16%",
             key: "roomtype",
             ...getColumnSearchProps("roomtype"),
-            sorter: (a, b) => a.roomtype.length - b.roomtype.length,
+            sorter: (a, b) => a.roomtype.TypeName.length - b.roomtype.TypeName.length,
             sortDirections: ["descend", "ascend"],
             render: (roomtype) => roomtype?.TypeName || "No type"
         },
@@ -313,10 +321,15 @@ const RoomList = () => {
 
     //✅ Lấy danh sách Rooms
     const getAllRooms = async () => {
-        const res = await RoomService.getAllRoom();
-        // console.log("data rooms: ", res);
-        return res;
+        setLoading(true); // Bật loading
+        try {
+            const res = await RoomService.getAllRoom();
+            return res;
+        } finally {
+            setLoading(false); // Tắt loading khi xong
+        }
     };
+
     const queryRoom = useQuery({
         queryKey: ["rooms"],
         queryFn: getAllRooms,
@@ -530,19 +543,22 @@ const RoomList = () => {
                 </div>
             </Button>
 
-            <Table columns={columns} dataSource={dataTable}
-                onRow={(record, rowIndex) => {
-                    return {
-                        onClick: (event) => {
-                            console.log("Record Selected:", record);
-                            setRowSelected(record._id);
-                        }
-                    };
-                }}
-            />
+            <Spin spinning={loading}>
+                <Table columns={columns} dataSource={dataTable}
+                    loading={isLoadingRoom}
+                    onRow={(record, rowIndex) => {
+                        return {
+                            onClick: (event) => {
+                                console.log("Record Selected:", record);
+                                setRowSelected(record._id);
+                            }
+                        };
+                    }}
+                />
+            </Spin>
 
             <DrawerComponent
-                title="Update Hotel"
+                title="Update Room"
                 isOpen={isOpenDrawer}
                 onClose={() => setIsOpenDrawer(false)}
                 width="80%"

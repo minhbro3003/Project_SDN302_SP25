@@ -206,8 +206,8 @@ const EmployeesPage = () => {
 
   return (
     <div style={{ padding: "20px" }}>
-      <Table 
-        columns={columns} 
+      <Table
+        columns={columns}
         dataSource={employees}
         onRow={(record) => ({
           onClick: () => navigate(`/employee-detail/${record._id}`),
