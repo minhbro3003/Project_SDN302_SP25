@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Input, Button, Form, notification, Card, Row, Col, Table, Alert, DatePicker, InputNumber, Select } from "antd";
 import { checkCustomerExists } from "../../services/CustomerService";
-import { getAvailableRooms } from "../../services/RoomService";
+import { getAvailableRooms, checkRoomAvailability } from "../../services/RoomService";
 import moment from "moment";
 import { getAllServices } from "../../services/ServiceService";
 import { createTransaction } from "../../services/TransactionService";
@@ -9,6 +9,7 @@ import { createPaymentLink } from "../../services/VNPayService";
 import { CopyrightCircleTwoTone } from '@ant-design/icons';
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
+import Statistic from "antd/es/statistic/Statistic";
 const { RangePicker } = DatePicker;
 
 const ReservationPage = () => {
@@ -25,6 +26,8 @@ const ReservationPage = () => {
     const [autoFill, setAutoFill] = useState(false);
     const [dates, setDates] = useState([null, null]); // For check-in and check-out dates
     const [paymentType, setPaymentType] = useState(""); // For Partial Pay / Full Pay
+    const [checkingAvailability, setCheckingAvailability] = useState(false);
+    const [showRoomTables, setShowRoomTables] = useState(false);
     const totalRoomPrice = selectedRooms.reduce((total, room) => total + room.Price, 0);
     const totalServicePrice = selectedServices.reduce((total, service) => total + service.totalPrice, 0);
     const finalPrice = totalRoomPrice + totalServicePrice;
@@ -92,44 +95,6 @@ const ReservationPage = () => {
         setPaymentType(value);
     };
 
-    // const handleGeneratePaymentLink = async () => {
-    //     if (!paymentType) {
-    //         alert("Please select a payment type.");
-    //         return;
-    //     }
-
-
-    //     // Construct the order info string
-    //     const selectedRoomNames = selectedRooms.join(", ");
-    //     const selectedServiceNames = selectedServices.map(service => `${service.serviceName} (x${service.quantity})`).join(", ");
-    //     const paymentDescription = paymentType === "Partial Pay" ? "Partial Payment (30%)" : "Full Payment";
-    //     const paymentAmount = paymentType === "Partial Pay" ? finalPrice * 0.30 : finalPrice;  // 30% for partial, full amount for full payment
-    //     const orderInfo = `Order for Rooms: ${selectedRoomNames}. Services: ${selectedServiceNames}. Payment Type: ${paymentDescription}`;
-
-    //     try {
-    //         // Call the createPaymentLink function with the orderInfo description and the amount (e.g., total amount)
-    //         const amount = paymentAmount;  // For example, this could be the total amount from selected rooms and services
-    //         const response = await createPaymentLink(amount, orderInfo);
-
-    //         if (response.paymentUrl) {
-    //             setPaymentLink(response.paymentUrl);  // Set the payment link from the response
-    //             api.success({
-    //                 message: " Generate Link success",
-    //                 description: "Generate Complete",
-    //             });
-    //         } else {
-    //             api.error({
-    //                 message: "Failed to generate",
-    //                 description: "Something went wrong",
-    //             });
-    //         }
-    //     } catch (error) {
-    //         console.error('Error generating payment link:', error);
-    //         alert('An error occurred while generating the payment link.');
-    //     }
-    // };
-
-
     const handleFieldChange = async (changedValue) => {
         const { phone, cccd } = changedValue;
         if (phone || cccd) {
@@ -170,18 +135,84 @@ const ReservationPage = () => {
             return;
         }
 
-        const updatedRoom = { ...room, checkin: dates[0], checkout: dates[1] }; // Assign checkin/checkouts
+        if (selectedRooms.some(r => r._id === room._id)) {
+            api.error({
+                message: "Room Already Selected",
+                description: "This room is already in your selection.",
+            });
+            return;
+        }
+
+        const updatedRoom = { ...room, checkin: dates[0], checkout: dates[1] };
         setSelectedRooms([...selectedRooms, updatedRoom]);
-        setAvailableRooms(availableRooms.filter((r) => r._id !== room._id)); // Remove from available rooms
+        setAvailableRooms(availableRooms.filter((r) => r._id !== room._id));
     };
 
     const handleRemoveRoom = (room) => {
         setSelectedRooms(selectedRooms.filter((r) => r._id !== room._id));
-        setAvailableRooms([...availableRooms, room]); // Add back to available rooms
+        if (room.Status === "Available") {
+            setAvailableRooms([...availableRooms, room]);
+        }
     };
 
     const handleDateChange = (value) => {
-        setDates(value); // Set the check-in and check-out dates
+        setDates(value);
+        setShowRoomTables(false);
+    };
+
+    // Function to disable past times
+    const disabledTime = (current, type) => {
+        if (!current || !current.isSame(moment(), 'day')) return {};
+
+        const now = moment();
+        return {
+            disabledHours: () => Array.from({ length: now.hour() }, (_, i) => i),
+            disabledMinutes: (selectedHour) => {
+                if (selectedHour === now.hour()) {
+                    return Array.from({ length: now.minute() }, (_, i) => i);
+                }
+                return [];
+            }
+        };
+    };
+
+    const handleCheckAvailability = async () => {
+        if (!dates[0] || !dates[1]) {
+            api.error({
+                message: "Select Dates First",
+                description: "Please select the check-in and check-out dates before checking availability.",
+            });
+            return;
+        }
+
+        setCheckingAvailability(true);
+        try {
+            const result = await checkRoomAvailability(
+                dates[0].format("YYYY-MM-DD HH:mm:ss"),
+                dates[1].format("YYYY-MM-DD HH:mm:ss")
+            );
+
+            if (result.status === "OK") {
+                setAvailableRooms(result.data);
+                setShowRoomTables(true);
+                api.success({
+                    message: "Availability Checked",
+                    description: "Room availability has been updated based on your selected dates.",
+                });
+            } else {
+                api.error({
+                    message: "Error",
+                    description: result.message || "Failed to check room availability",
+                });
+            }
+        } catch (error) {
+            api.error({
+                message: "Error",
+                description: "An error occurred while checking room availability.",
+            });
+        } finally {
+            setCheckingAvailability(false);
+        }
     };
 
     const availableColumns = [
@@ -247,8 +278,8 @@ const ReservationPage = () => {
                 </span>
             )
         },
-        { title: "Check-in", dataIndex: "checkin", key: "checkin", render: (text) => moment(text).format("YYYY-MM-DD") },
-        { title: "Check-out", dataIndex: "checkout", key: "checkout", render: (text) => moment(text).format("YYYY-MM-DD") },
+        { title: "Check-in", dataIndex: "checkin", key: "checkin", render: (text) => moment(text).format("YYYY-MM-DD HH:mm") },
+        { title: "Check-out", dataIndex: "checkout", key: "checkout", render: (text) => moment(text).format("YYYY-MM-DD HH:mm") },
         {
             title: "Action",
             key: "action",
@@ -342,6 +373,46 @@ const ReservationPage = () => {
     ];
 
     const handleSubmit = async () => {
+        if (!form.getFieldValue("full_name") || !form.getFieldValue("phone") || !form.getFieldValue("cccd")) {
+            api.error({
+                message: "Missing Information",
+                description: "Please fill in all customer information fields.",
+            });
+            return;
+        }
+
+        if (selectedRooms.length === 0) {
+            api.error({
+                message: "No Rooms Selected",
+                description: "Please select at least one room before booking.",
+            });
+            return;
+        }
+
+        if (!dates[0] || !dates[1]) {
+            api.error({
+                message: "Missing Dates",
+                description: "Please select check-in and check-out dates.",
+            });
+            return;
+        }
+
+        if (!paymentMethod) {
+            api.error({
+                message: "Missing Payment Method",
+                description: "Please select a payment method.",
+            });
+            return;
+        }
+
+        if (paymentMethod === "Credit Card" && !paymentType) {
+            api.error({
+                message: "Missing Payment Type",
+                description: "Please select a payment type for credit card payment.",
+            });
+            return;
+        }
+
         setLoading(true);
 
         // Prepare booking data
@@ -430,20 +501,63 @@ const ReservationPage = () => {
                     />
                 )}
 
-                {/* Date Picker */}
-                <Form.Item label="Dates" name="dates">
-                    <RangePicker
-                        format="YYYY-MM-DD"
-                        onChange={handleDateChange}
-                        disabledDate={(current) => current && current < moment().endOf("day")} // Disable past dates
-                    />
-                </Form.Item>
+                {/* Date Picker with Check Availability Button */}
+                <Row gutter={16}>
+                    <Col span={18}>
+                        <Form.Item label="Check-in/Check-out Time" name="dates">
+                            <RangePicker
+                                format="YYYY-MM-DD HH:mm"
+                                showTime={{
+                                    format: 'HH:mm',
+                                    minuteStep: 15,
+                                    defaultValue: [
+                                        moment().add(15 - (moment().minute() % 15), 'minutes'),
+                                        moment().add(1, 'day').startOf('day').add(12, 'hours')
+                                    ]
+                                }}
+                                onChange={handleDateChange}
+                                disabledDate={(current) => current && current < moment().startOf("day")}
+                                disabledTime={disabledTime}
+                                placeholder={['Check-in date & time', 'Check-out date & time']}
+                            />
+                        </Form.Item>
+                    </Col>
+                    <Col span={6}>
+                        <Form.Item>
+                            <Button
+                                type="primary"
+                                onClick={handleCheckAvailability}
+                                loading={checkingAvailability}
+                                style={{ marginTop: "29px" }}
+                            >
+                                Check Availability
+                            </Button>
+                        </Form.Item>
+                    </Col>
+                </Row>
 
-                {/* Available Rooms Table */}
-                <Table columns={availableColumns} dataSource={availableRooms} rowKey="_id" />
+                {/* Only show room tables after checking availability */}
+                {showRoomTables && (
+                    <>
+                        {/* Available Rooms Table */}
+                        <h2>Available Rooms</h2>
+                        <Table
+                            columns={availableColumns}
+                            dataSource={availableRooms}
+                            rowKey="_id"
+                            locale={{ emptyText: 'No available rooms for selected dates' }}
+                        />
 
-                {/* Selected Rooms Table */}
-                <Table columns={selectedColumns} dataSource={selectedRooms} rowKey="_id" />
+                        {/* Selected Rooms Table */}
+                        <h2>Selected Rooms</h2>
+                        <Table
+                            columns={selectedColumns}
+                            dataSource={selectedRooms}
+                            rowKey="_id"
+                            locale={{ emptyText: 'No rooms selected' }}
+                        />
+                    </>
+                )}
 
                 {/* Services Table */}
                 <Table columns={serviceColumns} dataSource={services} rowKey="_id" />
@@ -468,43 +582,24 @@ const ReservationPage = () => {
                                     <Select.Option value="Full Pay">Full Pay</Select.Option>
                                 </Select>
                             </Form.Item>
-                            {/* <Button
-                                type="primary"
-                                onClick={handleGeneratePaymentLink}
-                                disabled={!paymentType}
-                            >
-                                Generate payment link
-                            </Button> */}
                         </Col>
                     )}
                 </Row>
 
-                {/* After the payment link is generated */}
-                {/* {paymentLink && (
-                    <Row>
-                        <Col span={24}>
-                            <Form.Item label="Generated Payment Link">
-                                <Input
-                                    value={paymentLink}
-                                    readOnly
-                                    addonAfter={
-                                        <Button
-                                            icon={<CopyrightCircleTwoTone />}
-                                            onClick={() => navigator.clipboard.writeText(paymentLink)}
-                                        >
-                                            Copy
-                                        </Button>
-                                    }
-                                />
-                            </Form.Item>
-                        </Col>
-                    </Row>
-                )} */}
-
+                <Card title="Total Summary" bordered={false} style={{ width: "100%", textAlign: "center" }}>
+                    <Statistic title="Room Price" value={totalRoomPrice} prefix="$" />
+                    <Statistic title="Service Price" value={totalServicePrice} prefix="$" />
+                    <Statistic
+                        title="Final Price"
+                        value={finalPrice}
+                        prefix="$"
+                        valueStyle={{ color: "#3f8600", fontWeight: "bold" }}
+                    />
+                </Card>
 
                 <Button
                     type="primary"
-                    onClick={handleSubmit} // Trigger the handleSubmit manually
+                    onClick={handleSubmit}
                     loading={loading}
                 >
                     Book Reservation

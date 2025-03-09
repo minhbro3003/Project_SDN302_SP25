@@ -41,7 +41,6 @@ const LoginPage = () => {
                         refresh_token: data.refresh_token,
                     })
                 );
-
                 navigate("/dashboard");
             } else {
                 console.error("Login failed:", data.message);
@@ -100,6 +99,7 @@ const LoginPage = () => {
                 </Form>
             </LoginCard>
         </LoginContainer>
+               
     );
 };
 

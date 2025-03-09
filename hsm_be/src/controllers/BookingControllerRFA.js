@@ -42,8 +42,6 @@ const createBooking = async (req, res) => {
     }
 };
 
-
-
 // Update a booking by ID
 const updateBooking = async (req, res) => {
     try {
@@ -76,7 +74,26 @@ const deleteBooking = async (req, res) => {
     }
 };
 
+// Get bookings by date range
+const getBookingsByDateRange = async (req, res) => {
+    try {
+        const { startDate, endDate } = req.query;
+        if (!startDate || !endDate) {
+            return res.status(400).json({
+                status: "ERR",
+                message: "Start date and end date are required"
+            });
+        }
 
+        const bookings = await BookingService.getBookingsByDateRange(startDate, endDate);
+        return res.status(200).json(bookings);
+    } catch (e) {
+        return res.status(500).json({
+            message: "Failed to retrieve bookings",
+            error: e.message
+        });
+    }
+};
 
 module.exports = {
     getAllBookings,
@@ -84,4 +101,5 @@ module.exports = {
     createBooking,
     updateBooking,
     deleteBooking,
+    getBookingsByDateRange
 };

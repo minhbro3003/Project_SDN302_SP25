@@ -1,4 +1,3 @@
-
 import axios from "axios";
 
 export const getAllRoom = async (data) => {
@@ -101,5 +100,20 @@ export const getAvailableRooms = async () => {
     } catch (error) {
         console.error("Error fetching available rooms:", error);
         return { status: "ERR", message: error.response?.data?.message || "Failed to fetch available rooms" };
+    }
+};
+
+export const checkRoomAvailability = async (startDate, endDate) => {
+    try {
+        const response = await axios.get(`${process.env.REACT_APP_API_URL_BACKEND}/rooms/getavail_`, {
+            params: {
+                startDate,
+                endDate
+            }
+        });
+        return response.data;
+    } catch (error) {
+        console.error("Error checking room availability:", error);
+        return { status: "ERR", message: error.response?.data?.message || "Failed to check room availability" };
     }
 };

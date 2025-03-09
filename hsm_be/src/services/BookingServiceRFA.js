@@ -5,8 +5,15 @@ const Room = require("../models/RoomModel");
 const getAllBookings = async () => {
     try {
         const allBookings = await Booking.find()
-            .populate("customers") // Populate customer details
-            .populate("rooms"); // Populate room details
+            .populate({
+                path: 'customers',
+                select: 'full_name phone cccd'
+            })
+            .populate({
+                path: 'rooms',
+                select: 'RoomName Price'
+            })
+            .sort({ 'Time.Checkin': -1 });
 
         return {
             status: "OK",
@@ -188,7 +195,37 @@ const deleteBooking = async (id) => {
     }
 };
 
+// Get bookings by date range
+const getBookingsByDateRange = async (startDate, endDate) => {
+    try {
+        const bookings = await Booking.find({
+            'Time.Checkin': { $gte: new Date(startDate) },
+            'Time.Checkout': { $lte: new Date(endDate) }
+        })
+            .populate({
+                path: 'customers',
+                select: 'full_name phone cccd'
+            })
+            .populate({
+                path: 'rooms',
+                select: 'RoomName Price'
+            })
+            .sort({ 'Time.Checkin': 1 });
 
+        return {
+            status: "OK",
+            message: "Bookings retrieved successfully",
+            data: bookings
+        };
+    } catch (error) {
+        console.error("Error in getBookingsByDateRange:", error.message);
+        return {
+            status: "ERR",
+            message: "Failed to retrieve bookings",
+            error: error.message
+        };
+    }
+};
 
 module.exports = {
     getAllBookings,
@@ -197,4 +234,5 @@ module.exports = {
     createBookingRaw,
     updateBooking,
     deleteBooking,
+    getBookingsByDateRange
 };

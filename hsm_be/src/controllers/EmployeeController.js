@@ -1,4 +1,5 @@
 const EmployeeService = require("../services/EmployeeService");
+const Employee = require("../models/EmployeeModel");
 
 
 //get emnployee type
@@ -76,9 +77,45 @@ const listEmployees = async (req, res) => {
     }
 };
 
+const getEmployeeByAccountId = async (req, res) => {
+    try {
+        const accountId = req.params.id;
+
+        const employee = await Employee.findOne({ accountId })
+            .populate({
+                path: 'hotels',
+                select: 'NameHotel'
+            })
+            .populate({
+                path: 'permission',
+                select: 'PermissionName'
+            });
+
+        if (!employee) {
+            return res.status(404).json({
+                status: "ERR",
+                message: "Employee not found"
+            });
+        }
+
+        return res.status(200).json({
+            status: "OK",
+            data: employee
+        });
+    } catch (error) {
+        console.error("Error in getEmployeeByAccountId:", error);
+        return res.status(500).json({
+            status: "ERR",
+            message: "Internal server error",
+            error: error.message
+        });
+    }
+};
+
 module.exports = {
     getAllEmployeeType,
     getAllPermission,
     createEmployee,
     listEmployees,
+    getEmployeeByAccountId
 };

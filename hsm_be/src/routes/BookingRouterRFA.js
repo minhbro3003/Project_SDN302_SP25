@@ -6,6 +6,9 @@ const { authMiddleware } = require("../middleware/authMiddleware");
 // Get all bookings
 router.get("/"/*,authMiddleware*/, BookingController.getAllBookings);
 
+// Get bookings by date range
+router.get("/date-range"/*,authMiddleware*/, BookingController.getBookingsByDateRange);
+
 // Get a single booking by ID
 router.get("/:id"/*,authMiddleware*/, BookingController.getBookingById);
 

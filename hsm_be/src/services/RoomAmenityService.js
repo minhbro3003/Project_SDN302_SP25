@@ -232,12 +232,87 @@ const deleteRoomAmenity = async (id) => {
     }
 };
 
+
+// Get all amenities for a specific room by room ID
+const getRoomAmenitiesByRoomId = async (roomId) => {
+    try {
+        const roomAmenities = await RoomAmenity.find({ room: roomId })
+            .populate({
+                path: "room",
+                select: "RoomName Status Floor",
+            })
+            .populate({
+                path: "amenity",
+                select: "AmenitiesName",
+            });
+
+        if (!roomAmenities.length) {
+            return {
+                status: "ERR",
+                message: "No amenities found for this room",
+            };
+        }
+
+        return {
+            status: "OK",
+            message: "Room amenities retrieved successfully",
+            data: roomAmenities,
+        };
+    } catch (error) {
+        console.error("Error in getRoomAmenitiesByRoomId:", error.message);
+        return {
+            status: "ERR",
+            message: "Failed to retrieve room amenities",
+            error: error.message,
+        };
+    }
+};
+
+// Update room amenities dynamically
+const updateRoomAmenities = async (roomId, updates) => {
+    try {
+        for (const update of updates) {
+            const { amenityId, quantity, status, action } = update;
+
+            if (action === "remove") {
+                await RoomAmenity.findOneAndDelete({ room: roomId, amenity: amenityId });
+            } else {
+                const existingAmenity = await RoomAmenity.findOne({ room: roomId, amenity: amenityId });
+
+                if (existingAmenity) {
+                    existingAmenity.quantity = quantity !== undefined ? quantity : existingAmenity.quantity;
+                    existingAmenity.status = status !== undefined ? status : existingAmenity.status;
+                    await existingAmenity.save();
+                } else {
+                    const newAmenity = new RoomAmenity({ room: roomId, amenity: amenityId, quantity, status });
+                    await newAmenity.save();
+                }
+            }
+        }
+
+        return {
+            status: "OK",
+            message: "Room amenities updated successfully",
+        };
+    } catch (error) {
+        console.error("Error in updateRoomAmenities:", error.message);
+        return {
+            status: "ERR",
+            message: "Failed to update room amenities",
+            error: error.message,
+        };
+    }
+};
+
+
 module.exports = {
     getAllRoomAmenities,
     getRoomAmenityById,
     createRoomAmenity,
     updateRoomAmenity,
     deleteRoomAmenity,
+    getRoomAmenitiesByRoomId,
+    updateRoomAmenities,
     getAllNotFunctioningRoomAmenities,
     getAmenitiesByRoomId,
     updateRoomAmenitiesByRoomId

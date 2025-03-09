@@ -117,6 +117,30 @@ const deleteRoom = async (req, res) => {
     }
 };
 
+
+const getAvailableRooms_ = async (req, res) => {
+    try {
+        const { startDate, endDate } = req.query;
+        if (!startDate || !endDate) {
+            return res.status(400).json({
+                status: "ERR",
+                message: "Start date and end date are required",
+            });
+        }
+
+        const rooms = await RoomService.getAvailableRooms(startDate, endDate);
+        return res.status(200).json(rooms);
+    } catch (e) {
+        return res.status(500).json({
+            status: "ERROR",
+            message: "Failed to retrieve available rooms",
+            error: e.message,
+        });
+    }
+};
+
+
+
 module.exports = {
     getAllRooms,
     createRooms,
@@ -124,4 +148,5 @@ module.exports = {
     deleteRoom,
     getRoomByRoomId,
     getAvailableRooms,
+    getAvailableRooms_,
 };
