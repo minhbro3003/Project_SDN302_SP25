@@ -7,8 +7,12 @@ export const loginAccount = async (data) => {
         `${process.env.REACT_APP_API_URL_BACKEND}/account/login`,
         data
     );
+    
     return res.data;
+    
 };
+
+
 
 export const createAccount = async (data) => {
     try {

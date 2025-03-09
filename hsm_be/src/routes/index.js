@@ -11,6 +11,7 @@ const TransactionRouter = require("./TransactionRouter");
 const CustomerRouter = require("./CustomerRouter");
 const AmenityRouter = require("./AmenityRouter");
 const RoomAmenityRouter = require("./RoomAmenityRouter");
+const HouseKeeping = require('./HouseKeepingRouter');
 
 const routes = (app) => {
     app.use("/api/account", AccountRouter);
@@ -26,6 +27,7 @@ const routes = (app) => {
     app.use("/api/customers", CustomerRouter);
     app.use("/api/amenities", AmenityRouter);
     app.use("/api/roomamenities", RoomAmenityRouter);
+    app.use("/api/housekeeping", HouseKeeping);
 };
 
 module.exports = routes;

@@ -82,10 +82,19 @@ const createEmployee = async (req, res) => {
     }
 };
 
+const listEmployees = async (req, res) => {
+    try {
+        const employees = await EmployeeService.getListEmployees();
+        res.json(employees);
+    } catch (error) {
+        res.status(500).json({ message: "Error fetching employees", error: error.message });
+    }
+};
 
 module.exports = {
     getAllEmployeeType,
     getAllPermission,
     createEmployee,
-    getAllWorkingShift
+    getAllWorkingShift,
+    listEmployees,
 };
