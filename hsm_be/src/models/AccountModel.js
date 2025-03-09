@@ -9,7 +9,7 @@ const accounts = new mongoose.Schema(
         permissions: [
             {
                 type: mongoose.Schema.Types.ObjectId,
-                ref: "Permissions",
+                ref: "permissions",
                 // required: true,
             },
         ],

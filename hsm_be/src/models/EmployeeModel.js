@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 
 const employeeSchema = new mongoose.Schema(
     {
-        hotels: [{ type: mongoose.Schema.Types.ObjectId, ref: "Hotel", required: true }],
+        hotels: [{ type: mongoose.Schema.Types.ObjectId, ref: "hotels", required: true }],
         FullName: { type: String, required: true, trim: true },
         Phone: { 
             type: String, 
@@ -22,7 +22,8 @@ const employeeSchema = new mongoose.Schema(
             type: mongoose.Schema.Types.ObjectId, 
                         ref: "Account", 
                         required: true 
-        }
+        },
+        permission: {type: mongoose.Schema.Types.ObjectId, ref: "permissions", require: true}
 
     },
     {

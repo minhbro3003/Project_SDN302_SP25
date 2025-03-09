@@ -19,6 +19,8 @@ import ReservationPage from "../pages/ReservationPage/ReservationPage";
 import ReservationList from "../pages/ReservationPage/ReservationListPage";
 import VerificationPage from "../pages/ReservationPage/VerificationPayment";
 import ServicePage from "../pages/ServicePage/ServicePage";
+import Housekeeping from "../pages/HouseKeepingPage/HouseKeepingPage";
+import HousekeepingHistory from "../pages/HouseKeepingPage/House History/HouseHistoryPage";
 
 
 export const routes = [
@@ -40,7 +42,7 @@ export const routes = [
         page: Dashboard,
         isShowHeader: true,
         icon: <HomeOutlined />,
-        permissions: ["Admin", "Receptionist", "Janitor"], // Accessible by all
+        permissions: ["Admin", "Receptionist"], // Accessible by all
     },
     {
         path: "/login",
@@ -64,8 +66,8 @@ export const routes = [
                 permissions: ["Admin", "Receptionist", "Janitor"],
             },
             {
-                path: "/employees/details",
-                name: "Employee Details",
+                path: "/employees/list",
+                name: "Employees",
                 isShowHeader: true,
                 page: EmployeesPage,
                 icon: <AppstoreAddOutlined />,
@@ -87,7 +89,7 @@ export const routes = [
         page: RevenuePage,
         isShowHeader: true,
         icon: <SettingOutlined />,
-        permissions: ["Admin", "Receptionist", "Janitor"],
+        permissions: ["Admin", "Receptionist"],
     },
     {
         path: "/booking-log",
@@ -95,13 +97,13 @@ export const routes = [
         page: BookingPage,
         isShowHeader: true,
         icon: <SettingOutlined />,
-        permissions: ["Admin", "Receptionist", "Janitor"],
+        permissions: ["Admin", "Receptionist"],
     },
     {
         path: "/hotel",
         name: "Hotel",
         isShowHeader: true,
-        roles: ["Admin"],
+        permissions: ["Admin"],
         icon: <BankOutlined />,
         children: [
             {
@@ -149,7 +151,7 @@ export const routes = [
         path: "/rooms",
         name: "Rooms",
         isShowHeader: true,
-        permissions: ["Admin", "Receptionist", "Janitor"],
+        permissions: ["Admin", "Receptionist"],
         icon: <BarChartOutlined />,
         children: [
             {
@@ -158,7 +160,7 @@ export const routes = [
                 isShowHeader: true,
                 page: RoomDashboard,
                 icon: <LineChartOutlined />,
-                permissions: ["Admin", "Receptionist", "Janitor"],
+                permissions: ["Admin", "Receptionist"],
             },
             {
                 path: "/rooms/room-list",
@@ -166,17 +168,33 @@ export const routes = [
                 isShowHeader: true,
                 page: RoomList,
                 icon: <TableOutlined />,
-                permissions: ["Admin", "Receptionist", "Janitor"],
+                permissions: ["Admin", "Receptionist"],
             },
             {
-                path: "/rooms/add-room",
+                path: "/rooms",
                 name: "Add Room",
                 isShowHeader: true,
                 icon: <PlusCircleOutlined />,
                 page: AddRoom,
-                permissions: ["Admin", "Receptionist", "Janitor"],
+                permissions: ["Admin", "Receptionist"],
             },
         ],
+    },
+    {
+        path: "/housekeepinghistory",
+        name: "House Keeping History",
+        page: HousekeepingHistory,
+        isShowHeader: true,
+        icon: <TableOutlined />,
+        permissions: ["Admin"],
+    },
+    {
+        path: "/housekeeping",
+        name: "House Keeping",
+        page: Housekeeping,
+        isShowHeader: true,
+        icon: <TableOutlined />,
+        permissions: ["Janitor"],
     },
     {
         path: "/profile",
@@ -200,7 +218,7 @@ export const routes = [
         page: AccountPage,
         isShowHeader: true,
         icon: <HomeOutlined />,
-        permissions: ["Admin", "Receptionist", "Janitor"],
+        permissions: ["Admin", "Receptionist"],
     },
     {
         path: "/service",

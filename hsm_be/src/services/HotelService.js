@@ -1,38 +1,14 @@
-
 const Hotel = require("../models/HotelModel");
 
+//get all hotel
 const getAllHotel = () => {
     return new Promise(async (resolve, reject) => {
         try {
             const allHotel = await Hotel.find()
-                .populate({ path: "rooms", })
-                .populate({ path: "images" })
-                .lean();
-
-            const formatData = allHotel.map((hotel) => ({
-                id: hotel._id,
-                CodeHotel: hotel.CodeHotel,
-                NameHotel: hotel.NameHotel,
-                Introduce: hotel.Introduce,
-                Title: hotel.Title,
-                LocationHotel: hotel.LocationHotel,
-                Note: hotel.Note,
-                Active: hotel.Active,
-                IsDelete: hotel.IsDelete,
-                images: hotel.images?.map((img) => ({
-                    // id: img?._id,
-                    LinkImage: img?.LinkImage,
-                })) || [],
-                rooms: hotel.rooms.map((room) => ({
-                    // id: room._id,
-                    NameRoom: room.RoomName,
-                })),
-            }));
-
             resolve({
                 status: "OK",
-                message: "All Room successfully",
-                data: formatData,
+                message: " All Hotel successfully",
+                data: allHotel,
             });
         } catch (e) {
             reject(e);
@@ -40,11 +16,10 @@ const getAllHotel = () => {
     });
 };
 
-
 //get hotel by id
 const getHotelByIdService = async (id) => {
     try {
-        const hotel = await Hotel.findById(id);
+        const hotel = await Hotel.findById(id)
         if (!hotel) {
             return {
                 status: "ERR",
@@ -70,8 +45,8 @@ const getHotelByIdService = async (id) => {
 const createHotelService = async (newHotel) => {
     try {
         const {
-            CodeHotel, NameHotel, Introduce, Title, LocationHotel,
-            Note, provinces, images, rooms, Active, IsDelete
+            CodeHotel, NameHotel, Introduce, LocationHotel,
+            image, Active, IsDelete
         } = newHotel;
 
         const checkHotel = await Hotel.findOne({
@@ -79,34 +54,23 @@ const createHotelService = async (newHotel) => {
         });
 
         if (checkHotel) {
-            return {
-                status: "ERR",
-                message: "The hotel code or name already exists",
-            };
+            return { status: "ERR", message: "The hotel code or name already exists" };
         }
 
-        //create room
-        const newedHotelData = new Hotel({
-            CodeHotel, NameHotel, Introduce, Title, LocationHotel,
-            Note, provinces, images, rooms, Active, IsDelete
+        // Lưu danh sách `_id` của `Rooms`
+        const newHotelData = new Hotel({
+            CodeHotel, NameHotel, Introduce, LocationHotel,
+            image, Active, IsDelete
         });
-        //save database
-        const savedHotel = await newedHotelData.save();
 
-        return {
-            status: "OK",
-            message: "Create room successfully",
-            data: savedHotel,
-        };
+        const savedHotel = await newHotelData.save();
+        return { status: "OK", message: "Create hotel successfully", data: savedHotel };
     } catch (error) {
-        console.error("Error in createRoomService:", error.message);
-        return {
-            status: "ERR",
-            message: "Create room failed",
-            error: error.message,
-        };
+        console.error("❌ Error in createHotelService:", error.message);
+        return { status: "ERR", message: "Create hotel failed", error: error.message };
     }
 };
+
 
 //update a hotel
 const updateHotelService = async (id, data) => {

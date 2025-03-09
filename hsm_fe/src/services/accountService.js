@@ -7,8 +7,12 @@ export const loginAccount = async (data) => {
         `${process.env.REACT_APP_API_URL_BACKEND}/account/login`,
         data
     );
+    
     return res.data;
+    
 };
+
+
 
 export const createAccount = async (data) => {
     try {
@@ -21,7 +25,6 @@ export const createAccount = async (data) => {
         return { status: "ERR", message: error.response?.data?.message };
     }
 };
-console.log("API URL:", process.env.REACT_APP_API_URL_BACKEND);
 export const createProduct = async (data) => {
     const res = await axios.post(
         `${process.env.REACT_APP_API_URL_BACKEND}/account/create`,
