@@ -34,7 +34,15 @@ const getDashboardData = async (employeeId, permission) => {
         if (permission === "Admin") {
             const allHotels = await Hotel.find();
             const allRooms = await Room.find();
-            const allEmployees = await Employee.find().populate('permission');
+            const allEmployees = await Employee.find()
+                .populate('hotels')
+                .populate({
+                    path: 'accountId',
+                    populate: {
+                        path: 'permissions',
+                        select: 'PermissionName'
+                    }
+                });
 
             // Get monthly revenue data
             const monthlyRevenue = await Transaction.aggregate([
@@ -114,9 +122,9 @@ const getDashboardData = async (employeeId, permission) => {
                 statistics: {
                     hotelPerformance,
                     employeeStats: {
-                        managers: allEmployees.filter(emp => emp.permission?.PermissionName === "Hotel-Manager").length,
-                        receptionists: allEmployees.filter(emp => emp.permission?.PermissionName === "Receptionist").length,
-                        janitors: allEmployees.filter(emp => emp.permission?.PermissionName === "Janitor").length
+                        managers: allEmployees.filter(emp => emp.accountId?.permissions?.some(p => p.PermissionName === "Hotel-Manager")).length,
+                        receptionists: allEmployees.filter(emp => emp.accountId?.permissions?.some(p => p.PermissionName === "Receptionist")).length,
+                        janitors: allEmployees.filter(emp => emp.accountId?.permissions?.some(p => p.PermissionName === "Janitor")).length
                     },
                     revenueByMonth: monthlyRevenue
                 },
@@ -142,10 +150,23 @@ const getDashboardData = async (employeeId, permission) => {
                 }
             };
         }
-        // Hotel Manager Dashboard - Focus on specific hotel performance
-        else if (permission === "Hotel-Manager") {
+        // Hotel Manager or Hotel Admin Dashboard - Focus on specific hotel performance
+        else if (permission === "Hotel-Manager" || permission === "Hotel-Admin") {
             const hotelRooms = await Room.find({ hotel: { $in: hotelIds } });
-            const hotelEmployees = await Employee.find({ hotels: { $in: hotelIds } }).populate('permission');
+            const hotelEmployees = await Employee.find()
+                .populate('hotels')
+                .populate({
+                    path: 'accountId',
+                    populate: {
+                        path: 'permissions',
+                        select: 'PermissionName'
+                    }
+                });
+
+            // Filter employees to only those assigned to the specific hotels
+            const filteredEmployees = hotelEmployees.filter(emp =>
+                emp.hotels.some(hotel => hotelIds.includes(hotel._id.toString()))
+            );
 
             // Get today's check-ins and check-outs
             const todayActivity = {
@@ -176,7 +197,7 @@ const getDashboardData = async (employeeId, permission) => {
                         'Time.Checkin': { $lte: new Date() },
                         'Time.Checkout': { $gte: new Date() }
                     }),
-                    totalEmployees: hotelEmployees.length,
+                    totalEmployees: filteredEmployees.length,
                     monthlyRevenue: await Transaction.aggregate([
                         {
                             $match: {
@@ -201,8 +222,8 @@ const getDashboardData = async (employeeId, permission) => {
                         cleaning: await Room.countDocuments({ hotel: { $in: hotelIds }, Status: "Available - Cleaning" })
                     },
                     employeeStats: {
-                        receptionists: hotelEmployees.filter(emp => emp.permission?.PermissionName === "Receptionist").length,
-                        janitors: hotelEmployees.filter(emp => emp.permission?.PermissionName === "Janitor").length
+                        receptionists: filteredEmployees.filter(emp => emp.accountId?.permissions?.some(p => p.PermissionName === "Receptionist")).length,
+                        janitors: filteredEmployees.filter(emp => emp.accountId?.permissions?.some(p => p.PermissionName === "Janitor")).length
                     },
                     upcomingCheckouts: await Booking.find({
                         'rooms.hotel': { $in: hotelIds },

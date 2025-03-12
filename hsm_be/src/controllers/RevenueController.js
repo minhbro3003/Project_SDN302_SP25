@@ -31,7 +31,7 @@ const getRevenueData = async (req, res) => {
         }
 
         // Check if user has permission to view revenue data
-        const allowedRoles = ["Admin", "Hotel-Manager"];
+        const allowedRoles = ["Admin", "Hotel-Manager", "Hotel-Admin"];
         const hasPermission = account.permissions.some(p =>
             allowedRoles.includes(p.PermissionName)
         );
@@ -42,6 +42,9 @@ const getRevenueData = async (req, res) => {
                 message: "Insufficient permissions to view revenue data"
             });
         }
+
+        // Get the permission name for proper data filtering
+        const permission = account.permissions[0].PermissionName;
 
         const revenueData = await RevenueService.getRevenueData(
             employeeId,

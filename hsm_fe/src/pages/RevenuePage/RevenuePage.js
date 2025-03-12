@@ -171,17 +171,9 @@ const RevenuePage = () => {
               title="Total Revenue"
               value={revenueData.totalRevenue}
               precision={2}
-              prefix="$"
-              suffix={
-                <span style={{
-                  fontSize: '14px',
-                  marginLeft: '8px',
-                  color: revenueData.totalRevenue > revenueData.previousRevenue ? '#3f8600' : '#cf1322'
-                }}>
-                  {revenueData.totalRevenue > revenueData.previousRevenue ? <ArrowUpOutlined /> : <ArrowDownOutlined />}
-                  {Math.abs(((revenueData.totalRevenue - revenueData.previousRevenue) / revenueData.previousRevenue) * 100).toFixed(2)}%
-                </span>
-              }
+              prefix=""
+              suffix="₫"
+              formatter={(value) => value.toLocaleString('vi-VN')}
             />
           </Card>
         </Col>
@@ -191,7 +183,9 @@ const RevenuePage = () => {
               title="Booking Revenue"
               value={revenueData.bookingRevenue}
               precision={2}
-              prefix="$"
+              prefix=""
+              suffix="₫"
+              formatter={(value) => value.toLocaleString('vi-VN')}
             />
           </Card>
         </Col>
@@ -201,7 +195,9 @@ const RevenuePage = () => {
               title="Service Revenue"
               value={revenueData.serviceRevenue}
               precision={2}
-              prefix="$"
+              prefix=""
+              suffix="₫"
+              formatter={(value) => value.toLocaleString('vi-VN')}
             />
           </Card>
         </Col>
@@ -211,7 +207,9 @@ const RevenuePage = () => {
               title="Average Daily Revenue"
               value={revenueData.totalRevenue / 30}
               precision={2}
-              prefix="$"
+              prefix=""
+              suffix="₫"
+              formatter={(value) => value.toLocaleString('vi-VN')}
             />
           </Card>
         </Col>
@@ -273,7 +271,7 @@ const RevenuePage = () => {
                   title: 'Revenue',
                   dataIndex: 'revenue',
                   key: 'revenue',
-                  render: (value) => `$${value.toLocaleString()}`
+                  render: (value) => `${value.toLocaleString('vi-VN')} ₫`
                 },
                 { title: 'Bookings', dataIndex: 'bookings', key: 'bookings' }
               ]}
@@ -296,7 +294,7 @@ const RevenuePage = () => {
                   title: 'Amount',
                   dataIndex: 'amount',
                   key: 'amount',
-                  render: (amount) => `$${amount.toLocaleString()}`
+                  render: (amount) => `${amount.toLocaleString('vi-VN')} ₫`
                 },
                 {
                   title: 'Status',

@@ -13,7 +13,7 @@ const LoginPage = () => {
         password: "",
     });
 
-    const [captcha, setCaptcha] = useState(false);
+    const [captcha, setCaptcha] = useState(true);
 
     const formRef = useRef(null);
     const dispatch = useDispatch();
@@ -92,20 +92,6 @@ const LoginPage = () => {
 
                     <div className="forgot-password">
                         <a href="#">Forgot password?</a>
-                    </div>
-
-                    <div className="captcha">
-                        <div className="captcha_checkbox">
-                            <input type="checkbox" className="captcha_checkbox_input" value={captcha} onChange={(e) => { setCaptcha(e.target.checked) }} />
-                            <span className="captcha_checkbox_span"> I'm not a robot</span></div>
-                        <img
-                            className="img-fluid"
-                            src={require("../../asset/img/recaptcha-icon.png")}
-                            width="60px"
-                            height="60px"
-                            alt=""
-
-                        />
                     </div>
 
                     <Form.Item>

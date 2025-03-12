@@ -7,23 +7,31 @@ const {
     authUserMiddleware,
 } = require("../middleware/authMiddleware");
 
-//router get all rooms
+// Get all rooms
 router.get("/", roomsController.getAllRooms);
-//router get available rooms
+
+// Check room availability - specific route should come before parameter routes
+router.get("/availability", roomsController.checkRoomAvailability);
+
+// Get available rooms
 router.get("/getavail", roomsController.getAvailableRooms);
 
+// Get available rooms (alternative)
 router.get("/getavail_", roomsController.getAvailableRooms_);
-
-//router create new room
-router.post("/", roomsController.createRooms);
-//router update by id
-router.put("/:id", roomsController.updateRoom);
-//delete room
-router.delete("/:id", roomsController.deleteRoom);
-//router get room by id
-router.get("/:id", roomsController.getRoomByRoomId);
 
 // Get rooms by hotel
 router.get("/hotel/:hotelId", roomsController.getRoomsByHotel);
+
+// Create new room
+router.post("/", roomsController.createRooms);
+
+// Update room
+router.put("/:id", roomsController.updateRoom);
+
+// Delete room
+router.delete("/:id", roomsController.deleteRoom);
+
+// Get room by id - this should come last as it's a catch-all for /rooms/:id
+router.get("/:id", roomsController.getRoomByRoomId);
 
 module.exports = router;

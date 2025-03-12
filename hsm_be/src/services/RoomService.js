@@ -1,5 +1,6 @@
 const Rooms = require("../models/RoomModel");
 const RoomType = require("../models/RoomTypeModel");
+const Booking = require("../models/BookingModelRFA");
 //get all rooms
 
 const getAllRoomsService = () => {
@@ -192,25 +193,37 @@ const getAvailableRooms = async () => {
 };
 
 
-const getAvailableRooms_ = async (startDate, endDate) => {
+const getAvailableRooms_ = async (startDate, endDate, hotelId) => {
     try {
+        // Convert dates to Date objects
+        const checkIn = new Date(startDate);
+        const checkOut = new Date(endDate);
+
         // Find rooms that have conflicting bookings
         const bookedRooms = await Booking.find({
-            $or: [
-                { "Time.Checkin": { $lt: endDate }, "Time.Checkout": { $gt: startDate } }
-            ]
-        }).distinct("rooms"); // Get distinct booked room IDs
+            'Time.Checkin': { $lt: checkOut },
+            'Time.Checkout': { $gt: checkIn },
+            Status: { $ne: 'Cancelled' }  // Exclude cancelled bookings
+        }).distinct('rooms');
 
-        // Get all rooms that are NOT in the bookedRooms list
-        const availableRooms = await Room.find({
+        // Get all rooms from the specified hotel that are not in bookedRooms
+        const availableRooms = await Rooms.find({
             _id: { $nin: bookedRooms },
-            IsDelete: false
-        });
+            hotel: hotelId,
+            IsDelete: false  // Only exclude deleted rooms
+        }).populate('roomtype')
+            .populate('hotel', 'CodeHotel NameHotel');
+
+        // Map rooms to include availability status
+        const roomsWithStatus = availableRooms.map(room => ({
+            ...room.toObject(),
+            Status: 'Available'  // These rooms are available since they're not in bookedRooms
+        }));
 
         return {
             status: "OK",
             message: "Available rooms retrieved successfully",
-            data: availableRooms,
+            data: roomsWithStatus,
         };
     } catch (error) {
         console.error("Error in getAvailableRooms:", error.message);
