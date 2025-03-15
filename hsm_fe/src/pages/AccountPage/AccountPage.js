@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from "react";
 import { Form, Input, Button, Card } from "antd";
 import * as CreateAccount from "../../services/accountService";
 import { useMutation } from "@tanstack/react-query";
-import * as CustomMessage from "../../components/Message/Message";
 
 const AccountPage = () => {
     const [formData, setFormData] = useState({
@@ -15,24 +14,8 @@ const AccountPage = () => {
 
     const mutation = useMutation({
         mutationFn: (data) => CreateAccount.createAccount(data),
-        onError: (error) => {
-            CustomMessage.error(error.message || "Lỗi hệ thống!");
-        },
     });
     const { data, isLoading, isSuccess } = mutation;
-
-    useEffect(() => {
-        if (isSuccess) {
-            console.log("API Response:", data);
-            if (data.status === "OK") {
-                CustomMessage.success("Đăng ký thành công!");
-                formRef.current?.resetFields();
-                // setFormData({ FullName: "", Email: "", Username: "", Password: "" }); // Reset form
-            } else {
-                CustomMessage.error(data.message || "Có lỗi xảy ra!");
-            }
-        }
-    }, [isSuccess, data]);
 
     const handleOnChange = (e) => {
         const { name, value } = e.target;
@@ -55,7 +38,7 @@ const AccountPage = () => {
                 <Form.Item
                     label="Họ và Tên"
                     name="FullName"
-                    // rules={[{ required: true, message: "Vui lòng nhập họ tên!" }]}
+                // rules={[{ required: true, message: "Vui lòng nhập họ tên!" }]}
                 >
                     <Input
                         placeholder="Nhập họ tên"
@@ -92,7 +75,7 @@ const AccountPage = () => {
                         value={formData.Email}
                         onChange={handleOnChange}
                     />
-                    
+
                 </Form.Item>
 
                 <Form.Item
@@ -108,8 +91,8 @@ const AccountPage = () => {
                     />
                 </Form.Item>
                 {data?.status === "ERR" && (
-                        <span style={{ color: "red" }}>{data?.message}</span>
-                    )}
+                    <span style={{ color: "red" }}>{data?.message}</span>
+                )}
                 <Form.Item>
                     <Button
                         type="primary"

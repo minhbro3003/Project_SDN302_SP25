@@ -30,6 +30,19 @@ const   getRoomsByAccountController = async (req, res) => {
 
 
 
+
+const getAvailableRooms = async (req, res) => {
+    try {
+        const rooms = await RoomService.getAvailableRooms();
+        return res.status(200).json(rooms);
+    } catch (e) {
+        return res.status(404).json({
+            error: e.message,
+        });
+    }
+};
+
+
 //get room by id
 const getRoomByRoomId = async (req, res) => {
     try {
@@ -53,30 +66,19 @@ const getRoomByRoomId = async (req, res) => {
 //create a room
 const createRooms = async (req, res) => {
     try {
-        const {
-            RoomName,
-            Price,
-            Status,
-            Floor,
-            Active,
-            typerooms,
-            room_amenities,
-            Description,
-            Image,
-            IsDelete,
-        } = req.body;
-        console.log("req.body", req.body);
-        if (
-            !RoomName ||
-            !Price ||
-            !Status ||
-            !Active ||
-            !typerooms ||
-            !room_amenities
-        ) {
-            return res
-                .status(200)
-                .json({ status: "ERR", message: "The input is required." });
+        // const {
+        //     RoomName, Price, Status, Floor, hotel,
+        //     roomtype, room_amenities, Description, Image
+        // } = req.body;
+        // console.log("req.body", req.body);
+        const requiredFields = ["RoomName", "Price", "Floor", "hotel"];
+        const missingFields = requiredFields.filter(field => !req.body[field]);
+
+        if (missingFields.length > 0) {
+            return res.status(400).json({
+                status: "ERR",
+                message: `The following fields are required: ${missingFields.join(", ")}`,
+            });
         }
 
         const room = await RoomService.createRoomService(req.body);
@@ -140,5 +142,7 @@ module.exports = {
     updateRoom,
     deleteRoom,
     getRoomByRoomId,
-    getRoomsByAccountController
+    getRoomsByAccountController,
+    getAvailableRooms,
+
 };

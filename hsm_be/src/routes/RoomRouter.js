@@ -9,14 +9,17 @@ const {
 
 //router get all rooms
 router.get("/", roomsController.getAllRooms);
+//router get available rooms
+router.get("/getavail", roomsController.getAvailableRooms);
 //router create new room
-router.post("", roomsController.createRooms);
+router.post("/", roomsController.createRooms);
 //router update by id
 router.put("/:id", roomsController.updateRoom);
 //delete room
 router.delete("/:id", roomsController.deleteRoom);
 //router get room by id
 router.get("/:id", roomsController.getRoomByRoomId);
+
 
 router.get("/account/:accountId", roomsController.getRoomsByAccountController);
 
@@ -39,5 +42,6 @@ router.get("/account/:accountId", roomsController.getRoomsByAccountController);
 //     productController.deleteMany
 // );
 // router.get("/get-all-type", productController.getAllTypes);
+
 
 module.exports = router;

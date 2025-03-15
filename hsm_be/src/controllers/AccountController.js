@@ -32,7 +32,7 @@ const createAcount = async (req, res) => {
 const loginAccount = async (req, res) => {
     try {
         const { email, password } = req.body;
-        
+
         // Email format validation
         const mailformat = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/;
         if (!email || !password) {
@@ -56,7 +56,7 @@ const loginAccount = async (req, res) => {
 
         // Destructure refresh_token safely
         const { refresh_token, ...accountData } = account;
-        
+
         // Set refresh token as HTTP-only cookie
         res.cookie("refresh_token", refresh_token, {
             httpOnly: true,
@@ -181,4 +181,4 @@ const refreshToken = async (req, res) => {
 };
 
 
-module.exports = {createAcount, getAllAccounts, getDetailsAccount, loginAccount, refreshToken}
+module.exports = { createAcount, getAllAccounts, getDetailsAccount, loginAccount, refreshToken }
