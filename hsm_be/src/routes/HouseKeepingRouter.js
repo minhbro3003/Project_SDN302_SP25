@@ -9,5 +9,8 @@ router.put("/cancel/:taskId", housekeepingController.cancelHousekeepingTask);
 router.get("/logs/:roomId", housekeepingController.getHousekeepingLogs);
 router.get("/dirty-rooms", housekeepingController.getDirtyRooms);
 router.get("/list", housekeepingController.getHousekeepingTasks);
+router.get("/localhotels", housekeepingController.getLocalHotels);
+router.get("/hotels/by-location", housekeepingController.getHotelsByLocation);
+
 
 module.exports = router;

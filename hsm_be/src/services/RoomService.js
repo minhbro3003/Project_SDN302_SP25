@@ -1,6 +1,7 @@
 const Rooms = require("../models/RoomModel");
-
-//get all rooms
+const Employee = require("../models/EmployeeModel");
+const mongoose = require("mongoose");
+const Hotel = require("../models/HotelModel");
 // const getAllRoomsService = () => {
 //     return new Promise(async (resolve, reject) => {
 //         try {
@@ -69,6 +70,65 @@ const getAllRoomsService = () => {
         }
     });
 };
+
+
+
+
+
+
+
+
+
+const getRoomsByAccount = async (accountId) => {
+    try {
+        // Tìm nhân viên theo accountId
+        const employee = await Employee.findOne({ accountId }).populate("hotels");
+        if (!employee) {
+            return { success: false, message: "Không tìm thấy nhân viên với tài khoản này" };
+        }
+
+        // Lấy danh sách ID của các khách sạn mà nhân viên làm việc
+        const hotelIds = employee.hotels.map(hotel => hotel._id);
+
+        // Lấy danh sách phòng thuộc những khách sạn đó
+        const rooms = await Rooms.find({ hotel: { $in: hotelIds }, IsDelete: false })
+            .populate("hotel", "NameHotel LocationHotel")
+            
+
+        // Nhóm phòng theo khách sạn
+        const hotelsWithRooms = hotelIds.map(hotelId => {
+            const hotelRooms = rooms.filter(room => room.hotel._id.toString() === hotelId.toString());
+            return {
+                hotelId,
+                NameHotel: hotelRooms.length > 0 ? hotelRooms[0].hotel.NameHotel : "Unknown",
+                LocationHotel: hotelRooms.length > 0 ? hotelRooms[0].hotel.LocationHotel : "Unknown",
+                rooms: hotelRooms.map(room => ({
+                    id: room._id,
+                    name: room.RoomName,
+                    status: room.Status,
+                    floor: room.Floor,
+                    price: room.Price,
+                    description: room.Description,
+                    image: room.Image,
+                    roomType: room.roomtype ? room.roomtype.TypeName : "Unknown",
+                }))
+            };
+        });
+
+        return { success: true, data: hotelsWithRooms };
+    } catch (error) {
+        return { success: false, message: error.message };
+    }
+};
+
+
+
+
+
+
+
+
+
 
 
 //get room by id
@@ -194,6 +254,7 @@ module.exports = {
     updateRoomService,
     deleteRoomService,
     getRoomByRoomIdService,
+    getRoomsByAccount,
     // createProduct,
     // updateProduct,
     // getDetailsProduct,

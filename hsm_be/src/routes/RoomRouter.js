@@ -18,6 +18,8 @@ router.delete("/:id", roomsController.deleteRoom);
 //router get room by id
 router.get("/:id", roomsController.getRoomByRoomId);
 
+router.get("/account/:accountId", roomsController.getRoomsByAccountController);
+
 // router.post("/create", productController.createProduct);
 // router.put(
 //     "/update-product/:id",

@@ -13,6 +13,23 @@ const getAllRooms = async (req, res) => {
     }
 };
 
+
+
+
+
+const   getRoomsByAccountController = async (req, res) => {
+    try {
+        const { accountId } = req.params; // Lấy accountId từ URL
+        const result = await RoomService.getRoomsByAccount(accountId);
+        return res.status(result.success ? 200 : 400).json(result);
+    } catch (error) {
+        return res.status(500).json({ success: false, message: "Lỗi server" });
+    }
+};
+
+
+
+
 //get room by id
 const getRoomByRoomId = async (req, res) => {
     try {
@@ -123,4 +140,5 @@ module.exports = {
     updateRoom,
     deleteRoom,
     getRoomByRoomId,
+    getRoomsByAccountController
 };

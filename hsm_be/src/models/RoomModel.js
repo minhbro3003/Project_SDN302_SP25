@@ -1,6 +1,5 @@
 const mongoose = require("mongoose");
-require("./TypeRoomModel");
-require("./RoomAmenitiesModel");
+
 const roomSchema = new mongoose.Schema(
     {
         RoomName: { type: String, required: true, trim: true },
@@ -11,30 +10,17 @@ const roomSchema = new mongoose.Schema(
             default: "Available",
         },
         Floor: { type: Number, required: true },
-        Active: { type: Boolean, default: true },
-        typerooms: {
+        roomtype: {
             type: mongoose.Schema.Types.ObjectId,
-            ref: "typerooms",
+            ref: "RoomType",
             required: true,
         },
-        room_amenities: [
-            {
-                room_amenitiesID: {
-                    type: mongoose.Schema.Types.ObjectId,
-                    ref: "roomamenities",
-                    required: true,
-                },
-                quantity: { type: Number, required: true },
-                status: { type: String, trim: true },
-            }
-        ],
+        hotel: { type: mongoose.Schema.Types.ObjectId, ref: "hotels", },
         Description: { type: String, trim: true },
-        Image: [
-            {
-                url: { type: String, required: true, trim: true },
-                alt: { type: String, trim: true },
-            },
-        ],
+        Image: {
+            type: String,
+            trim: true,
+        },
         IsDelete: { type: Boolean, default: false },
     },
     {

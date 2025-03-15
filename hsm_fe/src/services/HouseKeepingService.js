@@ -1,15 +1,18 @@
 import axios from "axios";
 
-export const getAllRoom = async (data) => {
+export const getRoomsByAccount = async (accountId) => {
   try {
-    const res = await axios.get(`${process.env.REACT_APP_API_URL_BACKEND}/rooms`);
-    console.log("📌 API Response getAllRoom:", res.data);
+    const res = await axios.get(
+      `${process.env.REACT_APP_API_URL_BACKEND}/rooms/account/${accountId}`
+    );
+    console.log("📌 API Response getRoomsByAccount:", res.data);
     return res.data;
-} catch (error) {
-    console.error("❌ Lỗi khi gọi API getAllRoom:", error);
+  } catch (error) {
+    console.error("❌ Lỗi khi gọi API getRoomsByAccount:", error);
     return [];
-}
+  }
 };
+
 
 const API_URL = process.env.REACT_APP_API_URL_BACKEND + "/housekeeping";
 

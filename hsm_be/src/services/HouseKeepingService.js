@@ -1,6 +1,8 @@
 const HousekeepingTask = require("../models/HouseKeepingModel");
 const HousekeepingLog = require("../models/HouseKeepingLogModel");
 const Room = require("../models/RoomModel");
+const Hotel = require("../models/HotelModel");
+
 const mongoose = require("mongoose");
 async function createHousekeepingTask(roomId, assignedTo, taskType, notes) {
   try {
@@ -73,7 +75,7 @@ async function updateHousekeepingTask(taskId, status, cancelNotes = "") {
             taskId, 
             { 
                 status, 
-                notes: `Cancelled Reason: ${noteText}` 
+                notes: `${noteText}` 
             },
             { new: true } 
         );
@@ -132,9 +134,38 @@ async function getDirtyRooms() {
 }
 async function getHousekeepingTasks(filter = {}) {
   return await HousekeepingTask.find(filter)
-    .populate("room", "number status")
-    .populate("assignedTo", "Username");
+      .populate({
+          path: "room",
+          select: "RoomName Status",
+          populate: {
+              path: "hotel",
+              select: "NameHotel LocationHotel",
+          },
+      })
+      .populate("assignedTo", "Username");
 }
+
+
+
+// Lấy danh sách các khu vực (LocalHotels)
+const getLocalHotels = async () => {
+    try {
+        return await Hotel.distinct("LocationHotel", { IsDelete: false });
+    } catch (error) {
+        throw new Error("Error fetching local hotels: " + error.message);
+    }
+};
+
+// Lấy danh sách khách sạn theo khu vực đã chọn
+const getHotelsByLocation = async (location) => {
+    try {
+        return await Hotel.find({ LocationHotel: location, IsDelete: false })
+            .select("_id NameHotel LocationHotel");
+    } catch (error) {
+        throw new Error("Error fetching hotels by location: " + error.message);
+    }
+};
+
 
 module.exports = {
   createHousekeepingTask,
@@ -143,5 +174,7 @@ module.exports = {
   getDirtyRooms,
   getHousekeepingLogs,
   // updateRoomCleaningStatus,
+  getLocalHotels,
   getHousekeepingTasks,
+  getHotelsByLocation,
 };
