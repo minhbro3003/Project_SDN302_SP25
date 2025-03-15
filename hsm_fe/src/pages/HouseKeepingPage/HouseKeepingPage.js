@@ -1,48 +1,47 @@
 import React, { useState, useEffect } from "react";
-import { Card, message, Dropdown, Menu, Modal, notification } from "antd";
+import { Card, message, Dropdown, Menu, Modal } from "antd";
 import { ClearOutlined, MoreOutlined } from "@ant-design/icons";
-// import { ToastContainer, toast as api } from "react-toastify";
-// import "react-toastify/dist/ReactToastify.css";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import {
-  getAllRoom,
+  getRoomsByAccount,
   updateHousekeepingTask,
   getHousekeepingTasks,
 } from "../../services/HouseKeepingService";
 import axios from "axios";
+import { useSelector } from "react-redux";
+import TestNotification from "../HouseKeepingPage/TestNotification";
 
 const Housekeeping = () => {
+  const isRehydrated = useSelector((state) => state._persist?.rehydrated);
+  const account = useSelector((state) => state.account);
   const [rooms, setRooms] = useState([]);
   const [selectedRoom, setSelectedRoom] = useState(null);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [tasks, setTasks] = useState([]);
   const [currentEmployeeId, setCurrentEmployeeId] = useState(null);
-  const [api, contextHolder] = notification.useNotification();
 
   useEffect(() => {
-    fetchRooms();
-    fetchTasks();
-    getCurrentEmployeeId(); // Lấy ID nhân viên hiện tại
-  }, []);
+    if (!isRehydrated) return; // Nếu Redux chưa rehydrate, không fetch dữ liệu
 
-  // Lấy ID nhân viên hiện tại từ localStorage
-  const getCurrentEmployeeId = () => {
-    try {
-      const persistedData = localStorage.getItem("persist:root");
-      if (!persistedData) {
-        return null;
-      }
-
-      const parsedData = JSON.parse(persistedData);
-      const accountData = parsedData.account ? JSON.parse(parsedData.account) : null;
-      const employeeId = accountData ? accountData.id : null;
-
-      setCurrentEmployeeId(employeeId);
-      return employeeId;
-    } catch (error) {
-      console.error("Lỗi khi lấy ID nhân viên:", error);
-      return null;
+    if (!account || !account.id) {
+      console.error("❌ Không tìm thấy accountId");
+      return;
     }
-  };
+
+    setCurrentEmployeeId(account.id);
+    fetchRooms(account.id);
+    fetchTasks();
+
+    // Thiết lập polling mỗi 5 giây
+    const interval = setInterval(() => {
+      fetchRooms(account.id);
+      fetchTasks();
+    }, 100); // 5000ms = 5 giây, có thể điều chỉnh
+
+    // Cleanup khi component unmount
+    return () => clearInterval(interval);
+  }, [isRehydrated, account]);
 
   const fetchTasks = async () => {
     try {
@@ -54,17 +53,31 @@ const Housekeeping = () => {
     }
   };
 
-  const fetchRooms = async () => {
+  const fetchRooms = async (employeeId) => {
     try {
-      const response = await getAllRoom();
-      const roomNames = response.data.map((room) => ({
-        id: room.id,
-        name: room.RoomName,
-        status: room.Status,
-      }));
-      setRooms(roomNames);
+      if (!employeeId) {
+        console.error("❌ Không tìm thấy accountId");
+        return;
+      }
+      const response = await getRoomsByAccount(employeeId);
+
+      console.log("📌 API Response getRoomsByAccount:", response);
+
+      if (response.success && Array.isArray(response.data)) {
+        const roomNames = response.data.flatMap((hotel) =>
+          hotel.rooms.map((room) => ({
+            id: room.id,
+            name: room.name,
+            status: room.status,
+          }))
+        );
+        console.log("📌 Danh sách phòng sau khi xử lý:", roomNames);
+        setRooms(roomNames);
+      } else {
+        console.error("❌ API không trả về dữ liệu hợp lệ");
+      }
     } catch (error) {
-      message.error("Failed to fetch rooms");
+      console.error("❌ Lỗi khi lấy danh sách phòng:", error);
     }
   };
 
@@ -101,7 +114,7 @@ const Housekeeping = () => {
     const persistedData = localStorage.getItem("persist:root");
     if (!persistedData) {
       console.error("Không tìm thấy dữ liệu tài khoản. Hãy đăng nhập lại.");
-      api.error("Không tìm thấy dữ liệu tài khoản. Hãy đăng nhập lại.", { autoClose: 3000 });
+      toast.error("Không tìm thấy dữ liệu tài khoản. Hãy đăng nhập lại.", { autoClose: 3000 });
       return;
     }
 
@@ -113,7 +126,7 @@ const Housekeeping = () => {
       const employeeId = accountData ? accountData.id : null;
 
       if (!employeeId) {
-        api.error("Không tìm thấy ID nhân viên. Hãy đăng nhập lại.", { autoClose: 3000 });
+        toast.error("Không tìm thấy ID nhân viên. Hãy đăng nhập lại.", { autoClose: 3000 });
         return;
       }
 
@@ -137,17 +150,17 @@ const Housekeeping = () => {
           )
         );
 
-        api.success("Registration successful", { autoClose: 3000 });
+        toast.success("Registration successful", { autoClose: 3000 });
       }
-      await fetchTasks();
-      await fetchRooms();
+      // await fetchTasks();
+      // await fetchRooms();
     } catch (error) {
       console.error("Lỗi khi tạo housekeeping task:", error);
       // ⚠️ Hiển thị cảnh báo khi nhân viên đã có task
       if (error.response && error.response.data) {
-        api.warning(error.response.data.message, { autoClose: 3000 });
+        toast.warning(error.response.data.message, { autoClose: 3000 });
       } else {
-        api.error("Failed to create housekeeping task", { autoClose: 3000 });
+        toast.error("Failed to create housekeeping task", { autoClose: 3000 });
       }
     }
   };
@@ -180,13 +193,13 @@ const Housekeeping = () => {
       );
 
       if (!housekeepingTask) {
-        api.error("Không tìm thấy công việc dọn phòng.", { autoClose: 3000 });
+        toast.error("Không tìm thấy công việc dọn phòng.", { autoClose: 3000 });
         return;
       }
 
       // Kiểm tra quyền truy cập
       if (housekeepingTask.assignedTo._id !== currentEmployeeId) {
-        api.error("Bạn không phải là nhân viên được giao nhiệm vụ dọn phòng này!", { autoClose: 3000 });
+        toast.error("Bạn không phải là nhân viên được giao nhiệm vụ dọn phòng này!", { autoClose: 3000 });
         return;
       }
 
@@ -195,7 +208,7 @@ const Housekeeping = () => {
 
       if (key === "cleaned") {
         await updateHousekeepingTask(housekeepingTask._id, "Completed");
-        api.success("Room cleaned successfully", { autoClose: 3000 });
+        toast.success("Room cleaned successfully", { autoClose: 3000 });
       } else if (key === "canceled") {
         const note = prompt("Reason for cancellation of room cleaning?");
         if (!note) {
@@ -203,7 +216,7 @@ const Housekeeping = () => {
         }
 
         await updateHousekeepingTask(housekeepingTask._id, "Cancelled", note);
-        api.warning("Room cleaning task canceled", { autoClose: 3000 });
+        toast.warning("Room cleaning task canceled", { autoClose: 3000 });
       }
 
       setRooms((prevRooms) =>
@@ -218,7 +231,7 @@ const Housekeeping = () => {
         )
       );
 
-      await fetchTasks();
+      // await fetchTasks();
     } catch (error) {
       console.error("❌ Error updating room status:", error);
       message.error("Failed to update room status");
@@ -234,7 +247,7 @@ const Housekeeping = () => {
     const hasPermission = checkAssignmentPermission(room.id);
 
     if (!hasPermission) {
-      api.error("Bạn không phải là nhân viên được giao nhiệm vụ dọn phòng này!", { autoClose: 3000 });
+      toast.error("Bạn không phải là nhân viên được giao nhiệm vụ dọn phòng này!", { autoClose: 3000 });
       return;
     }
 
@@ -250,7 +263,7 @@ const Housekeeping = () => {
 
   return (
     <div style={{ padding: "24px" }}>
-      {contextHolder}
+      <ToastContainer />
       <h1
         style={{ fontSize: "20px", fontWeight: "bold", marginBottom: "16px" }}
       >
@@ -366,6 +379,7 @@ const Housekeeping = () => {
           <li style={{ color: "#00CC00" }}> Available - Cleaning</li>
         </ul>
       </div>
+      <TestNotification />
     </div>
   );
 };

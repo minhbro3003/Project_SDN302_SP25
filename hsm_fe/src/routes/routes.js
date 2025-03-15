@@ -212,7 +212,7 @@ export const routes = [
         page: Housekeeping,
         isShowHeader: true,
         icon: <TableOutlined />,
-        permissions: ["Janitor"],
+        permissions: ["Admin", "Janitor"],
     },
     {
         path: "/account",

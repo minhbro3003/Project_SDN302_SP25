@@ -1,27 +1,73 @@
 import React, { useEffect, useState } from "react";
-import { Table, Tag } from "antd";
-import styled from "styled-components";
+import { Tag, Spin, Select } from "antd";
 import axios from "axios";
+import {
+  StyledContainer,
+  StyledTitle,
+  StyledTable,
+  StyledSelectContainer,
+  StyledSelect
+} from "./styles";
 
-const StyledTableContainer = styled.div`
-  padding: 20px;
-  background: #f9f9f9;
-`;
+
+const { Option } = Select;
+
 
 const HousekeepingHistory = () => {
   const [tasks, setTasks] = useState([]);
+  const [localHotels, setLocalHotels] = useState([]);
+  const [hotels, setHotels] = useState([]);
+  const [selectedLocalHotel, setSelectedLocalHotel] = useState(null);
+  const [selectedHotel, setSelectedHotel] = useState(null);
+  const [loading, setLoading] = useState(false);
 
+
+  // Fetch danh sách LocalHotels
   useEffect(() => {
+    const fetchLocalHotels = async () => {
+      try {
+        const response = await axios.get("http://localhost:9999/api/housekeeping/localhotels");
+        setLocalHotels(response.data);
+      } catch (error) {
+        console.error("Error fetching local hotels:", error);
+      }
+    };
+    fetchLocalHotels();
+  }, []);
+
+
+  // Fetch danh sách Hotels theo LocalHotel đã chọn
+  useEffect(() => {
+    if (!selectedLocalHotel) return;
+    const fetchHotels = async () => {
+      try {
+        const response = await axios.get(`http://localhost:9999/api/housekeeping/hotels/by-location?location=${selectedLocalHotel}`);
+        setHotels(response.data);
+      } catch (error) {
+        console.error("Error fetching hotels:", error);
+      }
+    };
+    fetchHotels();
+  }, [selectedLocalHotel]);
+
+
+  // Fetch Task theo Hotel đã chọn
+  useEffect(() => {
+    if (!selectedHotel) return;
+    setLoading(true);
     const fetchTasks = async () => {
       try {
-        const response = await axios.get("http://localhost:9999/api/housekeeping/list");
+        const response = await axios.get(`http://localhost:9999/api/housekeeping/list?hotelId=${selectedHotel}`);
         setTasks(response.data);
       } catch (error) {
         console.error("Error fetching housekeeping tasks:", error);
+      } finally {
+        setLoading(false);
       }
     };
     fetchTasks();
-  }, []);
+  }, [selectedHotel]);
+
 
   const columns = [
     {
@@ -33,13 +79,13 @@ const HousekeepingHistory = () => {
       title: "Employee",
       dataIndex: "assignedTo",
       key: "assignedTo",
-      render: (assignedTo) => assignedTo?.FullName || "N/A",
+      render: (assignedTo) => assignedTo?.Username || "N/A",
     },
     {
       title: "Room",
       dataIndex: "room",
       key: "room",
-      render: (room) => room?.number || "N/A",
+      render: (room) => room?.RoomName || "N/A",
     },
     {
       title: "Type",
@@ -63,12 +109,49 @@ const HousekeepingHistory = () => {
     },
   ];
 
+
   return (
-    <StyledTableContainer>
-      <h2>Housekeeping Task History</h2>
-      <Table columns={columns} dataSource={tasks} rowKey="_id" />
-    </StyledTableContainer>
+    <StyledContainer>
+      <StyledTitle>Housekeeping Task History</StyledTitle>
+
+
+      {/* Dropdowns để chọn LocalHotel và Hotel */}
+      <StyledSelectContainer>
+        <StyledSelect
+          placeholder="Select LocalHotel"
+          onChange={(value) => {
+            setSelectedLocalHotel(value);
+            setSelectedHotel(null);
+          }}
+        >
+          {localHotels.map((location) => (
+            <Option key={location} value={location}>
+              {location}
+            </Option>
+          ))}
+        </StyledSelect>
+
+
+        <StyledSelect
+          placeholder="Select Hotel"
+          value={selectedHotel}
+          onChange={(value) => setSelectedHotel(value)}
+          disabled={!selectedLocalHotel}
+        >
+          {hotels.map((hotel) => (
+            <Option key={hotel._id} value={hotel._id}>
+              {hotel.NameHotel}
+            </Option>
+          ))}
+        </StyledSelect>
+      </StyledSelectContainer>
+
+
+      {/* Bảng hiển thị danh sách Task */}
+      {loading ? <Spin size="large" /> : <StyledTable columns={columns} dataSource={tasks} rowKey="_id" />}
+    </StyledContainer>
   );
 };
+
 
 export default HousekeepingHistory;

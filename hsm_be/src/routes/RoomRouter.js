@@ -26,4 +26,6 @@ router.get("/:id", roomsController.getRoomByRoomId);
 // Get rooms by hotel
 router.get("/hotel/:hotelId", roomsController.getRoomsByHotel);
 
+//
+router.get("/account/:accountId", roomsController.getRoomsByAccountController);
 module.exports = router;
