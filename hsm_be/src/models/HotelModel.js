@@ -17,38 +17,15 @@ const hotelSchema = new mongoose.Schema(
             type: String, 
             trim: true 
         },
-        Title: { 
-            type: String, 
-            trim: true 
-        },
         LocationHotel: { 
             type: String, 
             required: true, 
             trim: true 
         },
-        Note: { 
+        image: { 
             type: String, 
             trim: true 
         },
-        provinces: [
-            {
-                type: mongoose.Schema.Types.ObjectId,
-                ref: "Province",
-                required: true
-            }
-        ],
-        images: [
-            {
-                type: mongoose.Schema.Types.ObjectId,
-                ref: "Image"
-            }
-        ],
-        rooms: [
-            {
-                type: mongoose.Schema.Types.ObjectId,
-                ref: "Room"
-            }
-        ],
         Active: { 
             type: Boolean, 
             default: true 
@@ -63,6 +40,5 @@ const hotelSchema = new mongoose.Schema(
     }
 );
 
-const Hotel = mongoose.model("hotels", hotelSchema);
-
+const Hotel = mongoose.model("Hotel", hotelSchema);
 module.exports = Hotel;

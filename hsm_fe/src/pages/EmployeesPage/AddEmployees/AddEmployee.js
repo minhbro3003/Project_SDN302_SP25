@@ -1,9 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
 import * as getAllEmployeeType from "../../../services/EmployeeService";
-import * as getAllHotel from "../../../services/HotelService";
+import * as getAllHotelSevices from "../../../services/HotelService";
 import * as getAllEmployeeSchedule from "../../../services/EmployeeScheduleService";
+import * as getAllAccountServices from "../../../services/accountService";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap/dist/js/bootstrap.bundle.min";
+import "bootstrap-icons/font/bootstrap-icons.css";
+
 import {
     AddEmployeesPage,
     Card,
@@ -23,6 +26,7 @@ const AddEmployees = () => {
     const [selectedPermissions, setSelectedPermissions] = useState("");
     const [isChecked, setIsChecked] = useState(false);
     const [errors, setErrors] = useState({});
+    const [selectedImage, setSelectedImage] = useState(null);
     const formRef = useRef();
 
     // Cập nhật schedule khi chọn ngày & giờ
@@ -34,23 +38,23 @@ const AddEmployees = () => {
 
     const handleScheduleChange = (e) => {
         const { name, value } = e.target;
-    
+
         // Kiểm tra nếu giá trị giờ hợp lệ (trong khoảng 01:00 - 23:59)
         const isValidTime = (time) => {
             const regex = /^(0[1-9]|1\d|2[0-3]):([0-5]\d)$/; // Hỗ trợ 01:00 - 23:59
             return regex.test(time);
         };
-    
+
         if (name === "start_time" || name === "end_time") {
             if (!isValidTime(value)) {
                 alert("Giờ không hợp lệ! Vui lòng nhập giá trị từ 01:00 đến 23:59.");
                 return;
             }
         }
-    
+
         // Lấy ngày hiện tại theo múi giờ Việt Nam
         const today = getVietnamDate();
-    
+
         setFormDataES((prev) => ({
             ...prev,
             schedule: prev.schedule.length > 0
@@ -58,16 +62,45 @@ const AddEmployees = () => {
                 : [{ date: today, start_time: "", end_time: "", [name]: value }],
         }));
     };
-    
-    
 
+
+
+
+
+    // Xử lý khi chọn ảnh
+    const handleImageChange = (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => {
+            const base64String = reader.result; // Chuỗi Base64 của ảnh
+            setSelectedImage(base64String); // Hiển thị ảnh trước khi lưu
+            setFormData((prev) => ({ ...prev, Image: base64String })); // Lưu Base64 vào formData
+        };
+        reader.onerror = (error) => {
+            console.error("Lỗi khi chuyển ảnh thành Base64:", error);
+        };
+    };
+
+    //add account
+    const [formDataAccount, setFormDataAccount] = useState({
+        FullName: "",
+        Email: "",
+        Username: "",
+        Password: "",
+        permissions: "",
+
+    });
+    //add employee
     const [formData, setFormData] = useState({
         FullName: "",
         Address: "",
         Email: "",
         Phone: "",
         Gender: "",
-        Image: "link", // Placeholder image link
+        Image: "",
     });
 
     //add employeeschedule
@@ -83,6 +116,151 @@ const AddEmployees = () => {
             }
         ],
     });
+
+
+    // Handle form submission
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+
+        const newErrors = {};
+
+        // Kiểm tra email hợp lệ
+        const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
+        if (!formData.Email) {
+            newErrors.email = "Email không được để trống";
+        } else if (!emailRegex.test(formData.Email)) {
+            newErrors.email = "Email không đúng định dạng";
+        }
+
+        // Kiểm tra số điện thoại hợp lệ
+        const phoneRegex = /^[0-9]{10,15}$/;
+        if (!formData.Phone) {
+            newErrors.phone = "Số điện thoại không được để trống";
+        } else if (!phoneRegex.test(formData.Phone)) {
+            newErrors.phone = "Số điện thoại không đúng định dạng";
+        }
+
+        if (!formData.FullName) {
+            newErrors.fullName = "Tên nhân viên không được bỏ trống.";
+        }
+        if (!formData.Address) {
+            newErrors.address = "Địa chỉ không được bỏ trống.";
+        }
+        if (!formDataAccount.Username) {
+            newErrors.username = "Username không được bỏ trống.";
+        }
+        // Kiểm tra mật khẩu hợp lệ: ít nhất 8 ký tự, có chữ hoa, chữ thường, số và ký tự đặc biệt
+        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+        if (!formDataAccount.Password) {
+            newErrors.password = "Password không được bỏ trống.";
+        } else if (!passwordRegex.test(formDataAccount.Password)) {
+            newErrors.password = "Password phải có ít nhất 8 ký tự, gồm chữ hoa, chữ thường, số và ký tự đặc biệt.";
+        }
+
+        if (Object.keys(newErrors).length > 0) {
+            setErrors(newErrors);
+            return;
+        }
+
+        try {
+            // **1. Tạo Account trước**
+            const accountData = {
+                FullName: formData.FullName,
+                Email: formData.Email,
+                Username: formDataAccount.Username,
+                Password: formDataAccount.Password,
+                permissions: [selectedPermissions],
+            };
+
+            console.log("Submitting account data:", accountData);
+            const accountRes = await getAllAccountServices.createAccount(accountData);
+
+            if (accountRes?.status === "OK" && accountRes.data?._id) {
+                const newAccountId = accountRes.data._id; // Lấy ID Account vừa tạo
+                console.log("New Account ID:", newAccountId);
+
+                // **2. Tạo Employee sau khi Account được tạo**
+                const employeeData = {
+                    hotels: [selectedHotel],
+                    FullName: formData.FullName,
+                    Phone: formData.Phone,
+                    Email: formData.Email,
+                    Gender: formData.Gender,
+                    Image: formData.Image,
+                    Address: formData.Address,
+                    accountId: newAccountId, // Gán ID Account vào Employee
+                };
+
+                console.log("Submitting employee data:", employeeData);
+                const employeeRes = await getAllEmployeeType.createEmployee(employeeData);
+
+                if (employeeRes?.status === "OK" && employeeRes.data?._id) {
+                    const newEmployeeId = employeeRes.data._id;
+                    console.log("New Employee ID:", newEmployeeId);
+
+                    // **3. Thêm vào EmployeeSchedule**
+                    const employeeScheduleData = {
+                        employees: newEmployeeId,
+                        hotels: selectedHotel,
+                        employee_types: formDataES.employee_types,
+                        schedule: formDataES.schedule,
+                    };
+
+                    console.log("Submitting employee schedule data:", employeeScheduleData);
+                    const scheduleRes = await getAllEmployeeSchedule.createEmployeeSchedule(employeeScheduleData);
+
+                    if (scheduleRes?.status === "OK") {
+                        alert("Thêm tài khoản, nhân viên và lịch làm việc thành công!");
+
+                        // Reset form
+                        setFormDataAccount({
+                            FullName: "",
+                            Email: "",
+                            Username: "",
+                            Password: "",
+                            permissions: "",
+                        });
+                        setFormData({
+                            FullName: "",
+                            Address: "",
+                            Email: "",
+                            Phone: "",
+                            Gender: "",
+                            Image: "",
+                        });
+                        setFormDataES({
+                            employees: "",
+                            hotels: "",
+                            employee_types: "",
+                            schedule: [
+                                {
+                                    date: getVietnamDate(),
+                                    start_time: "",
+                                    end_time: "",
+                                }
+                            ],
+                        });
+                        setSelectedHotel("");
+                        setSelectedPermissions("");
+                        setIsChecked(false);
+                        formRef.current?.reset();
+                        window.location.reload();
+                    } else {
+                        alert("Lỗi khi thêm lịch làm việc.");
+                    }
+                } else {
+                    alert("Lỗi khi thêm nhân viên.");
+                }
+            } else if (accountRes?.status === "error" && accountRes?.message === "The email already exists") {
+                alert("Email đã tồn tại. Vui lòng thử lại với email khác.");
+            } else {
+                alert("Lỗi khi tạo tài khoản.");
+            }
+        } catch (error) {
+            console.error("Lỗi từ API: ", error);
+            alert("Đã có lỗi xảy ra, vui lòng thử lại.");
+        }
+    };
 
     // Cập nhật state khi chọn radio button
     const handleRadioChange = (e) => {
@@ -115,7 +293,7 @@ const AddEmployees = () => {
     useEffect(() => {
         const fetchHotels = async () => {
             try {
-                const response = await getAllHotel.getAllHotel();
+                const response = await getAllHotelSevices.getAllHotel();
                 if (response?.status === "OK" && Array.isArray(response.data)) {
                     setHotels(response.data);
                     setSelectedHotel(response.data[0]?._id || ""); // Lấy ID thay vì NameHotel
@@ -134,8 +312,14 @@ const AddEmployees = () => {
             try {
                 const response = await getAllEmployeeType.getAllPermission();
                 if (response?.status === "OK" && Array.isArray(response.data)) {
-                    setPermissions(response.data);
-                    setSelectedPermissions(response.data[0]?._id || ""); // Lấy ID thay vì NameHotel
+                    // Lọc bỏ các quyền có PermissionName là "Admin"
+                    const filteredPermissions = response.data.filter(permission =>
+                        !permission.PermissionName.includes("Admin") &&
+                        !permission.PermissionName.includes("Manager")
+                    );
+
+                    setPermissions(filteredPermissions);
+                    setSelectedPermissions(filteredPermissions[0]?._id || ""); // Lấy ID của quyền đầu tiên nếu có
                 }
             } catch (error) {
                 console.error("Lỗi khi lấy danh sách quyền:", error);
@@ -145,11 +329,71 @@ const AddEmployees = () => {
         fetchPermissions();
     }, []);
 
+
     // Handle input change
     const handleInputChange = (e) => {
         const { id, value } = e.target;
         setFormData((prevData) => ({ ...prevData, [id]: value }));
+
+        // Xử lý validation
+        const newErrors = { ...errors };
+        
+        if (id === "Email") {
+            if (!value) {
+                newErrors.email = "Email không được để trống";
+            } else {
+                const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
+                if (!emailRegex.test(value)) {
+                    newErrors.email = "Email không đúng định dạng";
+                } else {
+                    delete newErrors.email;
+                }
+            }
+        }
+
+        if (id === "Phone") {
+            if (!value) {
+                newErrors.phone = "Số điện thoại không được để trống";
+            } else {
+                const phoneRegex = /^[0-9]{10,15}$/;
+                if (!phoneRegex.test(value)) {
+                    newErrors.phone = "Số điện thoại không đúng định dạng";
+                } else {
+                    delete newErrors.phone;
+                }
+            }
+        }
+
+        setErrors(newErrors);
     };
+    // Handle input Account
+    const handleInputAccountChange = (e) => {
+        const { id, value } = e.target;
+        setFormDataAccount((prev) => ({ ...prev, [id]: value }));
+    
+        // Kiểm tra lỗi trực tiếp khi nhập
+        const newErrors = { ...errors };
+    
+        if (id === "Username" && !value.trim()) {
+            newErrors.username = "Username không được bỏ trống.";
+        } else {
+            delete newErrors.username;
+        }
+    
+        if (id === "Password") {
+            const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+            if (!value) {
+                newErrors.password = "Password không được bỏ trống.";
+            } else if (!passwordRegex.test(value)) {
+                newErrors.password = "Password phải có ít nhất 8 ký tự, gồm chữ hoa, chữ thường, số và ký tự đặc biệt.";
+            } else {
+                delete newErrors.password;
+            }
+        }
+    
+        setErrors(newErrors);
+    };
+    
 
     // Handle gender selection
     const handleGenderChange = (e) => {
@@ -161,152 +405,100 @@ const AddEmployees = () => {
         setIsChecked(!isChecked);
     };
 
-    // Handle form submission
-
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-
-        const newErrors = {};
-
-        // Kiểm tra email hợp lệ
-        const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
-        if (!emailRegex.test(formData.Email)) {
-            newErrors.email = "Email không hợp lệ. Vui lòng nhập lại.";
-        }
-
-        // Kiểm tra số điện thoại hợp lệ
-        const phoneRegex = /^[0-9]{10,15}$/;
-        if (!phoneRegex.test(formData.Phone)) {
-            newErrors.phone = "Số điện thoại không hợp lệ. Vui lòng nhập lại.";
-        }
-
-        if (!formData.FullName) {
-            newErrors.fullName = "Tên nhân viên không được bỏ trống.";
-        }
-        if (!formData.Address) {
-            newErrors.address = "Địa chỉ không được bỏ trống.";
-        }
-
-        if (Object.keys(newErrors).length > 0) {
-            setErrors(newErrors);
-            return;
-        }
-
-
-
-        // **1. Tạo Employee trước**
-        const employeeData = {
-            hotels: [selectedHotel],
-            FullName: formData.FullName,
-            permissions: [selectedPermissions],
-            Phone: formData.Phone,
-            Email: formData.Email,
-            Gender: formData.Gender,
-            Image: formData.Image,
-            Address: formData.Address,
-        };
-
-        console.log("Submitting employee data:", employeeData);
-
-        try {
-            const res = await getAllEmployeeType.createEmployee(employeeData);
-
-            if (res?.status === "OK" && res.data?._id) {
-                const newEmployeeId = res.data._id; // Lấy ID nhân viên vừa tạo
-
-                console.log("New Employee ID:", newEmployeeId);
-
-                // **2. Sau khi tạo nhân viên thành công, thêm vào EmployeeSchedule**
-                const employeeScheduleData = {
-                    employees: newEmployeeId, // Dùng ID nhân viên mới
-                    hotels: selectedHotel,
-                    employee_types: formDataES.employee_types,
-                    schedule: formDataES.schedule,
-                };
-
-                console.log("Submitting employee schedule data:", employeeScheduleData);
-
-                const scheduleRes = await getAllEmployeeSchedule.createEmployeeSchedule(employeeScheduleData);
-
-                if (scheduleRes?.status === "OK") {
-                    alert("Thêm nhân viên và lịch làm việc thành công!");
-                    setFormData({
-                        FullName: "",
-                        Address: "",
-                        Email: "",
-                        Phone: "",
-                        Gender: "",
-                        Image: "link",
-                    });
-                    setFormDataES({
-                        employees: "",
-                        hotels: "",
-                        employee_types: "",
-                        schedule: [
-                            {
-                                date: getVietnamDate(), // Đặt lại giá trị mặc định
-                                start_time: "",
-                                end_time: "",
-                            }
-                        ],
-                    });
-                    setSelectedHotel("");
-                    setSelectedPermissions("");
-                    setIsChecked(false);
-                    formRef.current?.reset();
-                    window.location.reload();
-                } else {
-                    alert("Lỗi khi thêm lịch làm việc.");
-                }
-            } else if (res?.status === "error" && res?.message === "The email of employee already exists") {
-                alert("Email đã tồn tại. Vui lòng thử lại với email khác.");
-            } else {
-                alert("Lỗi khi thêm nhân viên.");
-            }
-        } catch (error) {
-            console.error("Lỗi từ API: ", error);
-            if (error?.code === 400 && error?.message === "The email of employee already exists") {
-                alert("Email đã tồn tại. Vui lòng thử lại với email khác.");
-            } else {
-                alert("Đã có lỗi xảy ra, vui lòng thử lại.");
-            }
-        }
-    };
-
-
     return (
         <AddEmployeesPage>
             <Card>
+            <div style={{ maxHeight: "90vh", overflowY: "auto", paddingRight: "10px" }}>
                 <form ref={formRef} onSubmit={handleSubmit}>
+                    <div>
+                        <div className="image-container">
+                            {selectedImage ? (
+                                <img
+                                    src={selectedImage}
+                                    alt="Employee Preview"
+                                    className="profile-image"
+                                    style={{ height: "100px", width: "100px", borderRadius: "50%", objectFit: "cover" }}
+                                />
+                            ) : (
+                                <div className="default-icon" style={{ fontSize: "80px", color: "#ccc" }}>
+                                    <i className="bi bi-person-circle"></i>
+                                </div>
+                            )}
+                        </div>
+                        <label
+                            style={{
+                                display: "inline-block",
+                                padding: "8px 12px",
+                                cursor: "pointer",
+                                backgroundColor: "#ccc",
+                                borderRadius: "4px",
+                                fontSize: "14px",
+                                textAlign: "center"
+                            }}
+                        >
+                            Chọn ảnh
+                            <input type="file" accept="image/*" onChange={handleImageChange} style={{ display: "none" }} />
+                        </label>
+                    </div>
+
+
                     <div style={{ marginTop: "30px", display: "flex", gap: "20px" }}>
+
                         <div style={{ display: "flex", flexDirection: "column", flex: 1 }}>
-                            <Label style={{ fontSize: "20px" }} htmlFor="FullName">Employee Name</Label>
+                            <Label style={{ fontSize: "20px" }} htmlFor="FullName">
+                                <span style={{ color: "red", fontSize: "25px" }}>*</span>Employee Name
+                            </Label>
                             <Input id="FullName" value={formData.FullName} onChange={handleInputChange} placeholder="Input" />
                             {errors.fullName && <span style={{ color: "red" }}>{errors.fullName}</span>}
                         </div>
 
                         <div style={{ display: "flex", flexDirection: "column", flex: 1 }}>
-                            <Label style={{ fontSize: "20px" }} htmlFor="Address">Address</Label>
+                            <Label style={{ fontSize: "20px" }} htmlFor="Address">
+                                <span style={{ color: "red", fontSize: "25px" }}>*</span>Address
+                            </Label>
                             <Input id="Address" value={formData.Address} onChange={handleInputChange} placeholder="Input" />
                             {errors.address && <span style={{ color: "red" }}>{errors.address}</span>}
                         </div>
                     </div>
                     <div style={{ marginTop: "30px", display: "flex", gap: "20px" }}>
                         <div style={{ display: "flex", flexDirection: "column", flex: 1 }}>
-                            <Label style={{ fontSize: "20px" }} htmlFor="Email">Email</Label>
+                            <Label style={{ fontSize: "20px" }} htmlFor="Email">
+                                <span style={{ color: "red", fontSize: "25px" }}>*</span>Email
+                            </Label>
                             <Input id="Email" value={formData.Email} onChange={handleInputChange} placeholder="Input" />
                             {errors.email && <span style={{ color: "red" }}>{errors.email}</span>}
                         </div>
                         <div style={{ display: "flex", flexDirection: "column", flex: 1 }}>
-                            <Label style={{ fontSize: "20px" }} htmlFor="Phone">Phone</Label>
+                            <Label style={{ fontSize: "20px" }} htmlFor="Phone">
+                                <span style={{ color: "red", fontSize: "25px" }}>*</span>Phone
+                            </Label>
                             <Input id="Phone" value={formData.Phone} onChange={handleInputChange} placeholder="Input" />
                             {errors.phone && <span style={{ color: "red" }}>{errors.phone}</span>}
+                        </div>
+                    </div>
+                    <div style={{ marginTop: "30px", display: "flex", gap: "20px" }}>
+                        <div style={{ display: "flex", flexDirection: "column", flex: 1 }}>
+                            <Label style={{ fontSize: "20px" }} htmlFor="UserName">
+                                <span style={{ color: "red", fontSize: "25px" }}>*</span>UserName
+                            </Label>
+                            <Input id="Username" value={formDataAccount.Username} onChange={handleInputAccountChange} placeholder="Input" />
+                            {errors.username && <span style={{ color: "red" }}>{errors.username}</span>}
+                        </div>
+
+                        <div style={{ display: "flex", flexDirection: "column", flex: 1 }}>
+                            <Label style={{ fontSize: "20px" }} htmlFor="PassWord">
+                                <span style={{ color: "red", fontSize: "25px" }}>*</span>PassWord
+                            </Label>
+                            <Input id="Password" value={formDataAccount.Password} onChange={handleInputAccountChange} placeholder="Input" />
+                            {errors.password && <span style={{ color: "red" }}>{errors.password}</span>}
                         </div>
                     </div>
 
                     <div style={{ marginTop: "30px", display: "flex", gap: "20px" }}>
                         <div style={{ flex: 1 }}>
-                            <Label style={{ fontSize: "20px", marginBottom: "10px" }}>Hotel Name</Label>
+                            <Label style={{ fontSize: "20px", marginBottom: "10px" }}>
+                                Hotel Name
+                            </Label>
                             <select className="form-select" value={selectedHotel} onChange={(e) => setSelectedHotel(e.target.value)}>
                                 {hotels.map((hotel) => (
                                     <option key={hotel._id} value={hotel._id}>
@@ -316,7 +508,9 @@ const AddEmployees = () => {
                             </select>
                         </div>
                         <div style={{ flex: 1 }}>
-                            <Label style={{ fontSize: "20px", marginBottom: "10px" }}>Permission</Label>
+                            <Label style={{ fontSize: "20px", marginBottom: "10px" }}>
+                                Permission
+                            </Label>
                             <select className="form-select" value={selectedPermissions} onChange={(e) => setSelectedPermissions(e.target.value)}>
                                 {permissions.map((perm) => (
                                     <option key={perm._id} value={perm._id}>
@@ -345,7 +539,7 @@ const AddEmployees = () => {
                         </RadioGroup>
                     </div>
                     <div style={{ marginTop: "30px" }}>
-                        <div className="form-check form-switch" style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                        <div className="form-check form-switch" style={{ display: "flex", alignItems: "center", gap: "10px",marginLeft:"15px" }}>
                             <input
                                 className="form-check-input"
                                 type="checkbox"
@@ -354,10 +548,10 @@ const AddEmployees = () => {
                                 onChange={handleCheckboxChange}
                             />
                             <Label
-                                style={{ fontSize: "20px", margin: "0" }}
+                                style={{ fontSize: "20px", margin: "0", }}
                                 htmlFor="flexSwitchCheckDefault"
                             >
-                                Additional Information
+                                <span style={{ color: "red", fontSize: "25px" }}>*</span>Additional Information
                             </Label>
 
                         </div>
@@ -384,7 +578,7 @@ const AddEmployees = () => {
                                                         checked={formDataES.employee_types === item._id}
                                                         onChange={handleRadioChange}
                                                     />
-                                                    <label htmlFor={item._id}>{item.employeeType}</label>
+                                                    <label htmlFor={item._id}>{item.EmployeeType}</label>
                                                 </div>
                                             ))}
                                         </div>
@@ -459,6 +653,7 @@ const AddEmployees = () => {
                         </button>
                     </div>
                 </form>
+                </div>
             </Card>
         </AddEmployeesPage>
     );

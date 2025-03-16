@@ -35,7 +35,7 @@ const refreshTokenJwtService = async (token) => {
                 });
             }
 
-            jwt.verify(token, process.env.REFRESH_TOKEN, async (err, user) => {
+            jwt.verify(token, process.env.REFESH_TOKEN, async (err, user) => {
                 if (err) {
                     console.error("Token verification error:", err);
                     return resolve({

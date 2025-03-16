@@ -21,7 +21,8 @@ const LoginPage = () => {
         onSuccess: (data) => {
             if (data.status === "OK") {
                 localStorage.setItem("access_token", data.access_token);
-                localStorage.setItem("refresh_token", data.refresh_token); 
+                localStorage.setItem("refresh_token", data.refresh_token);
+
                 dispatch(updateAccount({ ...data.user, access_token: data.access_token, refresh_token: data.refresh_token }));
 
                 navigate("/dashboard");

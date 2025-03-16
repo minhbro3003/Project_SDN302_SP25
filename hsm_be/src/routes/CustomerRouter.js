@@ -1,11 +1,11 @@
 const express = require("express");
 const router = express.Router();
-const HotelController = require("../controllers/HotelController");
+const customerController = require("../controllers/CustomerController");
 const {
     authMiddleware,
     authUserMiddleware,
 } = require("../middleware/authMiddleware");
 
-router.get("/get-all-hotel", HotelController.getAllHotel);
-router.get("/by-room/:id", HotelController.getHotelByRoomId);
+router.post("/create-customer", customerController.createCustomer);
+
 module.exports = router;

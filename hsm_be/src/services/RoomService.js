@@ -1,6 +1,7 @@
 // const Product = require("../models/ProductModel");
 const Room = require("../models/RoomModel");
 const Rooms = require("../models/RoomModel");
+const TypeRoomModel = require("../models/TypeRoomModel");
 
 //get all rooms
 const getAllRoomsService = () => {
@@ -11,6 +12,23 @@ const getAllRoomsService = () => {
                 status: "OK",
                 message: " All rooms successfully",
                 data: allRooms,
+            });
+        } catch (e) {
+            console.log("Error: ", e.message);
+            reject(e);
+        }
+    });
+};
+
+//get typerooms
+const getAllTypeRoomService = () => {
+    return new Promise(async (resolve, reject) => {
+        try {
+            const allTypeRooms = await TypeRoomModel.find({});
+            resolve({
+                status: "OK",
+                message: " All typerooms successfully",
+                data: allTypeRooms,
             });
         } catch (e) {
             console.log("Error: ", e.message);
@@ -127,6 +145,25 @@ const updateRoomService = async (id, data) => {
         };
     }
 };
+
+//tuấn get all room  by hotelId
+
+const getAllRoomByHotelIdService = (hotelId) => {
+    return new Promise(async (resolve, reject) => {
+        try {
+            const allRooms = await Room.find({ hotel: hotelId }).select("-Image"); // Loại bỏ trường image
+            resolve({
+                status: "OK",
+                message: "All rooms successfully",
+                data: allRooms,
+            });
+        } catch (e) {
+            console.log("Error: ", e.message);
+            reject(e);
+        }
+    });
+};
+
 
 // delete room
 const deleteRoomService = (id) => {
@@ -324,6 +361,8 @@ module.exports = {
     updateRoomService,
     deleteRoomService,
     getRoomByRoomIdService,
+    getAllTypeRoomService,
+    getAllRoomByHotelIdService
     // createProduct,
     // updateProduct,
     // getDetailsProduct,

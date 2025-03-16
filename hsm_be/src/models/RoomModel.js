@@ -6,32 +6,22 @@ const roomSchema = new mongoose.Schema(
         Price: { type: Number, required: true, min: 0 },
         Status: {
             type: String,
-            enum: ["Available", "Occupied", "Maintenance", "Booked"], // Có thể thêm trạng thái khác nếu cần
+            enum: ["Available", "Booked"],
             default: "Available",
         },
-        Active: { type: Boolean, default: true },
-        typerooms: {
+        Floor: { type: Number, required: true },
+        hotel: {
             type: mongoose.Schema.Types.ObjectId,
-            ref: "TypeRoom",
+            ref: "Hotel",
             required: true,
         },
-        locations: {
+        roomtype: {  // Sửa từ `typerooms` thành `roomtype`
             type: mongoose.Schema.Types.ObjectId,
-            ref: "Location",
+            ref: "typerooms",
             required: true,
         },
-        room_amenities: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: "RoomAmenities",
-            required: true,
-        },
-        Discription: { type: String, trim: true },
-        Image: [
-            {
-                url: { type: String, required: true, trim: true },
-                alt: { type: String, trim: true },
-            },
-        ],
+        Description: { type: String, trim: true },
+        Image: { type: String, required: true, trim: true }, // Chuyển thành chuỗi Base64
         IsDelete: { type: Boolean, default: false },
     },
     {

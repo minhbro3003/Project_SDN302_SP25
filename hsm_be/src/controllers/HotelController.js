@@ -12,8 +12,27 @@ const getAllHotel = async (req, res) => {
         });
     }
 };
+// Lấy khách sạn theo roomId
+const getHotelByRoomId = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const hotel = await HotelService.getHotelByRoomId(id);
+
+        if (hotel.status === "NOT_FOUND") {
+            return res.status(404).json(hotel);
+        }
+
+        return res.status(200).json(hotel);
+    } catch (error) {
+        return res.status(500).json({
+            status: "ERROR",
+            message: error.message,
+        });
+    }
+};
+
 
 module.exports = {
     getAllHotel,
-
+    getHotelByRoomId
 };

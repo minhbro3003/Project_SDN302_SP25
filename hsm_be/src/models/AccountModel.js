@@ -8,7 +8,7 @@ const accounts = new mongoose.Schema(
         IsDelete: { type: Boolean },
         permissions: [{
             type: mongoose.Schema.Types.ObjectId,
-            ref: "Permissions",
+            ref: "permissions",
             // required: true,
         }],
     },

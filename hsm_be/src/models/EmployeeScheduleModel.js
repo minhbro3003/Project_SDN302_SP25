@@ -4,7 +4,7 @@ const employeeScheduleSchema = new mongoose.Schema(
     {
         employees: { 
             type: mongoose.Schema.Types.ObjectId, 
-            ref: "Employee", 
+            ref: "employees", 
             required: true 
         },
         hotels: { 
@@ -14,7 +14,7 @@ const employeeScheduleSchema = new mongoose.Schema(
         },
         employee_types: { 
             type: mongoose.Schema.Types.ObjectId, 
-            ref: "EmployeeType", 
+            ref: "employee_types", 
             required: true 
         },
       

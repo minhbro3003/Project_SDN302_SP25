@@ -13,6 +13,8 @@ import {SettingOutlined, AppstoreAddOutlined, HomeOutlined, BarChartOutlined, Li
 import RoomList from "../pages/RoomPage/RoomList";
 import EmployeesPage from "../pages/EmployeesPage/EmployeesPage";
 import EmployeeDetail from "../pages/EmployeesPage/EmployeeDetail/EmployeeDetail";
+import TestNotification from "../pages/EmployeesPage/EmployeeDetail/TestNotification"
+import BookingHistory from "../pages/BookingPage/BookingHistory";
 
 
 
@@ -43,7 +45,7 @@ export const routes = [
         path: "/employees",
         name: "Employee",
         isShowHeader: true,
-        permissions: ["Admin"],
+        permissions: ["Admin", "Receptionist", "Janitor"],
         children: [
             {
                 path: "/employees/add",
@@ -62,12 +64,20 @@ export const routes = [
                 permissions: ["Admin"],
             },
             {
-                path: "/employee-detail",
+                path: "/employee-details/:id",
                 name: "Employee Detail",
                 page: EmployeeDetail,
                 isShowHeader: true,
                 icon: <SettingOutlined />,
                 permissions: ["Admin", "Receptionist"],
+            },
+            {
+                path: "/testnotifications",
+                name: "Test Notification",
+                page: TestNotification,
+                isShowHeader: true,
+                icon: <SettingOutlined />,
+                permissions: ["Receptionist", "Janitor"],
             },
         ],
     },
@@ -80,12 +90,20 @@ export const routes = [
         permissions: ["Admin"],
     },
     {
-        path: "/booking-log",
-        name: "Booking Log",
+        path: "/booking",
+        name: "Booking",
         page: BookingPage,
         isShowHeader: true,
         icon: <SettingOutlined />,
-        permissions: ["Admin", "Receptionist"],
+        permissions: [ "Receptionist"],
+    },
+    {
+        path: "/booking-history",
+        name: "Booking History",
+        page: BookingHistory,
+        isShowHeader: true,
+        icon: <SettingOutlined />,
+        permissions: ["Admin"],
     },
     {
         path: "/rooms",

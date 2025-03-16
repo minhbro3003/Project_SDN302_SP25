@@ -10,6 +10,6 @@ const typeRoomSchema = new mongoose.Schema(
     }
 );
 
-const TypeRoom = mongoose.model("TypeRoom", typeRoomSchema);
+const Typerooms = mongoose.model("roomtypes", typeRoomSchema);
 
-module.exports = TypeRoom;
+module.exports = Typerooms;

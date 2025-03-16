@@ -42,4 +42,22 @@ export const createEmployee = async (data) => {
         return { status: "ERR", message: error.response?.data?.message };
     }
 };
+export const getDetailsEmployee = async (id) => {
+    const res = await axios.get(
+        `${process.env.REACT_APP_API_URL_BACKEND}/employee/get-details/${id}`
+    );
+    return res.data;
+};
+export const updateEmployee = async (id, data) => {
+    try {
+        const res = await axios.put(
+            `${process.env.REACT_APP_API_URL_BACKEND}/employee/edit-employee/${id}`,
+            data
+        );
+        return res.data;
+    } catch (error) {
+        return { status: "ERR", message: error.response?.data?.message };
+    }
+};
+
 console.log("API URL:", process.env.REACT_APP_API_URL_BACKEND);

@@ -7,16 +7,22 @@ const {
     authUserMiddleware,
 } = require("../middleware/authMiddleware");
 
+//get all typerooms
+router.get("/get-all-typeroom", roomsController.getAllTypeRooms);
 //router get all rooms
-router.get("/get-all-rooms", roomsController.getAllRooms);
+router.get("", roomsController.getAllRooms);
 //router create new room
-router.post("/create-room", roomsController.createRooms);
+router.post("", roomsController.createRooms);
 //router update by id
-router.put("/update-room/:id", roomsController.updateRoom);
+router.put("/:id", roomsController.updateRoom);
 //delete room
-router.delete("/delete-room/:id", roomsController.deleteRoom);
+router.delete("/:id", roomsController.deleteRoom);
 //router get room by id
-router.get("/get-room-details/:id", roomsController.getRoomByRoomId);
+router.get("/:id", roomsController.getRoomByRoomId);
+//router get room by hotelid
+router.get("/hotel/:id", roomsController.getAllRoomByHotelId);
+
+
 
 // router.post("/create", productController.createProduct);
 // router.put(

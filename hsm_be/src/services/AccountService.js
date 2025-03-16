@@ -5,7 +5,7 @@ const bcrypt = require("bcryptjs");
 
 const createAcount = (newAccount) => {
     return new Promise(async (resolve, reject) => {
-        const { FullName, Email, Username, Password } = newAccount;
+        const { FullName, Email, Username, Password,permissions } = newAccount;
         try {
             const checkUser = await Account.findOne({
                 Email: Email,
@@ -23,6 +23,7 @@ const createAcount = (newAccount) => {
                 Email,
                 Username,
                 Password: hash,
+                permissions,
             });
             if (createdAccount) {
                 resolve({
