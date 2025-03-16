@@ -21,9 +21,10 @@ const EmployeesPage = () => {
     axios
       .get(`${API_URL}/employee/list-employees`)
       .then((response) => {
-        const dataWithKeys = response.data.map(emp => ({
+        console.log("API Response:", response.data); // Kiểm tra dữ liệu từ API
+        const dataWithKeys = response.data.map((emp, index) => ({
           ...emp,
-          key: emp._id
+          key: index, // Thêm key duy nhất dựa trên index
         }));
         setEmployees(dataWithKeys);
       })
@@ -31,6 +32,7 @@ const EmployeesPage = () => {
         console.error("Error fetching employees:", error);
       });
   }, []);
+
 
   const handleSearch = (selectedKeys, confirm, dataIndex) => {
     confirm();
@@ -206,13 +208,17 @@ const EmployeesPage = () => {
 
   return (
     <div style={{ padding: "20px" }}>
-      <Table 
-        columns={columns} 
+      <Table
+        columns={columns}
         dataSource={employees}
         onRow={(record) => ({
-          onClick: () => navigate(`/employee-detail/${record._id}`),
-          style: { cursor: 'pointer' }
+          onClick: () => {
+            console.log("Employee Record:", record);
+            navigate(`/employee-detail/${record._id}`); // Dùng email làm ID duy nhất
+          },
+          style: { cursor: 'pointer' },
         })}
+
       />
     </div>
   );

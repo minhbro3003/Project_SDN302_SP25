@@ -1,7 +1,7 @@
-const EmployeeSchedule= require("../models/EmployeeScheduleModel");
+const EmployeeSchedule = require("../models/EmployeeScheduleModel");
 const createEmployeeSchedule = (newEmployeeSchedule) => {
     return new Promise(async (resolve, reject) => {
-        const { employees, hotels, employee_types, schedule} = newEmployeeSchedule;
+        const { employees, hotels, employee_types, schedule } = newEmployeeSchedule;
         try {
 
             const newEmployeeSchedule = await EmployeeSchedule.create({

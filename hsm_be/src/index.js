@@ -24,8 +24,82 @@ app.use(cookieParser()); // Lưu trữ cookie
 
 routes(app);
 
-app.listen(port, () => {
-    console.log(`Server is running on port http://localhost:${port}/`);
-    //Connect database
+const http = require("http");
+const server = http.createServer(app);
+
+const { Server } = require("socket.io");
+const Notification = require("./models/Notification");
+
+const io = new Server(server, {
+    cors: {
+        origin: "*",
+        methods: ["GET", "POST"]
+    }
+});
+
+
+app.set("io", io);
+
+let chatMessages = []; // Lưu tin nhắn trong RAM
+const janitors = new Set(); // Danh sách nhân viên dọn dẹp
+
+io.on("connection", (socket) => {
+    console.log("User connected:", socket.id);
+
+    // Tham gia vào room theo vai trò
+    socket.on("join_role", (role) => {
+        socket.join(role);
+        console.log(`${socket.id} joined room: ${role}`);
+    });
+
+    // Khi nhân viên dọn dẹp tham gia
+    socket.on("register", (role) => {
+        if (role === "janitor") {
+            janitors.add(socket.id);
+        }
+    });
+
+    // Gửi thông báo đến Admin khi có booking mới
+    socket.on("new_booking", async (data) => {
+        try {
+            const notification = new Notification({
+                sender: data.sender || "Hệ thống",
+                receiverRole: "Admin",
+                message: data.message,
+                type: "booking",
+            });
+
+            await notification.save();
+            io.to("Admin").emit("receive_notification", notification);
+        } catch (error) {
+            console.error("Lỗi khi lưu thông báo:", error);
+        }
+    });
+
+    // Gửi tin nhắn cũ khi user kết nối
+    socket.on("get_messages", () => {
+        socket.emit("load_messages", chatMessages);
+    });
+
+    // Nhận tin nhắn từ client
+    socket.on("send_message", (data) => {
+        console.log("Tin nhắn từ client:", data);
+        chatMessages.push(data);
+
+        // Phát tin nhắn đến tất cả client ngay lập tức
+        io.emit("receive_message", data);
+    });
+
+
+    // Khi nhân viên dọn dẹp rời khỏi
+    socket.on("disconnect", () => {
+        janitors.delete(socket.id);
+        console.log("User disconnected", socket.id);
+    });
+});
+
+// Chạy server
+server.listen(port, () => {
+    console.log(`Server is running on port ${port}`);
     connectDB();
 });

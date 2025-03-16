@@ -1,3 +1,4 @@
+const Employee = require("../models/EmployeeModel");
 const Rooms = require("../models/RoomModel");
 const RoomType = require("../models/RoomTypeModel");
 //get all rooms
@@ -246,6 +247,62 @@ const getRoomsByHotelService = async (hotelId) => {
     }
 };
 
+const getRoomsByAccount = async (accountId) => {
+    try {
+        // console.time("fetchData");
+
+
+        const employee = await Employee.findOne({ accountId });
+        if (!employee) {
+            return { success: false, message: "Không tìm thấy nhân viên với tài khoản này" };
+        }
+
+
+        const hotelIds = employee.hotels.map(hotel => hotel._id);
+
+
+        // Sử dụng aggregation pipeline thay vì populate
+        const hotelsWithRooms = await Rooms.aggregate([
+            { $match: { hotel: { $in: hotelIds }, IsDelete: false } },
+            {
+                $lookup: {
+                    from: "hotels", // Tên collection
+                    localField: "hotel",
+                    foreignField: "_id",
+                    as: "hotelData",
+                },
+            },
+            { $unwind: "$hotelData" },
+            {
+                $group: {
+                    _id: "$hotel",
+                    NameHotel: { $first: "$hotelData.NameHotel" },
+                    LocationHotel: { $first: "$hotelData.LocationHotel" },
+                    rooms: {
+                        $push: {
+                            id: "$_id",
+                            name: "$RoomName",
+                            status: "$Status",
+                            floor: "$Floor",
+                            price: "$Price",
+                            description: "$Description",
+                            roomType: "$roomtype.TypeName"
+                        }
+                    }
+                }
+            }
+        ]);
+
+
+        // console.timeEnd("fetchData");
+        return { success: true, data: hotelsWithRooms };
+
+
+    } catch (error) {
+        return { success: false, message: error.message };
+    }
+};
+
 module.exports = {
     getAllRoomsService,
     createRoomService,
@@ -254,5 +311,6 @@ module.exports = {
     getRoomByRoomIdService,
     getAvailableRooms_,
     getAvailableRooms,
-    getRoomsByHotelService
+    getRoomsByHotelService,
+    getRoomsByAccount,
 };

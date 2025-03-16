@@ -16,7 +16,7 @@ const createEmployeeSchedule = async (req, res) => {
             return res
                 .status(200)
                 .json({ status: "ERR", message: "The input is required." });
-        } 
+        }
 
         const employeeSchedule = await EmployeeScheduleService.createEmployeeSchedule(req.body);
         return res.status(200).json(employeeSchedule);

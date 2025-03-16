@@ -4,10 +4,10 @@ const { refreshTokenJwtService } = require("../services/JwtService");
 const createAcount = async (req, res) => {
     try {
         // console.log(req.body);
-        const { FullName, Email, Username, Password } = req.body;
+        const { FullName, Email, Username, Password, permissions } = req.body;
         const mailformat = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/;
         const isCheckEmail = mailformat.test(Email);
-        if (!Email || !Password || !Username) {
+        if (!Email || !Password || !Username || !permissions) {
             return res
                 .status(200)
                 .json({ status: "ERR", message: "The input is required." });

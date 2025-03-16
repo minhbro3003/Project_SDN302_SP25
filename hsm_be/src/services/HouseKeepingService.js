@@ -1,8 +1,9 @@
 const HousekeepingTask = require("../models/HouseKeepingModel");
 const HousekeepingLog = require("../models/HouseKeepingLogModel");
 const Room = require("../models/RoomModel");
+const Hotel = require("../models/HotelModel");
 const mongoose = require("mongoose");
-async function createHousekeepingTask(roomId, assignedTo, taskType, notes) {
+async function createHousekeepingTask(roomId, assignedTo, taskType, notes, io) {
   try {
     console.log("🔍 Debug values:", { roomId, assignedTo, taskType, notes });
 
@@ -11,13 +12,13 @@ async function createHousekeepingTask(roomId, assignedTo, taskType, notes) {
     }
 
     const existingTask = await HousekeepingTask.findOne({
-        assignedTo,
-        status: "In Progress",
-      });
-  
-      if (existingTask) {
-        throw new Error("You already have an unfinished task.");
-      }
+      assignedTo,
+      status: "In Progress",
+    });
+
+    if (existingTask) {
+      throw new Error("You already have an unfinished task.");
+    }
 
     const newTask = await HousekeepingTask.create({
       room: roomId,
@@ -26,7 +27,7 @@ async function createHousekeepingTask(roomId, assignedTo, taskType, notes) {
       status: "In Progress",
       notes,
     });
-
+    console.log("🔍 New task created with ID:", newTask._id);
     const updatedRoom = await Room.findByIdAndUpdate(
       roomId,
       { Status: "Available - Cleaning" },
@@ -36,6 +37,13 @@ async function createHousekeepingTask(roomId, assignedTo, taskType, notes) {
     if (!updatedRoom) {
       throw new Error(`Room with ID ${roomId} not found`);
     }
+    console.log("🔍 Số lượng client đang kết nối:", io.sockets.sockets.size);
+
+    console.log("🔍 Server gửi taskUpdated tới tất cả client:", newTask);
+    io.emit("taskUpdated", newTask);
+
+    console.log("🔍 Server gửi roomUpdated tới tất cả client:", updatedRoom);
+    io.emit("roomUpdated", updatedRoom);
 
     return {
       taskId: newTask._id,
@@ -47,15 +55,9 @@ async function createHousekeepingTask(roomId, assignedTo, taskType, notes) {
   }
 }
 
-async function updateHousekeepingTask(taskId, status, cancelNotes = "") {
+async function updateHousekeepingTask(taskId, status, cancelNotes = "", io) {
   try {
-    // 🔹 Tìm task theo ID
-    // console.log("🔍 Raw parameters received:");
-    // console.log("taskId:", taskId);
-    // console.log("status:", status);
-    // console.log("cancelNotes:", cancelNotes);
-    // console.log("Type of cancelNotes:", typeof cancelNotes);
-    // console.log("Length of cancelNotes:", cancelNotes ? cancelNotes.length : 0);
+
     const task = await HousekeepingTask.findById(taskId);
 
     if (!task) {
@@ -64,22 +66,25 @@ async function updateHousekeepingTask(taskId, status, cancelNotes = "") {
 
     // 🔹 Cập nhật trạng thái task
     // Instead of conditional updating, do:
+    let updatedTask;
     if (status === "Cancelled") {
-        // Kiểm tra cụ thể hơn để đảm bảo notes được lưu đúng
-        const noteText = cancelNotes ? cancelNotes : "No reason provided";
-        console.log("✅ Debug API: Cập nhật notes khi hủy:", noteText);
+      // Kiểm tra cụ thể hơn để đảm bảo notes được lưu đúng
+      const noteText = cancelNotes ? cancelNotes : "No reason provided";
+      console.log("✅ Debug API: Cập nhật notes khi hủy:", noteText);
 
-        await HousekeepingTask.findByIdAndUpdate(
-            taskId, 
-            { 
-                status, 
-                notes: `Cancelled Reason: ${noteText}` 
-            },
-            { new: true } 
-        );
+      updatedTask = await HousekeepingTask.findByIdAndUpdate(
+        taskId,
+        {
+          status,
+          notes: `${noteText}`
+        },
+        { new: true }
+
+      );
+      console.log("🔍 Received taskId for update:", taskId);
     } else {
-        task.status = status;
-        await task.save();
+      task.status = status;
+      await task.save();
     }
     console.log(
       "🔍 Debug API: Task ID nhận được:",
@@ -102,7 +107,9 @@ async function updateHousekeepingTask(taskId, status, cancelNotes = "") {
     if (!updatedRoom) {
       throw new Error(`Room with ID ${task.room} not found or update failed.`);
     }
-
+    console.log("🔍 Số lượng client đang kết nối:", io.sockets.sockets.size);
+    io.emit("taskUpdated", updatedTask); // Gửi task đã cập nhật tới tất cả client
+    io.emit("roomUpdated", updatedRoom);
     return { message: "Housekeeping task updated successfully", task };
   } catch (error) {
     console.error("❌ Error in updateHousekeepingTask:", error);
@@ -132,9 +139,37 @@ async function getDirtyRooms() {
 }
 async function getHousekeepingTasks(filter = {}) {
   return await HousekeepingTask.find(filter)
-    .populate("room", "number status")
+    .populate({
+      path: "room",
+      select: "RoomName Status",
+      populate: {
+        path: "hotel",
+        select: "NameHotel LocationHotel",
+      },
+    })
     .populate("assignedTo", "Username");
 }
+
+
+
+// Lấy danh sách các khu vực (LocalHotels)
+const getLocalHotels = async () => {
+  try {
+    return await Hotel.distinct("LocationHotel", { IsDelete: false });
+  } catch (error) {
+    throw new Error("Error fetching local hotels: " + error.message);
+  }
+};
+
+// Lấy danh sách khách sạn theo khu vực đã chọn
+const getHotelsByLocation = async (location) => {
+  try {
+    return await Hotel.find({ LocationHotel: location, IsDelete: false })
+      .select("_id NameHotel LocationHotel");
+  } catch (error) {
+    throw new Error("Error fetching hotels by location: " + error.message);
+  }
+};
 
 module.exports = {
   createHousekeepingTask,
@@ -143,5 +178,7 @@ module.exports = {
   getDirtyRooms,
   getHousekeepingLogs,
   // updateRoomCleaningStatus,
+  getLocalHotels,
   getHousekeepingTasks,
+  getHotelsByLocation,
 };

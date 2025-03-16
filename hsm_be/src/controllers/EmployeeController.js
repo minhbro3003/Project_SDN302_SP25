@@ -30,18 +30,17 @@ const getAllPermission = async (req, res) => {
     }
 };
 
-
 const createEmployee = async (req, res) => {
     try {
         const {
             hotels,
             FullName,
-            permissions,
             Phone,
             Email,
             Gender,
             Image,
             Address,
+            accountId,
 
 
         } = req.body;
@@ -67,6 +66,49 @@ const createEmployee = async (req, res) => {
         });
     }
 };
+
+//employee detail
+const getDetailsEmployee = async (req, res) => {
+    try {
+
+        if (!req.params || !req.params.id) {
+            return res.status(400).json({
+                status: "ERR",
+                message: "The employeeId is required",
+            });
+        }
+
+        const employee = await EmployeeService.getEmployeeWithSchedule(req);
+
+        return res.status(200).json(employee);
+    } catch (e) {
+        return res.status(404).json({
+            message: "! User creation failed 'SOS'!",
+            error: e.message,
+        });
+    }
+};
+
+//update employee
+const updateEmployeeController = async (req, res) => {
+    try {
+        const result = await EmployeeService.updateEmployeeWithSchedule(req);
+
+        if (result.status === "OK") {
+            return res.status(200).json(result);
+        } else {
+            return res.status(400).json(result);
+        }
+    } catch (error) {
+        console.error("Lỗi trong updateEmployeeController:", error);
+        return res.status(500).json({
+            status: "ERR",
+            message: "Lỗi server",
+            error: error.message
+        });
+    }
+};
+
 
 const listEmployees = async (req, res) => {
     try {
@@ -117,5 +159,7 @@ module.exports = {
     getAllPermission,
     createEmployee,
     listEmployees,
-    getEmployeeByAccountId
+    getEmployeeByAccountId,
+    getDetailsEmployee,
+    updateEmployeeController,
 };

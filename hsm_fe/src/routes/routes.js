@@ -75,7 +75,7 @@ export const routes = [
                 permissions: ["Admin", "Receptionist", "Janitor"],
             },
             {
-                path: "/employee-detail",
+                path: "/employee-detail/:id",
                 name: "Employee Detail",
                 page: EmployeeDetail,
                 isShowHeader: true,
