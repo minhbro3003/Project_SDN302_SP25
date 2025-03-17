@@ -1,6 +1,6 @@
 import React, { useState, useEffect, Fragment } from 'react';
 import { Layout, Menu, Avatar, Button } from 'antd';
-import { HomeOutlined, UserOutlined, BarChartOutlined, ProfileOutlined, LockOutlined, TableOutlined, FileTextOutlined, DownOutlined } from '@ant-design/icons';
+import { UserOutlined } from '@ant-design/icons';
 
 import { BrowserRouter as Router, Route, Routes, Link, useNavigate, useLocation, Navigate } from 'react-router-dom';
 import * as AccountService from "./services/accountService";

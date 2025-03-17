@@ -6,42 +6,9 @@ const RoomType = require("../models/RoomTypeModel");
 const getAllRoomsService = () => {
     return new Promise(async (resolve, reject) => {
         try {
-            const allRooms = await Rooms.find({},)//"-Image"
-                .populate("roomtype")
-                .populate("hotel", "CodeHotel NameHotel Introduce LocationHotel ")
-            // Format lại dữ liệu
-            const formatData = allRooms.map((room) => {
-                // console.log("room_amenities:", room.room_amenities); 
-
-                return {
-                    id: room._id,
-                    RoomName: room.RoomName,
-                    Price: room.Price,
-                    Status: room.Status,
-                    Floor: room.Floor,
-                    Active: room.Active,
-                    IsDelete: room.IsDelete,
-                    Description: room.Description,
-                    typerooms: room.typerooms
-                        ? { TypeName: room.typerooms.TypeName, Note: room.typerooms.Note }
-                        : null,
-                    room_amenities: Array.isArray(room.room_amenities)
-                        ? room.room_amenities.map((amenity) => ({
-                            id: amenity.room_amenitiesID?._id,
-                            name: amenity.room_amenitiesID?.AmenitiesName,
-                            note: amenity.room_amenitiesID?.Note,
-                            quantity: amenity.quantity,
-                            status: amenity.status,
-                        }))
-                        : [], // Nếu room_amenities không phải mảng, trả về mảng rỗng
-                    Image: Array.isArray(room.Image)
-                        ? room.Image.map((img) => ({
-                            url: img.url,
-                            alt: img.alt || "Room Image",
-                        }))
-                        : [], // Kiểm tra Image có phải mảng không
-                };
-            });
+            const allRooms = await Rooms.find({}, "-createdAt -updatedAt")//"-Image"
+                .populate("roomtype", "-Note")
+                .populate("hotel", "CodeHotel NameHotel ")
             resolve({
                 status: "OK",
                 message: "All rooms successfully",
@@ -53,7 +20,6 @@ const getAllRoomsService = () => {
         }
     });
 };
-
 
 //get room by id
 const getRoomByRoomIdService = (id) => {

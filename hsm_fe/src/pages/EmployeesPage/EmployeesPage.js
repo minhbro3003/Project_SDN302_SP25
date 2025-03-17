@@ -149,13 +149,6 @@ const EmployeesPage = () => {
             cursor: "pointer",
           }}
         />
-        <EditOutlined
-          style={{
-            color: "orange",
-            fontSize: "20px",
-            cursor: "pointer",
-          }}
-        />
       </div>
     );
   };
@@ -172,6 +165,17 @@ const EmployeesPage = () => {
       key: "fullname",
       ...getColumnSearchProps("fullname"),
       sorter: (a, b) => a.fullname.length - b.fullname.length,
+      render: (text, record) => (
+        <span
+          style={{ color: "blue", cursor: "pointer", }}
+          onClick={(e) => {
+            e.stopPropagation(); // Ngăn chặn event click lan ra hàng
+            navigate(`/employee-detail/${record._id}`);
+          }}
+        >
+          {text}
+        </span>
+      ),
     },
     {
       title: "Email",
@@ -211,13 +215,12 @@ const EmployeesPage = () => {
       <Table
         columns={columns}
         dataSource={employees}
-        onRow={(record) => ({
-          onClick: () => {
-            console.log("Employee Record:", record);
-            navigate(`/employee-detail/${record._id}`); // Dùng email làm ID duy nhất
-          },
-          style: { cursor: 'pointer' },
-        })}
+      // onRow={(record) => ({
+      //   onClick: () => {
+      //     navigate(`/employee-detail/${record._id}`);
+      //   },
+      //   style: { cursor: 'pointer' },
+      // })}
 
       />
     </div>

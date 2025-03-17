@@ -11,7 +11,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router";
 import ModalComponent from "../../components/ModalComponent/ModalComponent";
 import DrawerComponent from "../../components/DrawerComponent/DrawerComponent";
-import { ImageUploadSection, MainImagePreview, MainImagePreviewImg, UploadWrapper, StyledRadioButton, } from "./AddRoomStyle";
+import { ImageUploadSection, MainImagePreview, MainImagePreviewImg, UploadWrapper, } from "./AddRoomStyle";
 import { convertPrice, getBase64 } from "../../utils";
 
 const { Option } = Select;
@@ -26,7 +26,6 @@ const RoomList = () => {
     const [rowSelected, setRowSelected] = useState("");
     const navigate = useNavigate();
     const [amenities, setAmenities] = useState([]);
-    const [amenitiesStatus, setAmenitiesStatus] = useState({});
     const [selectedAmenityId, setSelectedAmenityId] = useState(null);
     const [amenitiesQuantity, setAmenitiesQuantity] = useState({});
     const [api, contextHolder] = notification.useNotification();

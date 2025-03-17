@@ -226,9 +226,9 @@ const EmployeeDetail = () => {
 
             {hotel && (
                 <InformationCard title="Thông tin nơi làm việc" isEditing={isEditing} toggleEdit={toggleEdit}>
-                    <p><strong>Mã khách sạn:</strong> {hotel?.CodeHotel}</p>
+                    <p><strong>Mã khách sạn: </strong> {hotel?.CodeHotel}</p>
                     <p>
-                        <strong>Tên khách sạn:</strong>
+                        <strong>Tên khách sạn: </strong>
                         {!isEditing ? (
                             hotel?.NameHotel
                         ) : (
@@ -243,7 +243,7 @@ const EmployeeDetail = () => {
                             </select>
                         )}
                     </p>
-                    <p><strong>Địa chỉ:</strong> {hotel?.LocationHotel}</p>
+                    <p><strong>Địa chỉ: </strong> {hotel?.LocationHotel}</p>
                 </InformationCard>
 
             )}
@@ -251,7 +251,7 @@ const EmployeeDetail = () => {
             {employeeType && (
                 <InformationCard title="Thông tin công việc & quyền" isEditing={isEditing} toggleEdit={toggleEdit}>
                     <p>
-                        <strong>Loại công việc:</strong>
+                        <strong>Loại công việc: </strong>
                         {!isEditing ? (
                             employeeType?.EmployeeType
                         ) : (
@@ -267,7 +267,7 @@ const EmployeeDetail = () => {
                         )}
                     </p>
                     <p>
-                        <strong>Quyền hạn:</strong>
+                        <strong>Quyền hạn: </strong>
                         {!isEditing ? (
                             employee?.accountId?.permissions?.[0]?.Note // Hiển thị quyền hạn nếu không chỉnh sửa
                         ) : (

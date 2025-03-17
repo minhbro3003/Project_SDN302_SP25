@@ -63,9 +63,9 @@ const deleteService = async (req, res) => {
     try {
         const deletedService = await ServiceService.deleteService(req.params.id);
         if (!deletedService) {
-            return res.status(404).json({ message: "Service not found" });
+            return res.status(404).json({ status: "ERR", message: "Service not found" });
         }
-        return res.status(200).json({ message: "Service deleted successfully" });
+        return res.status(200).json({ status: "OK", message: "Service deleted successfully" });
     } catch (e) {
         return res.status(500).json({
             message: "Service deletion failed",

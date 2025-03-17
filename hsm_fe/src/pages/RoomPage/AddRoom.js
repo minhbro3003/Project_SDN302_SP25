@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Form, Input, InputNumber, Select, Button, Upload, Row, Col, notification, Table, Space, Popconfirm, } from "antd";
 import { MinusOutlined, PlusOutlined, UploadOutlined } from "@ant-design/icons";
-import { RoomFormContainer, ImageUploadSection, MainImagePreview, MainImagePreviewImg, StyledRadioGroup, StyledRadioButton, } from "./AddRoomStyle";
+import { RoomFormContainer, ImageUploadSection, MainImagePreview, MainImagePreviewImg, StyledRadioGroup, StyledRadioButton, StyledButton, } from "./AddRoomStyle";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import * as RoomService from "../../services/RoomService";
 import * as HotelService from "../../services/HotelService";
@@ -26,7 +26,7 @@ const AddRoomForm = ({ initialValues }) => {
     const [amenitiesQuantity, setAmenitiesQuantity] = useState({});
     const [selectedAmenityId, setSelectedAmenityId] = useState(null);
     const [currentForm, setCurrentForm] = useState("single"); // "single" hoặc "bulk"
-
+    const [clicked, setClicked] = useState(false);
 
     const [stateRoom, setStateRoom] = useState({
         roomName: "", price: "", roomType: [], floor: "", hotel: [], image: "", description: "", quantity: "",
@@ -646,13 +646,13 @@ const AddRoomForm = ({ initialValues }) => {
                                 <Form.Item label="Room Description" name="description">
                                     <Input.TextArea value={stateRoom.description} name="description" onChange={handleOnChange} rows={3} placeholder="Enter room description" />
                                 </Form.Item>
-                                {/* <SubmitBtn type="submit">Save Room</SubmitBtn> */}
-                                <Form.Item>
-                                    <Button style={{ backgroundColor: "rgb(121, 215, 190)", borderColor: "rgb(121, 215, 190)", color: "black" }} htmlType="submit">
-                                        Save Room
-                                    </Button>
 
+                                <Form.Item>
+                                    <StyledButton htmlType="submit">
+                                        Save Room
+                                    </StyledButton>
                                 </Form.Item>
+
                             </Form>
                         </Col>
                     </Row>

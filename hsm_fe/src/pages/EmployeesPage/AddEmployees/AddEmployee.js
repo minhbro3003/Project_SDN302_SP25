@@ -417,7 +417,7 @@ const AddEmployees = () => {
                                         src={selectedImage}
                                         alt="Employee Preview"
                                         className="profile-image"
-                                        style={{ height: "100px", width: "100px", borderRadius: "50%", objectFit: "cover" }}
+                                        style={{ height: "100px", width: "100px", borderRadius: "50%", objectFit: "cover", marginBottom: "10px" }}
                                     />
                                 ) : (
                                     <div className="default-icon" style={{ fontSize: "80px", color: "#ccc" }}>

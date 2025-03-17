@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Table, Button, Input, Select, Space, Modal, Form, message, Switch } from 'antd';
+import { Table, Button, Input, Space, Modal, Form, Switch, notification, InputNumber } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import { createService, deleteService, getAllServices, updateService } from '../../services/ServiceService';
+// import ModalComponent from '../../components/ModalComponent/ModalComponent';
 
 const { Search } = Input;
 
@@ -11,8 +12,11 @@ const ServicePage = () => {
     const [pageSize, setPageSize] = useState(5);
     const [searchText, setSearchText] = useState('');
     const [isModalVisible, setIsModalVisible] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
+    const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
     const [selectedService, setSelectedService] = useState(null);
     const [form] = Form.useForm();
+    const [api, contextHolder] = notification.useNotification();
 
     const accessToken = localStorage.getItem("access_token");
 
@@ -26,7 +30,7 @@ const ServicePage = () => {
             setData(response.data);
             setFilteredData(response.data);
         } else {
-            message.error(response.message || "Failed to fetch services");
+            api.error({ message: "Error", description: response.message || "Failed to fetch services" });
         }
     };
 
@@ -40,25 +44,9 @@ const ServicePage = () => {
         setFilteredData(filtered);
     };
 
-
-    const handleDelete = async (id) => {
-        const response = await deleteService(id, accessToken);
-        if (response.status === "OK") {
-            message.success("Service deleted successfully");
-
-            const updatedData = data.filter(item => item._id !== id);
-            setData(updatedData);
-            setFilteredData(updatedData);
-
-            fetchServices();
-        } else {
-            message.error(response.message || "Failed to delete service");
-        }
-    };
-
     const showModal = (service = null) => {
         setSelectedService(service);
-        form.setFieldsValue(service || { ServiceName: '', Price: 0, Note: '', Active: true });
+        form.setFieldsValue(service || { ServiceName: '', Price: "", Note: '', Active: true });
         setIsModalVisible(true);
     };
 
@@ -71,23 +59,54 @@ const ServicePage = () => {
         if (selectedService) {
             const response = await updateService(selectedService._id, values, accessToken);
             if (response.status === "OK") {
-                message.success("Service updated successfully");
+                api.success({ message: "Success", description: "Service updated successfully" });
                 fetchServices();
             } else {
-                message.error(response.message || "Failed to update service");
+                api.error({ message: "Error", description: response.message || "Failed to update service" });
             }
         } else {
             const response = await createService(values, accessToken);
             if (response.status === "OK") {
-                message.success("Service created successfully");
+                api.success({ message: "Success", description: "Service created successfully" });
                 fetchServices();
             } else {
-                message.error(response.message || "Failed to create service");
+                api.error({ message: "Error", description: response.message || "Failed to create service" });
             }
         }
         setIsModalVisible(false);
         form.resetFields();
     };
+
+    // Hiển thị modal xóa
+    const showDeleteModal = (service) => {
+        setSelectedService(service);
+        setIsDeleteModalVisible(true);
+    };
+
+    // Xử lý xóa service
+    const handleDelete = async () => {
+        if (!selectedService) return;
+
+        setIsDeleting(true);
+
+        try {
+            const response = await deleteService(selectedService._id, accessToken);
+
+            if (response?.status === "OK") {
+                api.success({ message: "Success", description: response.message });
+
+                setIsDeleteModalVisible(false);
+                fetchServices();
+            } else {
+                api.error({ message: "Error", description: response?.message || "Failed to delete service" });
+            }
+        } catch (error) {
+            api.error({ message: "Error", description: "Something went wrong while deleting the service" });
+        } finally {
+            setIsDeleting(false);
+        }
+    };
+
 
     const columns = [
         {
@@ -121,16 +140,28 @@ const ServicePage = () => {
             title: 'Actions',
             key: 'actions',
             render: (_, record) => (
-                <Space>
-                    <Button
-                        type="primary"
-                        icon={<EditOutlined />}
+                <Space size="middle">
+                    <EditOutlined
+                        style={{
+                            color: "orange",
+                            fontSize: "20px",
+                            cursor: "pointer",
+                            backgroundColor: "#fff3e0",
+                            padding: "8px",
+                            borderRadius: "4px"
+                        }}
                         onClick={() => showModal(record)}
                     />
-                    <Button
-                        type="danger"
-                        icon={<DeleteOutlined />}
-                        onClick={() => handleDelete(record._id)}
+                    <DeleteOutlined
+                        style={{
+                            color: "red",
+                            fontSize: "20px",
+                            cursor: "pointer",
+                            backgroundColor: "#ffe0e0",
+                            padding: "8px",
+                            borderRadius: "4px"
+                        }}
+                        onClick={() => showDeleteModal(record)}
                     />
                 </Space>
             ),
@@ -139,8 +170,9 @@ const ServicePage = () => {
 
     return (
         <div style={{ padding: '20px' }}>
+            {contextHolder}
             <h2>Service List</h2>
-            <Button type="primary" icon={<PlusOutlined />} onClick={() => showModal()}>
+            <Button style={{ backgroundColor: "rgb(121, 215, 190)", color: "black" }} type="primary" icon={<PlusOutlined />} onClick={() => showModal()}>
                 Add New
             </Button>
             <br /><br />
@@ -164,7 +196,7 @@ const ServicePage = () => {
                     showSizeChanger: true,
                     onShowSizeChange: (current, size) => setPageSize(size),
                 }}
-                rowKey="id"
+                rowKey="_id"
                 bordered
                 style={{ width: '100%' }}
                 scroll={{ y: 2000 }}
@@ -185,7 +217,7 @@ const ServicePage = () => {
                         { max: 255, message: 'Service name cannot exceed 255 characters' }
                         ]}
                     >
-                        <Input />
+                        <Input placeholder="Service Name" />
                     </Form.Item>
                     <Form.Item
                         label="Price"
@@ -194,17 +226,9 @@ const ServicePage = () => {
                             { required: true, message: 'Please enter the price' },
                         ]}
                     >
-                        <Input
-                            type="number"
-                            min={0}
-                            onChange={(e) => {
-                                const value = e.target.value;
-                                if (value < 0) {
-                                    form.setFieldsValue({ Price: 0 });
-                                }
-                            }}
-                        />
+                        <InputNumber style={{ width: "100%" }} placeholder="Must be greater than 0" />
                     </Form.Item>
+
                     <Form.Item
                         label="Note"
                         name="Note"
@@ -224,11 +248,24 @@ const ServicePage = () => {
                     >
                         <Switch />
                     </Form.Item>
-                    <Button type="primary" htmlType="submit">
+                    <Button style={{ backgroundColor: "rgb(121, 215, 190)", color: "black" }} type="primary" htmlType="submit">
                         Save
                     </Button>
                 </Form>
             </Modal>
+
+            <Modal
+                title="Delete Service"
+                visible={isDeleteModalVisible}
+                onOk={handleDelete}
+                onCancel={() => setIsDeleteModalVisible(false)}
+                okText="Yes, Delete"
+                cancelText="Cancel"
+                confirmLoading={isDeleting}
+            >
+                <div>Are you sure you want to delete the service "{selectedService?.ServiceName}"?</div>
+            </Modal>
+
         </div>
     );
 };
