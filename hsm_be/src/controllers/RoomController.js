@@ -225,6 +225,7 @@ const getRoomsByAccountController = async (req, res) => {
     }
 };
 
+
 module.exports = {
     getAllRooms,
     createRooms,
@@ -234,5 +235,5 @@ module.exports = {
     getAvailableRooms,
     getAvailableRooms_,
     getRoomsByHotel,
-    getRoomsByAccountController,
+    getRoomsByAccountController
 };

@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import { Card, message, Dropdown, Menu, Modal } from "antd";
 import { ClearOutlined, MoreOutlined } from "@ant-design/icons";
 import { ToastContainer, toast } from "react-toastify";
-// import { io } from "socket.io-client";
 import "react-toastify/dist/ReactToastify.css";
 import {
   getRoomsByAccount,
@@ -20,12 +19,10 @@ const Housekeeping = () => {
   const [selectedRoom, setSelectedRoom] = useState(null);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [tasks, setTasks] = useState([]);
-  // const [socket, setSocket] = useState(null);
   const [currentEmployeeId, setCurrentEmployeeId] = useState(null);
 
   useEffect(() => {
     if (!isRehydrated) return; // Nếu Redux chưa rehydrate, không fetch dữ liệu
-
 
     if (!account || !account.id) {
       console.error("❌ Không tìm thấy accountId");
@@ -33,71 +30,17 @@ const Housekeeping = () => {
     }
 
     setCurrentEmployeeId(account.id);
-
-    // const socket = io("http://localhost:9999", {
-    //   reconnection: true,
-    //   reconnectionAttempts: 5,
-    //   reconnectionDelay: 1000,
-    //   timeout: 20000, // Tăng timeout lên 20 giây
-    //   pingInterval: 25000, // Gửi ping mỗi 25 giây
-    //   pingTimeout: 60000, // Tự động kết nối lại nếu mất kết nối
-    // });
-
-    // Lắng nghe sự kiện từ server
-    // socket.on("connect", () => {
-    //   console.log("Đã kết nối tới WebSocket server, socket ID:", socket.id);
-    // });
-
-    // socket.on("disconnect", (reason) => {
-    //   console.log("WebSocket ngắt kết nối, lý do:", reason);
-    // });
-
-
-    // socket.on("reconnect", (attempt) => {
-    //   console.log("WebSocket kết nối lại thành công, lần thử:", attempt);
-    // });
-
-    // socket.on("connect_error", (error) => {
-    //   console.error("Lỗi kết nối WebSocket:", error);
-    // });
-
-
-    // socket.on("taskUpdated", (updatedTask) => {
-    //   setTasks((prevTasks) => {
-    //     const taskExists = prevTasks.some((task) => task._id === updatedTask._id);
-    //     if (taskExists) {
-    //       return prevTasks.map((task) =>
-    //         task._id === updatedTask._id ? { ...task, ...updatedTask } : task
-    //       );
-    //     }
-    //     return [...prevTasks, updatedTask];
-    //   });
-    // });
-
-    // socket.on("roomUpdated", (updatedRoom) => {
-    //   setRooms((prevRooms) =>
-    //     prevRooms.map((room) =>
-    //       room.id === updatedRoom.id ? { ...room, ...updatedRoom } : room
-    //     )
-    //   );
-    // });
-
-
-    fetchRooms(account?.id);
+    fetchRooms(account.id);
     fetchTasks();
 
     // Thiết lập polling mỗi 5 giây
-    // const interval = setInterval(() => {
-    //   fetchRooms(account.id);
-    //   fetchTasks();
-    // }, 1000); // 5000ms = 5 giây, có thể điều chỉnh
-
+    const interval = setInterval(() => {
+      fetchRooms(account.id);
+      fetchTasks();
+    }, 100); // 5000ms = 5 giây, có thể điều chỉnh
 
     // Cleanup khi component unmount
-    // return () => clearInterval(interval);
-    // return () => {
-    // socket.disconnect();
-    // };
+    return () => clearInterval(interval);
   }, [isRehydrated, account]);
 
   const fetchTasks = async () => {
@@ -118,9 +61,7 @@ const Housekeeping = () => {
       }
       const response = await getRoomsByAccount(employeeId);
 
-
       console.log("📌 API Response getRoomsByAccount:", response);
-
 
       if (response.success && Array.isArray(response.data)) {
         const roomNames = response.data.flatMap((hotel) =>
@@ -199,23 +140,8 @@ const Housekeeping = () => {
           status: "In Progress",
         }
       );
-      console.log("res: " + response.data.task)
+
       if (response.status === 201) {
-        const { taskId } = response.data.task; // Lấy taskId từ response
-
-        console.log("🔍 New taskId from create:", taskId);
-
-
-        // Lưu taskId để sử dụng cho update sau này
-        setTasks((prevTasks) => [
-          ...prevTasks,
-          {
-            _id: taskId,
-            room: { _id: selectedRoom.id, RoomName: selectedRoom.RoomName },
-            status: "In Progress",
-            assignedTo: { _id: currentEmployeeId },
-          },
-        ]);
         setRooms((prevRooms) =>
           prevRooms.map((room) =>
             room.id === selectedRoom.id
@@ -226,7 +152,7 @@ const Housekeeping = () => {
 
         toast.success("Registration successful", { autoClose: 3000 });
       }
-      await fetchTasks();
+      // await fetchTasks();
       // await fetchRooms();
     } catch (error) {
       console.error("Lỗi khi tạo housekeeping task:", error);
@@ -261,14 +187,10 @@ const Housekeeping = () => {
       console.log("🔍 Debug: Trạng thái cập nhật", key);
 
       // Tìm task theo roomId và status
-      // const housekeepingTask = tasks.find(
-      //   (task) => task.room._id === selectedRoom.id && task.status === "In Progress"
-      // );
-
-      const inProgressTasks = tasks
-        .filter((task) => task.room._id === selectedRoom.id && task.status === "In Progress")
-        .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
-      const housekeepingTask = inProgressTasks[0];
+      const housekeepingTask = tasks.find(
+        (task) =>
+          task.room._id === selectedRoom.id && task.status === "In Progress"
+      );
 
       if (!housekeepingTask) {
         toast.error("Không tìm thấy công việc dọn phòng.", { autoClose: 3000 });
@@ -280,7 +202,7 @@ const Housekeeping = () => {
         toast.error("Bạn không phải là nhân viên được giao nhiệm vụ dọn phòng này!", { autoClose: 3000 });
         return;
       }
-      console.log("🔍 Task ID to update:", housekeepingTask._id);
+
       console.log("✅ Debug: Đã tìm thấy housekeepingTask:", housekeepingTask);
       console.log("🔍 Debug: Task ID:", housekeepingTask._id);
 

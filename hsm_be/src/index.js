@@ -29,16 +29,12 @@ const server = http.createServer(app);
 
 const { Server } = require("socket.io");
 const Notification = require("./models/Notification");
-
 const io = new Server(server, {
     cors: {
         origin: "*",
         methods: ["GET", "POST"]
     }
 });
-
-
-app.set("io", io);
 
 let chatMessages = []; // Lưu tin nhắn trong RAM
 const janitors = new Set(); // Danh sách nhân viên dọn dẹp
@@ -83,7 +79,7 @@ io.on("connection", (socket) => {
 
     // Nhận tin nhắn từ client
     socket.on("send_message", (data) => {
-        console.log("Tin nhắn từ client:", data);
+        console.log("📨 Tin nhắn từ client:", data);
         chatMessages.push(data);
 
         // Phát tin nhắn đến tất cả client ngay lập tức
@@ -98,8 +94,8 @@ io.on("connection", (socket) => {
     });
 });
 
-// Chạy server
-server.listen(port, () => {
-    console.log(`Server is running on port ${port}`);
+app.listen(port, () => {
+    console.log(`Server is running on port http://localhost:${port}/`);
+    //Connect database
     connectDB();
 });

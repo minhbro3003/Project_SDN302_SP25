@@ -333,7 +333,13 @@ const HotelList = () => {
 
     const renderAction = () => {
         return (
-            <div style={{ display: "flex", gap: "15px", alignItems: "center", }}>
+            <div
+                style={{
+                    display: "flex",
+                    gap: "10px",
+                    alignItems: "center",
+                }}
+            >
                 <div
                     style={{
                         background: "rgba(255, 165, 0, 0.2)", // Màu nền cam nhạt
@@ -364,6 +370,7 @@ const HotelList = () => {
                     <DeleteOutlined style={{ color: "red", fontSize: "20px" }} />
                 </div>
             </div>
+
         );
     };
     const columns = [
@@ -411,6 +418,7 @@ const HotelList = () => {
             title: "Status",
             dataIndex: "Active",
             key: "Active",
+            // ...getColumnSearchProps("Active"),
             render: (Active) => (
                 <Tag color={Active ? "green" : "volcano"}>
                     {Active ? "Active" : "Inactive"}
@@ -463,6 +471,7 @@ const HotelList = () => {
                     }}
                 />
             </Spin>
+
 
             <DrawerComponent
                 title="Update Hotel"

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Form, Input, InputNumber, Select, Button, Upload, Row, Col, notification, Table, Space, Popconfirm, } from "antd";
 import { MinusOutlined, PlusOutlined, UploadOutlined } from "@ant-design/icons";
-import { RoomFormContainer, ImageUploadSection, MainImagePreview, MainImagePreviewImg, StyledRadioGroup, StyledRadioButton, StyledButton, } from "./AddRoomStyle";
+import { RoomFormContainer, ImageUploadSection, MainImagePreview, MainImagePreviewImg, StyledRadioGroup, StyledRadioButton, } from "./AddRoomStyle";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import * as RoomService from "../../services/RoomService";
 import * as HotelService from "../../services/HotelService";
@@ -26,7 +26,7 @@ const AddRoomForm = ({ initialValues }) => {
     const [amenitiesQuantity, setAmenitiesQuantity] = useState({});
     const [selectedAmenityId, setSelectedAmenityId] = useState(null);
     const [currentForm, setCurrentForm] = useState("single"); // "single" hoặc "bulk"
-    const [clicked, setClicked] = useState(false);
+
 
     const [stateRoom, setStateRoom] = useState({
         roomName: "", price: "", roomType: [], floor: "", hotel: [], image: "", description: "", quantity: "",
@@ -303,7 +303,7 @@ const AddRoomForm = ({ initialValues }) => {
         setTimeout(() => {
             let hotelId = formBulk.getFieldValue("hotel");
             if (!hotelId) {
-                hotelId = stateRoom.hotel;
+                hotelId = stateRoom.hotel; // Lấy từ stateRoom nếu formBulk chưa có
             }
 
             if (!hotelId) {
@@ -312,6 +312,8 @@ const AddRoomForm = ({ initialValues }) => {
             }
 
             const roomName = formBulk.getFieldValue("roomName").trim();
+            // const floor = formBulk.getFieldValue("floor");
+
             if (!roomName) {
                 api.error({ message: "⚠ Room name is required!" });
                 return;
@@ -320,27 +322,26 @@ const AddRoomForm = ({ initialValues }) => {
             const quantity = formBulk.getFieldValue("quantity") || 1;
             const selectedAmenities = [...new Set(formBulk.getFieldValue("amenities") || [])];
 
-            // 📌 Kiểm tra roomName có dạng "R + số" không
+            // 📌 Chuẩn hóa roomName: Nếu R1, R2... thì chuyển thành R01, R02...
             const match = roomName.match(/^([A-Za-z]+)(\d+)$/);
             let prefix = roomName;
-            let baseNumber = 1;
+            let baseNumber = 1; // Mặc định số bắt đầu là 1
 
             if (match) {
                 prefix = match[1]; // Lấy phần chữ (R)
                 baseNumber = parseInt(match[2], 10); // Lấy số (1 hoặc 10)
 
-                // 📌 Nếu số nhỏ hơn 10, nhân 100 (R1 → 100, R2 → 200)
+                // 📌 Nếu số nhỏ hơn 10, thêm '0' vào trước (R1 → R101)
                 if (baseNumber < 10) {
-                    baseNumber = baseNumber * 100;
-                } else {
-                    baseNumber = baseNumber * 10; // Nếu >= 10, nhân 10 (R10 → 100, R11 → 110)
+                    baseNumber = `10${baseNumber}`;
                 }
-
-                baseNumber += 1; // Bắt đầu từ 1 (R100 → R101, R200 → R201)
             }
 
-            // 📌 Lấy danh sách phòng đã có
-            const roomsOnSameFloor = [...existingRooms, ...rooms].map(room => room.RoomName);
+            // 📌 Lấy danh sách số phòng trên tầng hiện tại (bao gồm cả những phòng đã queue)
+            const roomsOnSameFloor = [...existingRooms, ...rooms]
+                // .filter(room => room.Floor === floor)
+                .map(room => room.RoomName);
+
             let existingNumbers = roomsOnSameFloor
                 .map(name => {
                     const match = name.match(new RegExp(`^${prefix}(\\d+)$`));
@@ -351,15 +352,16 @@ const AddRoomForm = ({ initialValues }) => {
 
             let newRooms = [];
             let usedNumbers = new Set(existingNumbers);
-            let numberToUse = baseNumber;
+            let numberToUse = parseInt(baseNumber, 10); // Chuyển baseNumber về số nguyên
 
             for (let i = 0; i < quantity; i++) {
+                // Tìm số phòng trống nhỏ nhất
                 while (usedNumbers.has(numberToUse)) {
                     numberToUse++;
                 }
 
                 let newRoomName = `${prefix}${numberToUse}`;
-                usedNumbers.add(numberToUse);
+                usedNumbers.add(numberToUse); // Đánh dấu số đã dùng
 
                 let newRoom = {
                     key: newRoomName,
@@ -386,11 +388,10 @@ const AddRoomForm = ({ initialValues }) => {
             }
 
             console.log("🚀 New rooms added:", newRooms);
-            setRooms(prevRooms => [...prevRooms, ...newRooms]);
+            setRooms(prevRooms => [...prevRooms, ...newRooms]); // Cập nhật danh sách phòng queue
             api.success({ message: `✅ ${newRooms.length} rooms added successfully!` });
         }, 1500);
     };
-
 
     const handleSubmitBulk = async () => {
         if (rooms.length === 0) {
@@ -646,13 +647,13 @@ const AddRoomForm = ({ initialValues }) => {
                                 <Form.Item label="Room Description" name="description">
                                     <Input.TextArea value={stateRoom.description} name="description" onChange={handleOnChange} rows={3} placeholder="Enter room description" />
                                 </Form.Item>
-
+                                {/* <SubmitBtn type="submit">Save Room</SubmitBtn> */}
                                 <Form.Item>
-                                    <StyledButton htmlType="submit">
+                                    <Button style={{ backgroundColor: "rgb(121, 215, 190)", borderColor: "rgb(121, 215, 190)", color: "black" }} htmlType="submit">
                                         Save Room
-                                    </StyledButton>
-                                </Form.Item>
+                                    </Button>
 
+                                </Form.Item>
                             </Form>
                         </Col>
                     </Row>

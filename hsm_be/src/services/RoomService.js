@@ -6,9 +6,42 @@ const RoomType = require("../models/RoomTypeModel");
 const getAllRoomsService = () => {
     return new Promise(async (resolve, reject) => {
         try {
-            const allRooms = await Rooms.find({}, "-createdAt -updatedAt")//"-Image"
-                .populate("roomtype", "-Note")
-                .populate("hotel", "CodeHotel NameHotel ")
+            const allRooms = await Rooms.find({},)//"-Image"
+                .populate("roomtype")
+                .populate("hotel", "CodeHotel NameHotel Introduce LocationHotel ")
+            // Format lại dữ liệu
+            const formatData = allRooms.map((room) => {
+                // console.log("room_amenities:", room.room_amenities); 
+
+                return {
+                    id: room._id,
+                    RoomName: room.RoomName,
+                    Price: room.Price,
+                    Status: room.Status,
+                    Floor: room.Floor,
+                    Active: room.Active,
+                    IsDelete: room.IsDelete,
+                    Description: room.Description,
+                    typerooms: room.typerooms
+                        ? { TypeName: room.typerooms.TypeName, Note: room.typerooms.Note }
+                        : null,
+                    room_amenities: Array.isArray(room.room_amenities)
+                        ? room.room_amenities.map((amenity) => ({
+                            id: amenity.room_amenitiesID?._id,
+                            name: amenity.room_amenitiesID?.AmenitiesName,
+                            note: amenity.room_amenitiesID?.Note,
+                            quantity: amenity.quantity,
+                            status: amenity.status,
+                        }))
+                        : [], // Nếu room_amenities không phải mảng, trả về mảng rỗng
+                    Image: Array.isArray(room.Image)
+                        ? room.Image.map((img) => ({
+                            url: img.url,
+                            alt: img.alt || "Room Image",
+                        }))
+                        : [], // Kiểm tra Image có phải mảng không
+                };
+            });
             resolve({
                 status: "OK",
                 message: "All rooms successfully",
@@ -20,6 +53,7 @@ const getAllRoomsService = () => {
         }
     });
 };
+
 
 //get room by id
 const getRoomByRoomIdService = (id) => {
@@ -215,17 +249,14 @@ const getRoomsByHotelService = async (hotelId) => {
 
 const getRoomsByAccount = async (accountId) => {
     try {
-        // console.time("fetchData");
-
+        console.time("fetchData");
 
         const employee = await Employee.findOne({ accountId });
         if (!employee) {
             return { success: false, message: "Không tìm thấy nhân viên với tài khoản này" };
         }
 
-
         const hotelIds = employee.hotels.map(hotel => hotel._id);
-
 
         // Sử dụng aggregation pipeline thay vì populate
         const hotelsWithRooms = await Rooms.aggregate([
@@ -259,10 +290,8 @@ const getRoomsByAccount = async (accountId) => {
             }
         ]);
 
-
-        // console.timeEnd("fetchData");
+        console.timeEnd("fetchData");
         return { success: true, data: hotelsWithRooms };
-
 
     } catch (error) {
         return { success: false, message: error.message };
@@ -278,5 +307,5 @@ module.exports = {
     getAvailableRooms_,
     getAvailableRooms,
     getRoomsByHotelService,
-    getRoomsByAccount,
+    getRoomsByAccount
 };

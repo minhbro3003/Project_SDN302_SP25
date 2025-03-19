@@ -15,11 +15,7 @@ export const getRoomsByAccount = async (accountId) => {
 };
 
 
-
-
 const API_URL = process.env.REACT_APP_API_URL_BACKEND + "/housekeeping";
-
-
 
 
 export const createHousekeepingTask = async (roomId, assignedTo, taskType, notes) => {
@@ -76,3 +72,5 @@ export const updateRoomCleaningStatus = async (roomId, status, notes) => {
 export const getHousekeepingTasks = async (filter = {}) => {
   return axios.get(`${API_URL}/list`, { params: filter });
 };
+
+
