@@ -13,6 +13,7 @@ const accounts = new mongoose.Schema(
                 // required: true,
             },
         ],
+        refreshToken: { type: String },
     },
     {
         timestamps: true,

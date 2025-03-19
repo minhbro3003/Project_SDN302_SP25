@@ -63,16 +63,20 @@ const loginAccount = async (accountLogin) => {
             };
         }
 
-        // Generate access token
+        // Generate tokens
         const access_token = await generateAccessToken({
             id: account.id,
             isAdmin: account.isAdmin,
         });
 
-        // Generate refresh token
         const refresh_token = await generateFefreshToken({
             id: account.id,
             isAdmin: account.isAdmin,
+        });
+
+        // Save refresh token to database
+        await Account.findByIdAndUpdate(account.id, {
+            refreshToken: refresh_token
         });
 
         return {
@@ -86,6 +90,66 @@ const loginAccount = async (accountLogin) => {
         return {
             status: "ERR",
             message: "An error occurred during login",
+        };
+    }
+};
+
+const refreshTokenService = async (refreshToken) => {
+    try {
+        // Find account with this refresh token
+        const account = await Account.findOne({ refreshToken });
+
+        if (!account) {
+            return {
+                status: "ERR",
+                message: "Refresh token not found",
+            };
+        }
+
+        // Generate new tokens
+        const newAccessToken = await generateAccessToken({
+            id: account.id,
+            isAdmin: account.isAdmin,
+        });
+
+        const newRefreshToken = await generateFefreshToken({
+            id: account.id,
+            isAdmin: account.isAdmin,
+        });
+
+        // Update refresh token in database
+        await Account.findByIdAndUpdate(account.id, {
+            refreshToken: newRefreshToken
+        });
+
+        return {
+            status: "OK",
+            access_token: newAccessToken,
+            refresh_token: newRefreshToken,
+        };
+    } catch (error) {
+        return {
+            status: "ERR",
+            message: "Failed to refresh token",
+        };
+    }
+};
+
+const logout = async (accountId) => {
+    try {
+        // Remove refresh token from database
+        await Account.findByIdAndUpdate(accountId, {
+            refreshToken: null
+        });
+
+        return {
+            status: "OK",
+            message: "Logged out successfully"
+        };
+    } catch (error) {
+        return {
+            status: "ERR",
+            message: "Failed to logout"
         };
     }
 };
@@ -191,4 +255,6 @@ module.exports = {
     getAllAccounts,
     getDetailsAccount,
     loginAccount,
+    refreshTokenService,
+    logout,
 };

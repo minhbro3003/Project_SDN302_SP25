@@ -73,3 +73,21 @@ export const getEmployeeByAccountId = async (id, access_token) => {
         return null;
     }
 };
+
+export const logout = async (access_token) => {
+    try {
+        const res = await axiosJWT.post(
+            `${process.env.REACT_APP_API_URL_BACKEND}/account/logout`,
+            {},
+            {
+                headers: {
+                    token: `Bearer ${access_token}`,
+                }
+            }
+        );
+        return res.data;
+    } catch (error) {
+        console.error("Logout error:", error);
+        return { status: "ERR", message: error.response?.data?.message };
+    }
+};

@@ -158,27 +158,56 @@ const getDetailsAccount = async (req, res) => {
 };
 
 const refreshToken = async (req, res) => {
-    // console.log("req.cookies.refresh_token: ", req.cookies.refresh_token);
     try {
-        // const token = req.cookies.refresh_token;
-        const token = req.headers.token.split(" ")[1];
+        const token = req.headers.token?.split(" ")[1];
 
         if (!token) {
-            return res.status(200).json({
+            return res.status(401).json({
                 status: "ERR",
-                message: "The token is required",
+                message: "Refresh token is required",
             });
         }
-        const account = await refreshTokenJwtService(token);
 
-        return res.status(200).json(account);
-    } catch (e) {
-        return res.status(404).json({
-            message: "! User creation failed 'SOS'!",
-            error: e.message,
+        const result = await AccountService.refreshTokenService(token);
+
+        if (result.status === "ERR") {
+            return res.status(401).json(result);
+        }
+
+        // Set new refresh token as HTTP-only cookie
+        res.cookie("refresh_token", result.refresh_token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "Strict",
+            path: "/",
+        });
+
+        return res.status(200).json(result);
+    } catch (error) {
+        return res.status(500).json({
+            status: "ERR",
+            message: "Failed to refresh token",
+            error: error.message,
         });
     }
 };
 
+const logout = async (req, res) => {
+    try {
+        const accountId = req.account.id; // Assuming you have the account ID from auth middleware
+        const result = await AccountService.logout(accountId);
 
-module.exports = { createAcount, getAllAccounts, getDetailsAccount, loginAccount, refreshToken }
+        // Clear refresh token cookie
+        res.clearCookie("refresh_token");
+
+        return res.status(200).json(result);
+    } catch (error) {
+        return res.status(500).json({
+            status: "ERR",
+            message: "Failed to logout",
+            error: error.message,
+        });
+    }
+};
+
+module.exports = { createAcount, getAllAccounts, getDetailsAccount, loginAccount, refreshToken, logout }

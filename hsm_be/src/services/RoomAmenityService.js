@@ -6,34 +6,19 @@ const Amenity = require("../models/AmenityModel");
 // Get all room amenities
 const getAllRoomAmenities = async () => {
     try {
-        const roomAmenities = await RoomAmenity.find()
-            .populate({
-                path: "room", // Use 'room' instead of 'roomeID'
-                select: "RoomName Status Floor", // Select RoomName, Status, and Floor fields
-            })
-            .populate({
-                path: "amenity", // Populate the amenity field
-                select: "AmenitiesName", // Select AmenitiesName from Amenity model
-            });
-
-        console.log("roomAmenities: ", roomAmenities); // Check if room fields are populated
+        const roomAmenities = await RoomAmenity.find({ isDelete: false })
+            .populate('room', 'RoomName')
+            .populate('amenity', 'AmenitiesName');
 
         return {
             status: "OK",
-            message: "All room amenities retrieved successfully",
-            data: roomAmenities,
+            message: "Room amenities retrieved successfully",
+            data: roomAmenities
         };
     } catch (error) {
-        console.error("Error in getAllRoomAmenities:", error.message);
-        return {
-            status: "ERR",
-            message: "Failed to retrieve room amenities",
-            error: error.message,
-        };
+        throw new Error(error.message);
     }
 };
-
-
 
 // Get a single room amenity by ID
 const getRoomAmenityById = async (id) => {
@@ -180,7 +165,6 @@ const createRoomAmenity = async (newRoomAmenity) => {
     }
 };
 
-
 // Update a room amenity by ID
 const updateRoomAmenity = async (id, data) => {
     try {
@@ -231,7 +215,6 @@ const deleteRoomAmenity = async (id) => {
         };
     }
 };
-
 
 // Get all amenities for a specific room by room ID
 const getRoomAmenitiesByRoomId = async (roomId) => {
@@ -304,6 +287,28 @@ const updateRoomAmenities = async (roomId, updates) => {
     }
 };
 
+const updateRoomAmenityStatus = async (id, updateData) => {
+    try {
+        const roomAmenity = await RoomAmenity.findByIdAndUpdate(
+            id,
+            updateData,
+            { new: true }
+        ).populate('room', 'RoomName')
+            .populate('amenity', 'AmenitiesName');
+
+        if (!roomAmenity) {
+            throw new Error("Room amenity not found");
+        }
+
+        return {
+            status: "OK",
+            message: "Room amenity updated successfully",
+            data: roomAmenity
+        };
+    } catch (error) {
+        throw new Error(error.message);
+    }
+};
 
 module.exports = {
     getAllRoomAmenities,
@@ -315,5 +320,6 @@ module.exports = {
     updateRoomAmenities,
     getAllNotFunctioningRoomAmenities,
     getAmenitiesByRoomId,
-    updateRoomAmenitiesByRoomId
+    updateRoomAmenityStatus,
+    updateRoomAmenitiesByRoomId,
 };

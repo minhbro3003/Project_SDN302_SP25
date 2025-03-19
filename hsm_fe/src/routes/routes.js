@@ -21,6 +21,7 @@ import VerificationPage from "../pages/ReservationPage/VerificationPayment";
 import Housekeeping from "../pages/HouseKeepingPage/HouseKeepingPage";
 import HousekeepingHistory from "../pages/HouseKeepingPage/House History/HouseHistoryPage";
 import BookingLogs from "../pages/BookingPage/BookingLogs";
+import AmenityListPage from '../pages/AmenityPage/AmenityListPage/AmenityPageList';
 
 
 export const routes = [
@@ -221,6 +222,14 @@ export const routes = [
     //     icon: <HomeOutlined />,
     //     permissions: ["Admin", "Receptionist"],
     // },
+    {
+        path: "/amenities",
+        name: "Amenities",
+        page: AmenityListPage,
+        isShowHeader: true,
+        icon: <TableOutlined />,
+        permissions: ["Admin"], // Only Admin can access
+    },
     {
         path: "*",
         page: NotFoundPage,
