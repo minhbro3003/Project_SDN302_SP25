@@ -1,6 +1,7 @@
 const AccountService = require("../services/AccountService");
-const { refreshTokenJwtService } = require("../services/JwtService");
-
+const { refreshTokenJwtService, generateAccessToken, generateFefreshToken } = require("../services/JwtService");
+const jwt = require("jsonwebtoken");
+const Account = require("../models/AccountModel");
 const createAcount = async (req, res) => {
     try {
         // console.log(req.body);
@@ -38,7 +39,7 @@ const loginAccount = async (req, res) => {
         if (!email || !password) {
             return res.status(400).json({
                 status: "ERR",
-                message: "Email or password are required.",
+                message: "Email and password are required.",
             });
         }
         if (!mailformat.test(email)) {
@@ -49,29 +50,32 @@ const loginAccount = async (req, res) => {
         }
 
         // Authenticate account
-        const account = await AccountService.loginAccount(req.body);
-        if (account.status === "ERR") {
-            return res.status(401).json(account);
+        const result = await AccountService.loginAccount(req.body);
+        if (result.status === "ERR") {
+            return res.status(401).json(result);
         }
 
-        // Destructure refresh_token safely
-        const { refresh_token, ...accountData } = account;
-
         // Set refresh token as HTTP-only cookie
-        res.cookie("refresh_token", refresh_token, {
+        res.cookie("refresh_token", result.refresh_token, {
             httpOnly: true,
             secure: process.env.NODE_ENV === "production",
-            sameSite: "Strict",
+            sameSite: "strict",
             path: "/",
+            maxAge: 365 * 24 * 60 * 60 * 1000 // 1 year
         });
 
-        return res.status(200).json({ ...accountData, refresh_token });
+        // Only send access token and user data in response
+        return res.status(200).json({
+            status: "OK",
+            message: "Login successful",
+            access_token: result.access_token,
+            data: result.data
+        });
     } catch (error) {
         console.error("Login error:", error);
         return res.status(500).json({
             status: "ERR",
-            message: "Account login failed",
-            error: error.message,
+            message: "Login failed",
         });
     }
 };
@@ -159,53 +163,106 @@ const getDetailsAccount = async (req, res) => {
 
 const refreshToken = async (req, res) => {
     try {
-        const token = req.headers.token?.split(" ")[1];
+        const refreshToken = req.cookies.refresh_token;
+        //    console.log("Received refresh token:", refreshToken);
 
-        if (!token) {
+        if (!refreshToken) {
+            console.log("No refresh token in cookies");
             return res.status(401).json({
                 status: "ERR",
-                message: "Refresh token is required",
+                message: "No refresh token provided"
             });
         }
 
-        const result = await AccountService.refreshTokenService(token);
-
-        if (result.status === "ERR") {
-            return res.status(401).json(result);
+        let decoded;
+        try {
+            decoded = jwt.verify(refreshToken, process.env.REFRESH_TOKEN);
+            //     console.log("Decoded token:", decoded);
+        } catch (error) {
+            if (error.name === "TokenExpiredError") {
+                console.log("Refresh token expired");
+                return res.status(403).json({
+                    status: "ERR",
+                    message: "Refresh token expired"
+                });
+            }
+            console.log("Invalid refresh token:", error);
+            return res.status(403).json({
+                status: "ERR",
+                message: "Invalid refresh token"
+            });
         }
 
-        // Set new refresh token as HTTP-only cookie
-        res.cookie("refresh_token", result.refresh_token, {
+        const user = await Account.findById(decoded.id)
+            .populate('permissions')
+            .select('-Password');
+
+        if (!user || user.refreshToken !== refreshToken) {
+            console.log("Token mismatch or user not found");
+            return res.status(403).json({
+                status: "ERR",
+                message: "Invalid refresh token"
+            });
+        }
+
+        const access_token = await generateAccessToken({ id: user.id });
+        const new_refresh_token = await generateFefreshToken({ id: user.id });
+
+        // Immediately invalidate the old refresh token (added improvement)
+        user.refreshToken = new_refresh_token;
+        await user.save();
+
+        res.cookie('refresh_token', new_refresh_token, {
             httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
-            sameSite: "Strict",
-            path: "/",
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict',
+            path: '/',
+            maxAge: 365 * 24 * 60 * 60 * 1000 // 1 year
         });
 
-        return res.status(200).json(result);
+        return res.status(200).json({
+            status: "OK",
+            message: "Token refreshed successfully",
+            access_token,
+            data: {
+                _id: user._id,
+                Email: user.Email,
+                FullName: user.FullName,
+                Username: user.Username,
+                permissionDetails: user.permissions,
+                IsDelete: user.IsDelete
+            }
+        });
     } catch (error) {
+        console.error("Unexpected error during token refresh:", error);
         return res.status(500).json({
             status: "ERR",
-            message: "Failed to refresh token",
-            error: error.message,
+            message: "An unexpected error occurred"
         });
     }
 };
 
 const logout = async (req, res) => {
     try {
-        const accountId = req.account.id; // Assuming you have the account ID from auth middleware
-        const result = await AccountService.logout(accountId);
+        // Get user ID from authenticated request
+        const userId = req.account.id;
+        // Clear refresh token in database
+        const result = await AccountService.logout(userId);
 
         // Clear refresh token cookie
-        res.clearCookie("refresh_token");
+        res.clearCookie('refresh_token', {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            path: '/',
+            sameSite: 'strict'
+        });
 
         return res.status(200).json(result);
     } catch (error) {
+        console.error("Logout error:", error);
         return res.status(500).json({
             status: "ERR",
-            message: "Failed to logout",
-            error: error.message,
+            message: "Failed to logout"
         });
     }
 };

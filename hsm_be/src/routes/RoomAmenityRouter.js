@@ -55,8 +55,8 @@ router.delete("/:id", RoomAmenityController.deleteRoomAmenity);
 router.get("/:roomId/amenities", RoomAmenityController.getAmenitiesByRoomIdController);
 router.put("/:roomId/amenities", RoomAmenityController.updateRoomAmenitiesByRoomIdController);
 router.get("/room/:roomId", RoomAmenityController.getRoomAmenitiesByRoomId);
-router.get("/amenity/:amenityId", RoomAmenityController.getRoomAmenitiesByAmenity);
-router.put("/:id", RoomAmenityController.updateRoomAmenityStatus);
+// router.get("/amenity/:amenityId", RoomAmenityController.getRoomAmenitiesByAmenity);
+// router.put("/:id", RoomAmenityController.updateRoomAmenityStatus);
 
 
 

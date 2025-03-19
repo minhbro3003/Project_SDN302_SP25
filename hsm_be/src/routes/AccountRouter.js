@@ -153,6 +153,6 @@ router.post("/refresh-token", accountController.refreshToken);
  *       401:
  *         description: Unauthorized
  */
-router.post("/logout", authMiddleware, accountController.logout);
+router.post("/logout", authUserMiddleware, accountController.logout);
 
 module.exports = router;

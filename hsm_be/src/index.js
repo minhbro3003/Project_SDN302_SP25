@@ -46,6 +46,5 @@ app.use(errorHandler);
 
 app.listen(port, () => {
     console.log(`Server is running on port http://localhost:${port}/`);
-    //Connect database
     connectDB();
 });

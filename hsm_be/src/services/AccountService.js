@@ -63,15 +63,13 @@ const loginAccount = async (accountLogin) => {
             };
         }
 
-        // Generate tokens
+        // Generate tokens with only ID
         const access_token = await generateAccessToken({
             id: account.id,
-            isAdmin: account.isAdmin,
         });
 
         const refresh_token = await generateFefreshToken({
             id: account.id,
-            isAdmin: account.isAdmin,
         });
 
         // Save refresh token to database
@@ -79,11 +77,18 @@ const loginAccount = async (accountLogin) => {
             refreshToken: refresh_token
         });
 
+        // Return user data separately from tokens
         return {
             status: "OK",
             message: "Login successful",
             access_token,
             refresh_token,
+            data: {
+                id: account.id,
+                email: account.Email,
+                fullName: account.FullName,
+                permissions: account.permissions,  // Send permissions in response, not in token
+            }
         };
     } catch (error) {
         console.error("Error in loginAccount:", error);
@@ -109,12 +114,10 @@ const refreshTokenService = async (refreshToken) => {
         // Generate new tokens
         const newAccessToken = await generateAccessToken({
             id: account.id,
-            isAdmin: account.isAdmin,
         });
 
         const newRefreshToken = await generateFefreshToken({
             id: account.id,
-            isAdmin: account.isAdmin,
         });
 
         // Update refresh token in database
