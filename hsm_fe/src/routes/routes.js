@@ -88,7 +88,7 @@ export const routes = [
         page: RevenuePage,
         isShowHeader: true,
         icon: <SettingOutlined />,
-        permissions: ["Admin", "Receptionist"],
+        permissions: ["Admin"],
     },
     {
         path: "/hotel",

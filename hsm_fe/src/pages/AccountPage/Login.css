@@ -49,7 +49,7 @@
 .login-page__container {
     overflow-y: hidden;
     min-height: 100vh !important;
-    background-image: url("../../asset/img/backgroud.png");
+    /* background-image: url("../../asset/img/backgroud.png"); */
     background-repeat: repeat;
     background-size: cover;
     position: relative;

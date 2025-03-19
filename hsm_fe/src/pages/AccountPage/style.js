@@ -6,7 +6,7 @@ export const LoginContainer = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-  background-image: url("../../asset/img/backgroud.png");
+  // background-image: url("../../asset/img/backgroud.png");
   background-repeat: repeat;
   background-size: cover;
   background-position: center;

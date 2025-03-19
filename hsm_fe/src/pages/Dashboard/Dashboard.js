@@ -512,7 +512,7 @@ const Dashboard = () => {
           <Col span={12}>
             <Card title="Upcoming Checkouts">
               <Timeline>
-                {dashboardData.statistics.upcomingCheckouts.map((checkout, index) => (
+                {dashboardData?.statistics.upcomingCheckouts?.map((checkout, index) => (
                   <Timeline.Item key={index}>
                     <p>{checkout.roomName}</p>
                     <p>{new Date(checkout.checkoutTime).toLocaleString()}</p>
