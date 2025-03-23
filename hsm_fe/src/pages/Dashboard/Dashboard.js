@@ -87,7 +87,8 @@ const Dashboard = () => {
                 title="Monthly Revenue"
                 value={dashboardData.metrics.monthlyRevenue}
                 prefix={<DollarOutlined />}
-                suffix="VND"
+                suffix="₫"
+                formatter={(value) => value.toLocaleString('vi-VN')}
               />
             </Card>
           </Col>
@@ -133,7 +134,7 @@ const Dashboard = () => {
                     title: 'Revenue',
                     dataIndex: 'revenue',
                     key: 'revenue',
-                    render: (value) => `${value.toLocaleString()} VND`
+                    render: (value) => `${value.toLocaleString('vi-VN')} ₫`
                   }
                 ]}
                 pagination={false}
@@ -175,7 +176,7 @@ const Dashboard = () => {
                 title: 'Amount',
                 dataIndex: 'FinalPrice',
                 key: 'amount',
-                render: (amount) => `${amount.toLocaleString()} VND`
+                render: (amount) => `${amount.toLocaleString('vi-VN')} ₫`
               },
               {
                 title: 'Status',
@@ -195,11 +196,11 @@ const Dashboard = () => {
     );
   }
 
-  // Hotel Manager Dashboard
-  if (account?.permissions?.includes("Hotel-Manager")) {
+  // Hotel Manager or Hotel Admin Dashboard
+  if (account?.permissions?.includes("Hotel-Manager") || account?.permissions?.includes("Hotel-Admin")) {
     return (
       <div style={{ padding: '24px' }}>
-        <Title level={2}>Hotel Manager Dashboard</Title>
+        <Title level={2}>Hotel Dashboard</Title>
 
         {/* Key Metrics */}
         <Row gutter={[16, 16]}>
@@ -227,7 +228,8 @@ const Dashboard = () => {
                 title="Monthly Revenue"
                 value={dashboardData.metrics.monthlyRevenue}
                 prefix={<DollarOutlined />}
-                suffix="VND"
+                suffix="₫"
+                formatter={(value) => value.toLocaleString('vi-VN')}
               />
             </Card>
           </Col>

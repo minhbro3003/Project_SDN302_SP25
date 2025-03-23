@@ -7,7 +7,46 @@ const {
     authUserMiddleware,
 } = require("../middleware/authMiddleware");
 
-//router get all rooms
+/**
+ * @swagger
+ * tags:
+ *   name: RoomTypes
+ *   description: Room type management endpoints
+ */
+
+/**
+ * @swagger
+ * /api/roomtype:
+ *   get:
+ *     summary: Get all room types
+ *     tags: [RoomTypes]
+ *     responses:
+ *       200:
+ *         description: List of all room types
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: OK
+ *                 message:
+ *                   type: string
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/RoomType'
+ *       404:
+ *         description: Room types not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ */
 router.get("", roomsTypeController.getAllRoomsType);
 //router create new room
 // router.post("", roomsTypeController.createRooms);

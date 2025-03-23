@@ -34,14 +34,16 @@ const getRevenueData = async (employeeId, timeRange, startDate, endDate) => {
             }
         };
 
-
-        // For hotel managers, only show their hotel's data
+        // Get hotel IDs for the employee
         const hotelIds = employee.hotels.map(hotel => hotel._id);
 
-        // Since permission is undefined, let's treat non-admin employees as hotel managers
+        // Check permissions for data filtering
         const isAdmin = employee.permission?.PermissionName === "Admin";
+        const isHotelAdmin = employee.permission?.PermissionName === "Hotel-Admin";
+        const isHotelManager = employee.permission?.PermissionName === "Hotel-Manager";
 
-        if (hotelIds.length > 0 && !isAdmin) {
+        // Filter by hotel for Hotel-Admin and Hotel-Manager
+        if (hotelIds.length > 0 && (isHotelAdmin || isHotelManager)) {
             // Look up bookings for these hotels
             const hotelBookings = await Booking.find({
                 'hotel': { $in: hotelIds }

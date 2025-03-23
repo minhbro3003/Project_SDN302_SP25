@@ -215,16 +215,28 @@ const getRoomsByHotel = async (req, res) => {
     }
 };
 
-const getRoomsByAccountController = async (req, res) => {
+const checkRoomAvailability = async (req, res) => {
     try {
-        const { accountId } = req.params; // Lấy accountId từ URL
-        const result = await RoomService.getRoomsByAccount(accountId);
-        return res.status(result.success ? 200 : 400).json(result);
+        const { startDate, endDate, hotelId } = req.query;
+
+        if (!startDate || !endDate || !hotelId) {
+            return res.status(400).json({
+                status: "ERR",
+                message: "Start date, end date, and hotel ID are required"
+            });
+        }
+
+        const result = await RoomService.getAvailableRooms_(startDate, endDate, hotelId);
+        return res.status(200).json(result);
     } catch (error) {
-        return res.status(500).json({ success: false, message: "Lỗi server" });
+        console.error("Error in checkRoomAvailability:", error);
+        return res.status(500).json({
+            status: "ERR",
+            message: "Failed to check room availability",
+            error: error.message
+        });
     }
 };
-
 
 module.exports = {
     getAllRooms,
@@ -235,5 +247,5 @@ module.exports = {
     getAvailableRooms,
     getAvailableRooms_,
     getRoomsByHotel,
-    getRoomsByAccountController
+    checkRoomAvailability
 };

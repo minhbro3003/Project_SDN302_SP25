@@ -3,19 +3,14 @@ const Amenity = require("../models/AmenityModel");
 // Get all amenities
 const getAllAmenities = async () => {
     try {
-        const amenities = await Amenity.find();
+        const amenities = await Amenity.find({ isDelete: false });
         return {
             status: "OK",
-            message: "All amenities retrieved successfully",
-            data: amenities,
+            message: "Amenities retrieved successfully",
+            data: amenities
         };
     } catch (error) {
-        console.error("Error in getAllAmenities:", error.message);
-        return {
-            status: "ERR",
-            message: "Failed to retrieve amenities",
-            error: error.message,
-        };
+        throw new Error(error.message);
     }
 };
 
@@ -47,72 +42,61 @@ const getAmenityById = async (id) => {
 // Create a new amenity
 const createAmenity = async (amenityData) => {
     try {
-        const { AmenitiesName, Note } = amenityData;
-        const newAmenity = new Amenity({ AmenitiesName, Note });
-        const savedAmenity = await newAmenity.save();
+        const newAmenity = new Amenity(amenityData);
+        await newAmenity.save();
+
         return {
             status: "OK",
             message: "Amenity created successfully",
-            data: savedAmenity,
+            data: newAmenity
         };
     } catch (error) {
-        console.error("Error in createAmenity:", error.message);
-        return {
-            status: "ERR",
-            message: "Failed to create amenity",
-            error: error.message,
-        };
+        throw new Error(error.message);
     }
 };
 
 // Update an amenity by ID
-const updateAmenity = async (id, data) => {
+const updateAmenity = async (id, updateData) => {
     try {
-        const amenity = await Amenity.findById(id);
+        const amenity = await Amenity.findByIdAndUpdate(
+            id,
+            { ...updateData },
+            { new: true }
+        );
+
         if (!amenity) {
-            return {
-                status: "ERR",
-                message: "Amenity not found",
-            };
+            throw new Error("Amenity not found");
         }
-        const updatedAmenity = await Amenity.findByIdAndUpdate(id, data, { new: true });
+
         return {
             status: "OK",
             message: "Amenity updated successfully",
-            data: updatedAmenity,
+            data: amenity
         };
     } catch (error) {
-        console.error("Error in updateAmenity:", error.message);
-        return {
-            status: "ERR",
-            message: "Failed to update amenity",
-            error: error.message,
-        };
+        throw new Error(error.message);
     }
 };
 
-// Delete an amenity by ID
+// Delete an amenity by ID (soft delete)
 const deleteAmenity = async (id) => {
     try {
-        const amenity = await Amenity.findById(id);
+        const amenity = await Amenity.findByIdAndUpdate(
+            id,
+            { isDelete: true },
+            { new: true }
+        );
+
         if (!amenity) {
-            return {
-                status: "ERR",
-                message: "Amenity not found",
-            };
+            throw new Error("Amenity not found");
         }
-        await Amenity.findByIdAndDelete(id);
+
         return {
             status: "OK",
-            message: "Amenity deleted successfully",
+            message: "Amenity deleted successfully"
         };
     } catch (error) {
-        console.error("Error in deleteAmenity:", error.message);
-        return {
-            status: "ERR",
-            message: "Failed to delete amenity",
-            error: error.message,
-        };
+        throw new Error(error.message);
     }
 };
 
