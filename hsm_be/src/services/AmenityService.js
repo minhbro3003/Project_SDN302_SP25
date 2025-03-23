@@ -3,7 +3,7 @@ const Amenity = require("../models/AmenityModel");
 // Get all amenities
 const getAllAmenities = async () => {
     try {
-        const amenities = await Amenity.find({ isDelete: false });
+        const amenities = await Amenity.find();
         return {
             status: "OK",
             message: "Amenities retrieved successfully",
@@ -83,7 +83,7 @@ const deleteAmenity = async (id) => {
     try {
         const amenity = await Amenity.findByIdAndUpdate(
             id,
-            { isDelete: true },
+            // { isDelete: true },
             { new: true }
         );
 

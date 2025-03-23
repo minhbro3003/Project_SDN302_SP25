@@ -1,7 +1,9 @@
 const Transaction = require("../models/TransactionModel");
 const Booking = require("../models/BookingModelRFA");
 const Service = require("../models/ServiceModel");
+const Room = require("../models/RoomModel");
 const mongoose = require("mongoose");
+
 const { createBookingAndTransaction } = require("../services/TransactionService");
 const TransactionService = require("../services/TransactionService");
 
@@ -39,11 +41,11 @@ const createBookingAndTransactionController = async (req, res) => {
 // Get all transactions
 const getAllTransactions = async (req, res) => {
     try {
-        const transactions = await Transaction.find().populate("bookings services.serviceId");
+        const transactions = await TransactionService.getFullAllTransactions();
         return res.status(200).json({
             status: "OK",
             message: "All transactions retrieved successfully",
-            data: transactions,
+            data: transactions.data,
         });
     } catch (error) {
         console.error("Error in getAllTransactions:", error.message);

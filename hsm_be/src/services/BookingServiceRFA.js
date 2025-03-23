@@ -231,7 +231,24 @@ const getBookingsByDateRange = async (startDate, endDate) => {
         };
     }
 };
+//
+const getAllBookingsByHotelId = async (hotelId) => {
+    console.log("Tìm phòng thuộc khách sạn:", hotelId);
+    const rooms = await Room.find({ hotel: hotelId }).select("_id");
+    console.log("Danh sách phòng:", rooms);
 
+    const roomIds = rooms.map(room => room._id);
+    console.log("Danh sách roomIds:", roomIds);
+
+    const bookings = await Booking.find({ rooms: { $in: roomIds } })
+        .populate({
+            path: "rooms",
+            select: "-Image"
+        });
+
+    console.log("Danh sách booking tìm thấy:", bookings);
+    return bookings;
+};
 module.exports = {
     getAllBookings,
     getBookingById,
@@ -239,5 +256,6 @@ module.exports = {
     createBookingRaw,
     updateBooking,
     deleteBooking,
-    getBookingsByDateRange
+    getBookingsByDateRange,
+    getAllBookingsByHotelId
 };

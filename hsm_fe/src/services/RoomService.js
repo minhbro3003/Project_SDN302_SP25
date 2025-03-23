@@ -10,6 +10,16 @@ export const getAllRoom = async (data) => {
     return res.data;
 };
 
+export const getAllTypeRoom = async (data) => {
+    const res = await axios.get(
+        `${process.env.REACT_APP_API_URL_BACKEND}/rooms/get-all-typeroom`,
+        data
+
+    );
+    // console.log("getAllTypeRoom", res);
+    return res.data;
+};
+
 export const getRoomById = async (id) => {
     const res = await axios.get(
         `${process.env.REACT_APP_API_URL_BACKEND}/rooms/${id}`
@@ -120,4 +130,22 @@ export const checkRoomAvailability = async (startDate, endDate, hotelId) => {
         console.error("Error checking room availability:", error);
         throw error;
     }
+};
+//
+
+
+// export const getAllRoom2 = async (data) => {
+//     const res = await axios.get(
+//         `${process.env.REACT_APP_API_URL_BACKEND}/rooms`,
+//         data
+
+//     );
+//     console.log("data", data);
+//     return res.data;
+// };
+export const getAllRoomByHotelId = async (id) => {
+    const res = await axios.get(
+        `${process.env.REACT_APP_API_URL_BACKEND}/rooms/hotel/${id}`
+    );
+    return res.data;
 };

@@ -206,13 +206,13 @@ const refreshToken = async (req, res) => {
         }
 
         const access_token = await generateAccessToken({ id: user.id });
-        const new_refresh_token = await generateFefreshToken({ id: user.id });
+        // const new_refresh_token = await generateFefreshToken({ id: user.id });
 
         // Immediately invalidate the old refresh token (added improvement)
-        user.refreshToken = new_refresh_token;
-        await user.save();
+        // user.refreshToken = new_refresh_token;
+        // await user.save();
 
-        res.cookie('refresh_token', new_refresh_token, {
+        res.cookie('refresh_token', refreshToken, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
             sameSite: 'strict',

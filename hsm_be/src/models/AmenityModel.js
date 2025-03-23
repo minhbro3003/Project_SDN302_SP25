@@ -4,7 +4,6 @@ const amenitySchema = new mongoose.Schema(
     {
         AmenitiesName: { type: String, required: true },
         Note: { type: String },
-        isDelete: { type: Boolean, default: false }
     },
     {
         timestamps: true,

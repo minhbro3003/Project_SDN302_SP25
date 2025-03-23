@@ -12,7 +12,7 @@ const { authMiddleware } = require("../middleware/authMiddleware");
 
 /**
  * @swagger
- * /api/room-amenities:
+ * /api/roomamenities:
  *   get:
  *     summary: Get all room amenities
  *     tags: [Room Amenities]
@@ -30,7 +30,7 @@ router.get("/", RoomAmenityController.getAllRoomAmenities);
 
 /**
  * @swagger
- * /api/room-amenities/not-functioning:
+ * /api/roomamenities/not-functioning:
  *   get:
  *     summary: Get all non-functioning room amenities
  *     tags: [Room Amenities]
@@ -63,7 +63,7 @@ router.get("/room/:roomId", RoomAmenityController.getRoomAmenitiesByRoomId);
 
 /**
  * @swagger
- * /api/room-amenities/{roomId}/amenities:
+ * /api/roomamenities/{roomId}/amenities:
  *   get:
  *     summary: Get amenities for a specific room
  *     tags: [Room Amenities]

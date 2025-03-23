@@ -95,11 +95,29 @@ const getBookingsByDateRange = async (req, res) => {
     }
 };
 
+//
+const getBookingsByHotel = async (req, res) => {
+    try {
+        const { hotelId } = req.params;
+
+        if (!hotelId) {
+            return res.status(400).json({ message: "Hotel ID is required" });
+        }
+
+        const bookings = await BookingService.getAllBookingsByHotelId(hotelId);
+        return res.status(200).json(bookings);
+    } catch (error) {
+        console.error("Error fetching bookings:", error);
+        return res.status(500).json({ message: "Internal Server Error" });
+    }
+};
+
 module.exports = {
     getAllBookings,
     getBookingById,
     createBooking,
     updateBooking,
     deleteBooking,
-    getBookingsByDateRange
+    getBookingsByDateRange,
+    getBookingsByHotel
 };

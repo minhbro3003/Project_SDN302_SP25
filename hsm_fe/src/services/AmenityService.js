@@ -5,7 +5,7 @@ export const getAllAmenities = async (data) => {
         `/api/amenities`,
         data
     );
-    // console.log("res getAllAmenities:", res);
+    console.log("res getAllAmenities:", res);
     return res.data;
 };
 

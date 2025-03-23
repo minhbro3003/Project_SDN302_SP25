@@ -26,15 +26,15 @@ const getAllRoomsService = () => {
                     typerooms: room.typerooms
                         ? { TypeName: room.typerooms.TypeName, Note: room.typerooms.Note }
                         : null,
-                    room_amenities: Array.isArray(room.room_amenities)
-                        ? room.room_amenities.map((amenity) => ({
-                            id: amenity.room_amenitiesID?._id,
-                            name: amenity.room_amenitiesID?.AmenitiesName,
-                            note: amenity.room_amenitiesID?.Note,
-                            quantity: amenity.quantity,
-                            status: amenity.status,
-                        }))
-                        : [], // Nếu room_amenities không phải mảng, trả về mảng rỗng
+                    // room_amenities: Array.isArray(room.room_amenities)
+                    //     ? room.room_amenities.map((amenity) => ({
+                    //         id: amenity.room_amenitiesID?._id,
+                    //         name: amenity.room_amenitiesID?.AmenitiesName,
+                    //         note: amenity.room_amenitiesID?.Note,
+                    //         quantity: amenity.quantity,
+                    //         status: amenity.status,
+                    //     }))
+                    //     : [], // Nếu room_amenities không phải mảng, trả về mảng rỗng
                     Image: Array.isArray(room.Image)
                         ? room.Image.map((img) => ({
                             url: img.url,
@@ -311,6 +311,39 @@ const getRoomsByAccount = async (accountId) => {
     }
 };
 
+
+const getAllTypeRoomService = () => {
+    return new Promise(async (resolve, reject) => {
+        try {
+            const allTypeRooms = await RoomType.find({});
+            resolve({
+                status: "OK",
+                message: " All typerooms successfully",
+                data: allTypeRooms,
+            });
+        } catch (e) {
+            console.log("Error: ", e.message);
+            reject(e);
+        }
+    });
+};
+const getAllRoomByHotelIdService = (hotelId) => {
+    return new Promise(async (resolve, reject) => {
+        try {
+            const allRooms = await Rooms.find({ hotel: hotelId }).select("-Image"); // Loại bỏ trường image
+            resolve({
+                status: "OK",
+                message: "All rooms successfully",
+                data: allRooms,
+            });
+        } catch (e) {
+            console.log("Error: ", e.message);
+            reject(e);
+        }
+    });
+};
+
+
 module.exports = {
     getAllRoomsService,
     createRoomService,
@@ -320,5 +353,7 @@ module.exports = {
     getAvailableRooms_,
     getAvailableRooms,
     getRoomsByHotelService,
-    getRoomsByAccount
+    getRoomsByAccount,
+    getAllTypeRoomService,
+    getAllRoomByHotelIdService
 };

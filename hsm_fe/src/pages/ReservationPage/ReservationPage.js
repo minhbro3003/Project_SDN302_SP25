@@ -11,7 +11,9 @@ import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import Statistic from "antd/es/statistic/Statistic";
 import { getAllHotel } from "../../services/HotelService";
-
+import TestNotification from "../HouseKeepingPage/TestNotification";
+import { io } from "socket.io-client";
+const socket = io("http://localhost:9999");
 const { RangePicker } = DatePicker;
 
 const ReservationPage = () => {
@@ -418,6 +420,105 @@ const ReservationPage = () => {
         },
     ];
 
+    // const handleSubmit = async () => {
+    //     if (!form.getFieldValue("full_name") || !form.getFieldValue("phone") || !form.getFieldValue("cccd")) {
+    //         api.error({
+    //             message: "Missing Information",
+    //             description: "Please fill in all customer information fields.",
+    //         });
+    //         return;
+    //     }
+
+    //     if (selectedRooms.length === 0) {
+    //         api.error({
+    //             message: "No Rooms Selected",
+    //             description: "Please select at least one room before booking.",
+    //         });
+    //         return;
+    //     }
+
+    //     if (!dates[0] || !dates[1]) {
+    //         api.error({
+    //             message: "Missing Dates",
+    //             description: "Please select check-in and check-out dates.",
+    //         });
+    //         return;
+    //     }
+
+    //     if (!paymentMethod) {
+    //         api.error({
+    //             message: "Missing Payment Method",
+    //             description: "Please select a payment method.",
+    //         });
+    //         return;
+    //     }
+
+    //     if (paymentMethod === "Credit Card" && !paymentType) {
+    //         api.error({
+    //             message: "Missing Payment Type",
+    //             description: "Please select a payment type for credit card payment.",
+    //         });
+    //         return;
+    //     }
+
+    //     setLoading(true);
+
+    //     // Prepare booking data
+    //     const bookingData = {
+    //         customer: {
+    //             full_name: form.getFieldValue("full_name"),
+    //             phone: form.getFieldValue("phone"),
+    //             cccd: form.getFieldValue("cccd"),
+    //         },
+    //         rooms: selectedRooms.map(room => room._id),  // Pass only room IDs
+    //         services: selectedServices.map(service => ({
+    //             serviceId: service.serviceId,
+    //             quantity: service.quantity,
+    //         })),
+    //         checkin: dates[0],
+    //         checkout: dates[1],
+    //         paymentMethod: paymentMethod,
+    //         SumPrice: selectedRooms.reduce((total, room) => total + room.Price, 0), // Add the total price of selected rooms
+    //         Status: "Pending", // Add status
+    //     };
+
+    //     // Prepare transaction data
+    //     const transactionData = {
+    //         services: selectedServices.map(service => ({
+    //             serviceId: service.serviceId,
+    //             quantity: service.quantity,
+    //         })),
+    //         FinalPrice: bookingData.SumPrice + selectedServices.reduce((total, service) => total + service.totalPrice, 0), // Add total service price
+    //         PaidAmount: 0, // Or use any value based on payment method
+    //         PaymentMethod: paymentMethod,
+    //         paymentType: paymentType,
+    //         PaymentReference: paymentLink,
+    //         CreatedBy: account.fullName, // Or replace with logged-in user information
+    //     };
+
+    //     try {
+    //         const result = await createTransaction(bookingData, transactionData);
+    //         if (result.status === "OK") {
+    //             api.success({
+    //                 message: "Booking Successful",
+    //                 description: "Your booking has been created successfully.",
+    //             });
+    //             navigate("/reservationlist");
+    //         } else {
+    //             api.error({
+    //                 message: "Booking Failed",
+    //                 description: result.message,
+    //             });
+    //         }
+    //     } catch (error) {
+    //         api.error({
+    //             message: "Error",
+    //             description: "An error occurred while creating the booking and transaction.",
+    //         });
+    //     }
+
+    //     setLoading(false);
+    // };
     const handleSubmit = async () => {
         if (!form.getFieldValue("full_name") || !form.getFieldValue("phone") || !form.getFieldValue("cccd")) {
             api.error({
@@ -461,14 +562,14 @@ const ReservationPage = () => {
 
         setLoading(true);
 
-        // Prepare booking data
+        // Chuẩn bị dữ liệu đặt phòng
         const bookingData = {
             customer: {
                 full_name: form.getFieldValue("full_name"),
                 phone: form.getFieldValue("phone"),
                 cccd: form.getFieldValue("cccd"),
             },
-            rooms: selectedRooms.map(room => room._id),  // Pass only room IDs
+            rooms: selectedRooms.map(room => room._id),
             services: selectedServices.map(service => ({
                 serviceId: service.serviceId,
                 quantity: service.quantity,
@@ -476,22 +577,22 @@ const ReservationPage = () => {
             checkin: dates[0],
             checkout: dates[1],
             paymentMethod: paymentMethod,
-            SumPrice: selectedRooms.reduce((total, room) => total + room.Price, 0), // Add the total price of selected rooms
-            Status: "Pending", // Add status
+            SumPrice: selectedRooms.reduce((total, room) => total + room.Price, 0),
+            Status: "Pending",
         };
 
-        // Prepare transaction data
+        // Chuẩn bị dữ liệu giao dịch
         const transactionData = {
             services: selectedServices.map(service => ({
                 serviceId: service.serviceId,
                 quantity: service.quantity,
             })),
-            FinalPrice: bookingData.SumPrice + selectedServices.reduce((total, service) => total + service.totalPrice, 0), // Add total service price
-            PaidAmount: 0, // Or use any value based on payment method
+            FinalPrice: bookingData.SumPrice + selectedServices.reduce((total, service) => total + service.totalPrice, 0),
+            PaidAmount: 0,
             PaymentMethod: paymentMethod,
             paymentType: paymentType,
             PaymentReference: paymentLink,
-            CreatedBy: account.fullName, // Or replace with logged-in user information
+            CreatedBy: account.fullName,
         };
 
         try {
@@ -501,6 +602,20 @@ const ReservationPage = () => {
                     message: "Booking Successful",
                     description: "Your booking has been created successfully.",
                 });
+
+                // Gửi thông báo đến Admin qua Socket.io
+                socket.emit("new_booking", {
+                    sender: bookingData.customer.full_name || "Hệ thống",
+                    message: `Đã có một booking mới! Khách: ${bookingData.customer.full_name || "Không xác định"} 
+                        đã đặt phòng ${selectedRooms.map(room => room.RoomName).join(", ") || "Không xác định"} 
+                        từ ngày ${bookingData.checkin || "N/A"} đến ngày ${bookingData.checkout || "N/A"}.`,
+                    createdAt: new Date().toISOString()
+                });
+
+                // Cập nhật danh sách đặt phòng
+                // fetchBookings();
+
+                // Điều hướng đến danh sách đặt phòng
                 navigate("/reservationlist");
             } else {
                 api.error({
@@ -517,6 +632,7 @@ const ReservationPage = () => {
 
         setLoading(false);
     };
+
     return (
         <div style={{ backgroundColor: "#F6F4F0", padding: "20px" }}>
             {contextHolder}
@@ -668,6 +784,7 @@ const ReservationPage = () => {
                     Book Reservation
                 </Button>
             </Form>
+            <TestNotification />
         </div>
     );
 };

@@ -43,7 +43,7 @@ router.get("/", HotelController.getAllHotel);
 
 /**
  * @swagger
- * /api/hotels/{id}:
+ * /api/hotel/{id}:
  *   get:
  *     summary: Get hotel by ID
  *     tags: [Hotels]
@@ -75,7 +75,7 @@ router.get("/:id", HotelController.getHotelById);
 
 /**
  * @swagger
- * /api/hotels:
+ * /api/hotel:
  *   post:
  *     summary: Create a new hotel
  *     tags: [Hotels]
@@ -124,7 +124,7 @@ router.post("/", HotelController.createHotel);
 
 /**
  * @swagger
- * /api/hotels/{id}:
+ * /api/hotel/{id}:
  *   put:
  *     summary: Update a hotel
  *     tags: [Hotels]
@@ -174,7 +174,7 @@ router.put("/:id", HotelController.updateHotel);
 
 /**
  * @swagger
- * /api/hotels/{id}:
+ * /api/hotel/{id}:
  *   delete:
  *     summary: Delete a hotel
  *     tags: [Hotels]

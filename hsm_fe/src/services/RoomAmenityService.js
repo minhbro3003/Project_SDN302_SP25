@@ -2,6 +2,7 @@ import axios from "axios";
 
 export const getRoomAmenities = async () => {
     const res = await axios.get(`/api/roomamenities`);
+    console.log("getRoomAmenities", res)
     return res.data;
 };
 
@@ -18,4 +19,4 @@ export const getRoomAmenitiesByRoom = async (roomId) => {
 export const getRoomAmenitiesByAmenity = async (amenityId) => {
     const res = await axios.get(`/api/roomamenities/amenity/${amenityId}`);
     return res.data;
-}; 
+};

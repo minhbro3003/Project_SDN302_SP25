@@ -75,67 +75,25 @@ router.post("/create", housekeepingController.createHousekeepingTask);
  */
 router.put("/edit/:taskId", housekeepingController.updateHousekeepingTask);
 
-/**
- * @swagger
- * /api/housekeeping/cancel/{taskId}:
- *   put:
- *     summary: Cancel a housekeeping task
- *     tags: [Housekeeping]
- *     parameters:
- *       - in: path
- *         name: taskId
- *         required: true
- *         schema:
- *           type: string
- *     responses:
- *       200:
- *         description: Task cancelled successfully
- *       404:
- *         description: Task not found
- */
-router.put("/cancel/:taskId", housekeepingController.cancelHousekeepingTask);
-
-/**
- * @swagger
- * /api/housekeeping/logs/{roomId}:
- *   get:
- *     summary: Get housekeeping logs for a room
- *     tags: [Housekeeping]
- *     parameters:
- *       - in: path
- *         name: roomId
- *         required: true
- *         schema:
- *           type: string
- *     responses:
- *       200:
- *         description: List of housekeeping logs
- *         content:
- *           application/json:
- *             schema:
- *               type: array
- *               items:
- *                 $ref: '#/components/schemas/HousekeepingLog'
- */
-router.get("/logs/:roomId", housekeepingController.getHousekeepingLogs);
-
-/**
- * @swagger
- * /api/housekeeping/dirty-rooms:
- *   get:
- *     summary: Get list of rooms that need cleaning
- *     tags: [Housekeeping]
- *     responses:
- *       200:
- *         description: List of rooms needing cleaning
- *         content:
- *           application/json:
- *             schema:
- *               type: array
- *               items:
- *                 $ref: '#/components/schemas/Room'
- */
-router.get("/dirty-rooms", housekeepingController.getDirtyRooms);
+// /**
+//  * @swagger
+//  * /api/housekeeping/cancel/{taskId}:
+//  *   put:
+//  *     summary: Cancel a housekeeping task
+//  *     tags: [Housekeeping]
+//  *     parameters:
+//  *       - in: path
+//  *         name: taskId
+//  *         required: true
+//  *         schema:
+//  *           type: string
+//  *     responses:
+//  *       200:
+//  *         description: Task cancelled successfully
+//  *       404:
+//  *         description: Task not found
+//  */
+// router.put("/cancel/:taskId", housekeepingController.cancelHousekeepingTask);
 
 /**
  * @swagger
@@ -168,5 +126,8 @@ router.get("/dirty-rooms", housekeepingController.getDirtyRooms);
  *                 $ref: '#/components/schemas/HousekeepingTask'
  */
 router.get("/list", housekeepingController.getHousekeepingTasks);
+
+router.get("/localhotels", housekeepingController.getLocalHotels);
+router.get("/hotels/by-location", housekeepingController.getHotelsByLocation);
 
 module.exports = router;

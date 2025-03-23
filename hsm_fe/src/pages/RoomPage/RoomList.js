@@ -503,7 +503,6 @@ const RoomList = () => {
             Image: stateRoom.Image,
             roomtype: stateRoom.roomtype || "",
             hotel: stateRoom.hotel || "",
-            room_amenities: stateRoom.room_amenities,
         };
 
         console.log("onUpdateHotel", updateData);

@@ -127,30 +127,30 @@ async function updateHousekeepingTask(taskId, status, cancelNotes = "") {
 }
 
 
-async function cancelHousekeepingTask(taskId) {
-  const task = await HousekeepingTask.findById(taskId);
-  if (!task) throw new Error("Không tìm thấy công việc");
+// async function cancelHousekeepingTask(taskId) {
+//   const task = await HousekeepingTask.findById(taskId);
+//   if (!task) throw new Error("Không tìm thấy công việc");
 
 
-  task.status = "Cancelled";
-  await task.save();
+//   task.status = "Cancelled";
+//   await task.save();
 
 
-  await Room.findByIdAndUpdate(task.room, {
-    status: "Available - Need Cleaning",
-  });
-  return task;
-}
+//   await Room.findByIdAndUpdate(task.room, {
+//     status: "Available - Need Cleaning",
+//   });
+//   return task;
+// }
 
 
-async function getHousekeepingLogs(roomId) {
-  return await HousekeepingLog.find({ roomId }).populate("staffId", "FullName");
-}
+// async function getHousekeepingLogs(roomId) {
+//   return await HousekeepingLog.find({ roomId }).populate("staffId", "FullName");
+// }
 
 
-async function getDirtyRooms() {
-  return await Room.find({ Status: "Available - Need Cleaning" });
-}
+// async function getDirtyRooms() {
+//   return await Room.find({ Status: "Available - Need Cleaning" });
+// }
 async function getHousekeepingTasks(filter = {}) {
   return await HousekeepingTask.find(filter)
     .populate({
@@ -195,9 +195,9 @@ const getHotelsByLocation = async (location) => {
 module.exports = {
   createHousekeepingTask,
   updateHousekeepingTask,
-  cancelHousekeepingTask,
-  getDirtyRooms,
-  getHousekeepingLogs,
+  // cancelHousekeepingTask,
+  // getDirtyRooms,
+  // getHousekeepingLogs,
   // updateRoomCleaningStatus,
   getLocalHotels,
   getHousekeepingTasks,

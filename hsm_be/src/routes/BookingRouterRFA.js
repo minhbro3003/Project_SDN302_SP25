@@ -76,6 +76,9 @@ router.get("/date-range", BookingController.getBookingsByDateRange);
  *               $ref: '#/components/schemas/Booking'
  */
 router.get("/:id", BookingController.getBookingById);
+//tuan
+router.get("/hotel/:hotelId", BookingController.getBookingsByHotel);
+
 
 /**
  * @swagger

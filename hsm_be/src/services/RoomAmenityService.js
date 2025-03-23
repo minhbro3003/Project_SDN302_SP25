@@ -6,7 +6,7 @@ const Amenity = require("../models/AmenityModel");
 // Get all room amenities
 const getAllRoomAmenities = async () => {
     try {
-        const roomAmenities = await RoomAmenity.find({ isDelete: false })
+        const roomAmenities = await RoomAmenity.find()
             .populate('room', 'RoomName')
             .populate('amenity', 'AmenitiesName');
 

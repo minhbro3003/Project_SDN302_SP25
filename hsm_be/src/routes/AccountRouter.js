@@ -125,22 +125,6 @@ router.post("/login", accountController.loginAccount);
 
 /**
  * @swagger
- * /api/account/refresh-token:
- *   post:
- *     summary: Refresh access token
- *     tags: [Accounts]
- *     security:
- *       - bearerAuth: []
- *     responses:
- *       200:
- *         description: New access token generated
- *       401:
- *         description: Invalid refresh token
- */
-router.post("/refresh-token", accountController.refreshToken);
-
-/**
- * @swagger
  * /api/account/logout:
  *   post:
  *     summary: Logout from account

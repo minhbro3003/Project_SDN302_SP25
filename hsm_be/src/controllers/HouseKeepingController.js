@@ -32,45 +32,45 @@ exports.updateHousekeepingTask = async (req, res) => {
 };
 
 
-exports.cancelHousekeepingTask = async (req, res) => {
-    try {
-        const { taskId } = req.params;
-        const cancelledTask = await housekeepingService.cancelHousekeepingTask(taskId);
-        res.status(200).json({ message: "Đã hủy công việc", cancelledTask });
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
-};
-exports.updateRoomCleaningStatus = async (req, res) => {
-    try {
-        const { roomId, status, notes } = req.body;
-        const result = await housekeepingService.updateRoomCleaningStatus(roomId, status, notes);
-        res.status(200).json({ message: "Cập nhật thành công", result });
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
-};
+// exports.cancelHousekeepingTask = async (req, res) => {
+//     try {
+//         const { taskId } = req.params;
+//         const cancelledTask = await housekeepingService.cancelHousekeepingTask(taskId);
+//         res.status(200).json({ message: "Đã hủy công việc", cancelledTask });
+//     } catch (error) {
+//         res.status(500).json({ message: error.message });
+//     }
+// };
+// exports.updateRoomCleaningStatus = async (req, res) => {
+//     try {
+//         const { roomId, status, notes } = req.body;
+//         const result = await housekeepingService.updateRoomCleaningStatus(roomId, status, notes);
+//         res.status(200).json({ message: "Cập nhật thành công", result });
+//     } catch (error) {
+//         res.status(500).json({ message: error.message });
+//     }
+// };
 
 
-exports.getHousekeepingLogs = async (req, res) => {
-    try {
-        const { roomId } = req.params;
-        const logs = await housekeepingService.getHousekeepingLogs(roomId);
-        res.status(200).json(logs);
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
-};
+// exports.getHousekeepingLogs = async (req, res) => {
+//     try {
+//         const { roomId } = req.params;
+//         const logs = await housekeepingService.getHousekeepingLogs(roomId);
+//         res.status(200).json(logs);
+//     } catch (error) {
+//         res.status(500).json({ message: error.message });
+//     }
+// };
 
 
-exports.getDirtyRooms = async (req, res) => {
-    try {
-        const rooms = await housekeepingService.getDirtyRooms();
-        res.status(200).json(rooms);
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
-};
+// exports.getDirtyRooms = async (req, res) => {
+//     try {
+//         const rooms = await housekeepingService.getDirtyRooms();
+//         res.status(200).json(rooms);
+//     } catch (error) {
+//         res.status(500).json({ message: error.message });
+//     }
+// };
 
 
 

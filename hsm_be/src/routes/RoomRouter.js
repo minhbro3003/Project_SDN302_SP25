@@ -80,29 +80,6 @@ router.get("/", roomsController.getAllRooms);
  */
 router.get("/availability", roomsController.checkRoomAvailability);
 
-/**
- * @swagger
- * /api/rooms/getavail:
- *   get:
- *     summary: Get available rooms
- *     tags: [Rooms]
- *     responses:
- *       200:
- *         description: List of available rooms
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 status:
- *                   type: string
- *                 data:
- *                   type: array
- *                   items:
- *                     $ref: '#/components/schemas/Room'
- */
-router.get("/getavail", roomsController.getAvailableRooms);
-
 // Get available rooms (alternative)
 router.get("/getavail_", roomsController.getAvailableRooms_);
 
@@ -136,6 +113,11 @@ router.get("/getavail_", roomsController.getAvailableRooms_);
  *                     $ref: '#/components/schemas/Room'
  */
 router.get("/hotel/:hotelId", roomsController.getRoomsByHotel);
+
+//tuan
+router.get("/get-all-typeroom", roomsController.getAllTypeRooms);
+//router get room by hotelid
+router.get("/hotel/:id", roomsController.getAllRoomByHotelId);
 
 /**
  * @swagger
@@ -245,4 +227,5 @@ router.delete("/:id", roomsController.deleteRoom);
  */
 router.get("/:id", roomsController.getRoomByRoomId);
 
+router.get("/account/:accountId", roomsController.getRoomsByAccountController);
 module.exports = router;
