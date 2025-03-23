@@ -3,7 +3,6 @@ const dotenv = require("dotenv");
 dotenv.config();
 
 const generateAccessToken = async (payload) => {
-    // console.log("payload", payload);
     const access_token = jwt.sign(
         { id: payload.id },
         process.env.ACCESS_TOKEN,
