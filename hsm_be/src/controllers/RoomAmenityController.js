@@ -5,10 +5,12 @@ const Amenity = require("../models/AmenityModel");
 // Get all room amenities
 const getAllRoomAmenities = async (req, res) => {
     try {
-        const roomAmenities = await RoomAmenityService.getAllRoomAmenities();
-        return res.status(200).json(roomAmenities);
+        const response = await RoomAmenityService.getAllRoomAmenities();
+        // Return the data directly without modification
+        return res.status(200).json(response);
     } catch (error) {
         return res.status(500).json({
+            status: "ERR",
             message: "Failed to retrieve room amenities",
             error: error.message,
         });

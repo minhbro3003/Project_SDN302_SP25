@@ -3,55 +3,9 @@ const dotenv = require("dotenv");
 const Account = require("../models/AccountModel");
 dotenv.config();
 
-const authMiddleware = async (req, res, next) => {
+const checkAdminMiddleware = async (req, res, next) => {
     try {
-        const token = req.headers.token?.split(" ")[1];
-        if (!token) {
-            return res.status(401).json({
-                message: "Access denied. No token provided.",
-                status: "Error",
-            });
-        }
-        // Verify token and get user ID
-        const decoded = jwt.verify(token, process.env.ACCESS_TOKEN);
-
-        // Fetch fresh user data including permissions
-        const user = await Account.findById(decoded.id)
-            .populate('permissions')
-            .select('-Password');  // Exclude password
-
-        if (!user) {
-            return res.status(401).json({
-                message: "User not found",
-                status: "Error",
-            });
-        }
-
-        // Check if user has admin permissions
-        const isAdmin = user.permissions.some(p => p.PermissionName === "Admin");
-
-        if (!isAdmin) {
-            return res.status(403).json({
-                message: "Access denied. Admin privileges required.",
-                status: "Error",
-            });
-        }
-
-        // Attach user to request object
-        req.account = user;
-        next();
-    } catch (error) {
-        return res.status(401).json({
-            message: "Invalid token",
-            status: "Error",
-        });
-    }
-};
-
-const authUserMiddleware = async (req, res, next) => {
-    try {
-        const token = req.headers.token?.split(" ")[1];
-        const userId = req.params.id;
+        let token = req.headers.token?.split(" ")[1] || req.headers.authorization?.split(" ")[1];
 
         if (!token) {
             return res.status(401).json({
@@ -60,9 +14,7 @@ const authUserMiddleware = async (req, res, next) => {
             });
         }
 
-        // Verify token and get user ID
         const decoded = jwt.verify(token, process.env.ACCESS_TOKEN);
-        // Fetch fresh user data including permissions
         const user = await Account.findById(decoded.id)
             .populate('permissions')
             .select('-Password');
@@ -74,12 +26,11 @@ const authUserMiddleware = async (req, res, next) => {
             });
         }
 
-        // Check if user has admin permissions or is accessing their own data
+        // Check specifically for Admin permission
         const isAdmin = user.permissions.some(p => p.PermissionName === "Admin");
-
-        if (!isAdmin && user.id !== userId) {
+        if (!isAdmin) {
             return res.status(403).json({
-                message: "Access denied. Insufficient privileges.",
+                message: "Access denied. Admin privileges required.",
                 status: "Error",
             });
         }
@@ -94,7 +45,41 @@ const authUserMiddleware = async (req, res, next) => {
     }
 };
 
+const checkAuthMiddleware = async (req, res, next) => {
+    try {
+        let token = req.headers.token?.split(" ")[1] || req.headers.authorization?.split(" ")[1];
+
+        if (!token) {
+            return res.status(401).json({
+                message: "Access denied. No token provided.",
+                status: "Error",
+            });
+        }
+
+        const decoded = jwt.verify(token, process.env.ACCESS_TOKEN);
+        const user = await Account.findById(decoded.id)
+            .populate('permissions')
+            .select('-Password');
+
+        if (!user) {
+            return res.status(401).json({
+                message: "User not found",
+                status: "Error",
+            });
+        }
+
+        // Just verify the user is logged in, no specific permission check
+        req.account = user;
+        next();
+    } catch (error) {
+        return res.status(401).json({
+            message: "Invalid token",
+            status: "Error",
+        });
+    }
+};
+
 module.exports = {
-    authMiddleware,
-    authUserMiddleware,
+    checkAdminMiddleware,  // for admin-only routes
+    checkAuthMiddleware,   // for any authenticated user
 };

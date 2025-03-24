@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const AmenityController = require("../controllers/AmenityController");
+const { checkAdminMiddleware } = require("../middleware/authMiddleware");
 
 /**
  * @swagger
@@ -98,6 +99,8 @@ router.put("/:id", AmenityController.updateAmenity);
  *   delete:
  *     summary: Delete an amenity
  *     tags: [Amenities]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -107,9 +110,41 @@ router.put("/:id", AmenityController.updateAmenity);
  *     responses:
  *       200:
  *         description: Amenity deleted successfully
+ *       400:
+ *         description: Cannot delete amenity that is in use
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Admin privileges required
  *       404:
  *         description: Amenity not found
  */
-router.delete("/:id", AmenityController.deleteAmenity);
+router.delete("/:id", checkAdminMiddleware, AmenityController.deleteAmenity);
+
+/**
+ * @swagger
+ * /api/amenities/{id}/soft:
+ *   delete:
+ *     summary: Soft delete an amenity
+ *     tags: [Amenities]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Amenity marked as deleted successfully
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Admin privileges required
+ *       404:
+ *         description: Amenity not found
+ */
+router.delete("/:id/soft", checkAdminMiddleware, AmenityController.softDeleteAmenity);
 
 module.exports = router;

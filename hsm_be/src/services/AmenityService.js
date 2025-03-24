@@ -1,4 +1,5 @@
 const Amenity = require("../models/AmenityModel");
+const RoomAmenity = require("../models/RoomAmenityModel");
 
 // Get all amenities
 const getAllAmenities = async () => {
@@ -81,19 +82,61 @@ const updateAmenity = async (id, updateData) => {
 // Delete an amenity by ID (soft delete)
 const deleteAmenity = async (id) => {
     try {
-        const amenity = await Amenity.findByIdAndUpdate(
-            id,
-            // { isDelete: true },
-            { new: true }
-        );
-
+        // First check if amenity exists
+        const amenity = await Amenity.findById(id);
         if (!amenity) {
-            throw new Error("Amenity not found");
+            return {
+                status: "ERR",
+                message: "Amenity not found"
+            };
         }
+
+        // Check if amenity is being used in any rooms
+        const roomAmenities = await RoomAmenity.find({ amenity: id });
+        if (roomAmenities.length > 0) {
+            return {
+                status: "ERR",
+                message: "Cannot delete amenity as it is currently assigned to one or more rooms",
+                affectedRooms: roomAmenities.length
+            };
+        }
+
+        // If not being used, proceed with deletion
+        await Amenity.findByIdAndDelete(id);
 
         return {
             status: "OK",
             message: "Amenity deleted successfully"
+        };
+    } catch (error) {
+        throw new Error(error.message);
+    }
+};
+
+// Alternative: Soft delete if you prefer
+const softDeleteAmenity = async (id) => {
+    try {
+        // First check if amenity exists
+        const amenity = await Amenity.findById(id);
+        if (!amenity) {
+            return {
+                status: "ERR",
+                message: "Amenity not found"
+            };
+        }
+
+        // Update amenity to mark as deleted
+        await Amenity.findByIdAndUpdate(id, { IsDelete: true });
+
+        // Optionally, update all related room amenities to "Missing" status
+        await RoomAmenity.updateMany(
+            { amenity: id },
+            { status: 'Missing' }
+        );
+
+        return {
+            status: "OK",
+            message: "Amenity marked as deleted successfully"
         };
     } catch (error) {
         throw new Error(error.message);
@@ -106,4 +149,5 @@ module.exports = {
     createAmenity,
     updateAmenity,
     deleteAmenity,
+    softDeleteAmenity,
 };

@@ -1,13 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import {
     Table, Button, Modal, Form, Input,
-    Space, message, Popconfirm, Tabs, Tag
+    Space, message, Popconfirm, Tabs, Tag, Alert, Switch, Tooltip, Dropdown
 } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
+import {
+    PlusOutlined, EditOutlined, DeleteOutlined,
+    ExclamationCircleOutlined, UndoOutlined, DownOutlined, StopOutlined
+} from '@ant-design/icons';
 import * as amenityService from '../../../services/AmenityService';
 import * as roomAmenityService from '../../../services/RoomAmenityService';
 
 const { TabPane } = Tabs;
+const { confirm } = Modal;
 
 const AmenityListPage = () => {
     const [amenities, setAmenities] = useState([]);
@@ -17,22 +21,26 @@ const AmenityListPage = () => {
     const [editingId, setEditingId] = useState(null);
     const [loading, setLoading] = useState(false);
     const [roomAmenitiesLoading, setRoomAmenitiesLoading] = useState(false);
+    const [showDeleted, setShowDeleted] = useState(false);
+    const [error, setError] = useState(null);
 
     useEffect(() => {
         fetchAmenities();
         fetchRoomAmenities();
-    }, []);
+    }, [showDeleted]);
 
     const fetchAmenities = async () => {
         try {
             setLoading(true);
-            const response = await amenityService.getAllAmenities();
+            setError(null);
+            const response = await amenityService.getAllAmenities(showDeleted);
             if (response.status === "OK") {
                 setAmenities(response.data);
             } else {
-                message.error(response.message || 'Failed to fetch amenities');
+                throw new Error(response.message || 'Failed to fetch amenities');
             }
         } catch (error) {
+            setError(error.message);
             message.error('Failed to fetch amenities');
         } finally {
             setLoading(false);
@@ -70,17 +78,39 @@ const AmenityListPage = () => {
         setIsModalVisible(true);
     };
 
-    const handleDelete = async (id) => {
+    const handleHardDelete = async (id) => {
         try {
             const response = await amenityService.deleteAmenity(id);
             if (response.status === "OK") {
                 message.success('Amenity deleted successfully');
                 fetchAmenities();
+            } else if (response.status === "ERR" && response.affectedRooms) {
+                Modal.confirm({
+                    title: 'Amenity in use',
+                    content: `This amenity is currently used in ${response.affectedRooms} room(s). Would you like to soft delete it instead?`,
+                    okText: 'Yes, Soft Delete',
+                    cancelText: 'Cancel',
+                    onOk: () => handleSoftDelete(id)
+                });
             } else {
                 message.error(response.message || 'Failed to delete amenity');
             }
         } catch (error) {
             message.error('Failed to delete amenity');
+        }
+    };
+
+    const handleSoftDelete = async (id) => {
+        try {
+            const response = await amenityService.softDeleteAmenity(id);
+            if (response.status === "OK") {
+                message.success('Amenity soft deleted successfully');
+                fetchAmenities();
+            } else {
+                message.error(response.message || 'Failed to soft delete amenity');
+            }
+        } catch (error) {
+            message.error('Failed to soft delete amenity');
         }
     };
 
@@ -112,9 +142,10 @@ const AmenityListPage = () => {
 
     const getStatusColor = (status) => {
         const colors = {
-            'Working': 'green',
+            'Functioning': 'green',
             'Broken': 'red',
-            'Under Maintenance': 'orange'
+            'Missing': 'orange',
+            'Other': 'grey'
         };
         return colors[status] || 'default';
     };
@@ -124,7 +155,13 @@ const AmenityListPage = () => {
             title: 'Name',
             dataIndex: 'AmenitiesName',
             key: 'AmenitiesName',
-            sorter: (a, b) => a.AmenitiesName.localeCompare(b.AmenitiesName)
+            sorter: (a, b) => a.AmenitiesName.localeCompare(b.AmenitiesName),
+            render: (text, record) => (
+                <Space>
+                    {text}
+                    {record.IsDelete && <Tag color="red">Deleted</Tag>}
+                </Space>
+            )
         },
         {
             title: 'Note',
@@ -137,19 +174,29 @@ const AmenityListPage = () => {
             key: 'actions',
             render: (_, record) => (
                 <Space>
-                    <Button
-                        type="primary"
-                        icon={<EditOutlined />}
-                        onClick={() => handleEdit(record)}
-                    />
-                    <Popconfirm
-                        title="Are you sure you want to delete this amenity?"
-                        onConfirm={() => handleDelete(record._id)}
-                        okText="Yes"
-                        cancelText="No"
-                    >
-                        <Button danger icon={<DeleteOutlined />} />
-                    </Popconfirm>
+                    {!record.IsDelete && (
+                        <>
+                            <Tooltip title="Edit">
+                                <Button
+                                    type="primary"
+                                    icon={<EditOutlined />}
+                                    onClick={() => handleEdit(record)}
+                                />
+                            </Tooltip>
+                            <Popconfirm
+                                title="Delete this amenity?"
+                                description="This will permanently delete the amenity if it's not in use, otherwise it will be soft deleted."
+                                onConfirm={() => handleHardDelete(record._id)}
+                                okText="Yes"
+                                cancelText="No"
+                            >
+                                <Button
+                                    danger
+                                    icon={<DeleteOutlined />}
+                                />
+                            </Popconfirm>
+                        </>
+                    )}
                 </Space>
             ),
         },
@@ -158,15 +205,24 @@ const AmenityListPage = () => {
     const roomAmenityColumns = [
         {
             title: 'Room',
-            dataIndex: ['room', 'RoomName'],
             key: 'room',
-            sorter: (a, b) => a.room.RoomName.localeCompare(b.room.RoomName)
+            render: (_, record) => (
+                <Space>
+                    {record.room?.RoomName || 'N/A'}
+                    {record.room?.Floor && <Tag color="blue">Floor {record.room.Floor}</Tag>}
+                </Space>
+            )
         },
         {
             title: 'Amenity',
-            dataIndex: ['amenity', 'AmenitiesName'],
             key: 'amenity',
-            sorter: (a, b) => a.amenity.AmenitiesName.localeCompare(b.amenity.AmenitiesName)
+            render: (_, record) => record.amenity?.AmenitiesName || 'N/A'
+        },
+        {
+            title: 'Quantity',
+            dataIndex: 'quantity',
+            key: 'quantity',
+            sorter: (a, b) => a.quantity - b.quantity
         },
         {
             title: 'Status',
@@ -176,24 +232,18 @@ const AmenityListPage = () => {
                 <Tag color={getStatusColor(status)}>{status}</Tag>
             ),
             filters: [
-                { text: 'Working', value: 'Working' },
+                { text: 'Functioning', value: 'Functioning' },
                 { text: 'Broken', value: 'Broken' },
-                { text: 'Under Maintenance', value: 'Under Maintenance' }
+                { text: 'Missing', value: 'Missing' },
+                { text: 'Other', value: 'Other' }
             ],
             onFilter: (value, record) => record.status === value
-        },
-        {
-            title: 'Notes',
-            dataIndex: 'notes',
-            key: 'notes',
-            ellipsis: true
         },
         {
             title: 'Last Updated',
             dataIndex: 'updatedAt',
             key: 'updatedAt',
-            render: (date) => new Date(date).toLocaleDateString(),
-            sorter: (a, b) => new Date(a.updatedAt) - new Date(b.updatedAt)
+            render: (date) => date ? new Date(date).toLocaleDateString() : 'N/A'
         }
     ];
 
@@ -201,16 +251,36 @@ const AmenityListPage = () => {
         <div style={{ padding: 24 }}>
             <Tabs defaultActiveKey="1">
                 <TabPane tab="Amenities List" key="1">
-                    <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between' }}>
-                        <h2>Amenities Management</h2>
-                        <Button
-                            type="primary"
-                            icon={<PlusOutlined />}
-                            onClick={handleAdd}
-                        >
-                            Add Amenity
-                        </Button>
+                    <div style={{ marginBottom: 16 }}>
+                        <Space style={{ width: '100%', justifyContent: 'space-between' }}>
+                            <h2>Amenities Management</h2>
+                            <Space>
+                                <Switch
+                                    checkedChildren="Show Deleted"
+                                    unCheckedChildren="Hide Deleted"
+                                    checked={showDeleted}
+                                    onChange={setShowDeleted}
+                                />
+                                <Button
+                                    type="primary"
+                                    icon={<PlusOutlined />}
+                                    onClick={handleAdd}
+                                >
+                                    Add Amenity
+                                </Button>
+                            </Space>
+                        </Space>
                     </div>
+
+                    {error && (
+                        <Alert
+                            message="Error"
+                            description={error}
+                            type="error"
+                            showIcon
+                            style={{ marginBottom: 16 }}
+                        />
+                    )}
 
                     <Table
                         columns={amenityColumns}

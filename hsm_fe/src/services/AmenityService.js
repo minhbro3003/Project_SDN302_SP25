@@ -1,9 +1,8 @@
 import axios from "axios";
 
-export const getAllAmenities = async (data) => {
+export const getAllAmenities = async (includeDeleted = false) => {
     const res = await axios.get(
-        `/api/amenities`,
-        data
+        `/api/amenities${includeDeleted ? '?includeDeleted=true' : ''}`
     );
     console.log("res getAllAmenities:", res);
     return res.data;
@@ -41,5 +40,10 @@ export const deleteAmenity = async (id) => {
         `/api/amenities/${id}`
     );
     console.log("res deleteAmenity:", res);
+    return res.data;
+};
+
+export const softDeleteAmenity = async (id) => {
+    const res = await axios.delete(`/api/amenities/${id}/soft`);
     return res.data;
 };

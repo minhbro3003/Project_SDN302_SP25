@@ -7,13 +7,31 @@ const Amenity = require("../models/AmenityModel");
 const getAllRoomAmenities = async () => {
     try {
         const roomAmenities = await RoomAmenity.find()
-            .populate('room', 'RoomName')
-            .populate('amenity', 'AmenitiesName');
+            .populate({
+                path: 'room',
+                select: 'RoomName Floor Status'
+            })
+            .populate({
+                path: 'amenity',
+                select: 'AmenitiesName Note'
+            })
+            .lean(); // Convert to plain JavaScript object
+
+        // Transform the data to match the expected format
+        const formattedRoomAmenities = roomAmenities.map(ra => ({
+            _id: ra._id,
+            room: ra.room,
+            amenity: ra.amenity,
+            quantity: ra.quantity,
+            status: ra.status,
+            updatedAt: ra.updatedAt,
+            createdAt: ra.createdAt
+        }));
 
         return {
             status: "OK",
             message: "Room amenities retrieved successfully",
-            data: roomAmenities
+            data: formattedRoomAmenities
         };
     } catch (error) {
         throw new Error(error.message);

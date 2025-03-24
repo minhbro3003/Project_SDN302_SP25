@@ -61,15 +61,36 @@ const updateAmenity = async (req, res) => {
 // Delete an amenity by ID
 const deleteAmenity = async (req, res) => {
     try {
-        const deletedAmenity = await AmenityService.deleteAmenity(req.params.id);
-        if (!deletedAmenity) {
-            return res.status(404).json({ message: "Amenity not found" });
+        const result = await AmenityService.deleteAmenity(req.params.id);
+
+        if (result.status === "ERR") {
+            return res.status(400).json(result);
         }
-        return res.status(200).json({ message: "Amenity deleted successfully" });
-    } catch (e) {
+
+        return res.status(200).json(result);
+    } catch (error) {
         return res.status(500).json({
-            message: "Amenity deletion failed",
-            error: e.message,
+            status: "ERR",
+            message: "Failed to delete amenity",
+            error: error.message
+        });
+    }
+};
+
+const softDeleteAmenity = async (req, res) => {
+    try {
+        const result = await AmenityService.softDeleteAmenity(req.params.id);
+
+        if (result.status === "ERR") {
+            return res.status(400).json(result);
+        }
+
+        return res.status(200).json(result);
+    } catch (error) {
+        return res.status(500).json({
+            status: "ERR",
+            message: "Failed to delete amenity",
+            error: error.message
         });
     }
 };
@@ -80,4 +101,5 @@ module.exports = {
     createAmenity,
     updateAmenity,
     deleteAmenity,
+    softDeleteAmenity
 };

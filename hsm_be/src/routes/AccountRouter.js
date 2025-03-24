@@ -2,8 +2,8 @@ const express = require("express");
 const router = express.Router();
 const accountController = require("../controllers/AccountController");
 const {
-    authMiddleware,
-    authUserMiddleware,
+    checkAdminMiddleware,
+    checkAuthMiddleware,
 } = require("../middleware/authMiddleware");
 
 /**
@@ -58,7 +58,7 @@ const {
  *       400:
  *         description: Invalid input
  */
-router.post("/create", accountController.createAcount);
+router.post("/create", checkAdminMiddleware, accountController.createAcount);
 
 /**
  * @swagger
@@ -66,6 +66,8 @@ router.post("/create", accountController.createAcount);
  *   get:
  *     summary: Get all accounts
  *     tags: [Accounts]
+ *     security:
+ *       - bearerAuth: []
  *     responses:
  *       200:
  *         description: List of all accounts
@@ -75,8 +77,12 @@ router.post("/create", accountController.createAcount);
  *               type: array
  *               items:
  *                 $ref: '#/components/schemas/Account'
+ *       401:
+ *         description: Unauthorized - No token provided
+ *       403:
+ *         description: Forbidden - Invalid token or insufficient privileges
  */
-router.get("", accountController.getAllAccounts);
+router.get("/", checkAuthMiddleware, accountController.getAllAccounts);
 
 /**
  * @swagger
@@ -137,6 +143,8 @@ router.post("/login", accountController.loginAccount);
  *       401:
  *         description: Unauthorized
  */
-router.post("/logout", authUserMiddleware, accountController.logout);
+router.post("/logout", checkAuthMiddleware, accountController.logout);
+
+router.post("/refresh-token", accountController.refreshToken);
 
 module.exports = router;
