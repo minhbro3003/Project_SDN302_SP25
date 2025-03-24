@@ -1,6 +1,6 @@
 import React, { useState, useEffect, Fragment } from 'react';
 import { Layout, Menu, Avatar, Button } from 'antd';
-import { HomeOutlined, UserOutlined, BarChartOutlined, ProfileOutlined, LockOutlined, TableOutlined, FileTextOutlined, DownOutlined } from '@ant-design/icons';
+import { UserOutlined } from '@ant-design/icons';
 
 import { BrowserRouter as Router, Route, Routes, Link, useNavigate, useLocation, Navigate } from 'react-router-dom';
 import * as AccountService from "./services/accountService";
@@ -12,6 +12,7 @@ import NotFoundPage from './pages/NotFoundPage/NotFoundPage';
 import { resetAccount, updateAccount } from './redux/accountSlice';
 import { persistStore } from 'redux-persist';
 import { store } from './redux/store';
+import axios from 'axios';
 const { Sider, Content, Header } = Layout;
 const publicRoutes = ["/login", "/verification"];
 
@@ -21,9 +22,7 @@ const App = () => {
     const location = useLocation();
     const [isLoading, setIsLoading] = useState(false);
     const account = useSelector((state) => state.account);
-
     const userPermissions = account?.permissions || [];
-
 
     useEffect(() => {
         if (publicRoutes.some((route) => location.pathname.startsWith(route))) return;
@@ -41,100 +40,102 @@ const App = () => {
 
     useEffect(() => {
         if (publicRoutes.some((route) => location.pathname.startsWith(route))) return;
-
-        if (account?.id) return; // 
+        if (account?.id) return;
 
         const handleAuthCheck = async () => {
-            const { storageData, decoded } = handleDecoded();
-
-            if (!storageData || !decoded?.id) {
+            const token = localStorage.getItem("access_token");
+            if (!token) {
                 console.warn("No valid token found, redirecting to login...");
                 dispatch(resetAccount());
                 navigate("/login");
                 return;
             }
 
-            console.log("User authenticated. Fetching account details...");
-            await handleGetDetailsAccount(decoded.id, storageData);
+            try {
+                const decoded = jwtDecode(token);
+                if (!decoded?.id) {
+                    throw new Error("Invalid token");
+                }
+
+                console.log("User authenticated. Fetching account details...");
+                const res = await AccountService.getDetailsAccount(decoded.id, token);
+                if (res?.data) {
+                    // Fetch employee details if available
+                    let employeeData = null;
+                    try {
+                        const employeeRes = await AccountService.getEmployeeByAccountId(decoded.id, token);
+                        if (employeeRes?.data) {
+                            employeeData = employeeRes.data;
+                        }
+                    } catch (error) {
+                        console.error("Error fetching employee details:", error);
+                    }
+
+                    dispatch(
+                        updateAccount({
+                            ...res.data,
+                            access_token: token,
+                            employee: employeeData
+                        })
+                    );
+                }
+            } catch (error) {
+                console.error("Auth check error:", error);
+                dispatch(resetAccount());
+                navigate("/login");
+            }
         };
 
         handleAuthCheck();
     }, [account?.id, dispatch, navigate]);
 
-    const handleDecoded = () => {
-        let storageData = account?.access_token || localStorage.getItem("access_token");
-        let decoded = {};
-
-        try {
-            if (storageData) {
-                if (isJsonString(storageData)) {
-                    const parsedData = JSON.parse(storageData);
-                    storageData = parsedData.access_token || parsedData;
-                }
-
-                decoded = jwtDecode(storageData);
-            }
-        } catch (error) {
-            console.error("Error decoding token:", error);
-        }
-
-        return { decoded, storageData };
-    };
-
-    AccountService.axiosJWT.interceptors.request.use(
-        async (config) => {
-            const currentTime = new Date().getTime() / 1000;
-            const { decoded } = handleDecoded();
-            let storageRefreshToken = localStorage.getItem("refresh_token");
-
-            const refreshToken = storageRefreshToken;
-            const decodedRefreshToken = jwtDecode(refreshToken);
-            if (decoded?.exp < currentTime) {
-                if (decodedRefreshToken?.exp > currentTime) {
-                    const data = await AccountService.refreshToken(refreshToken);
-                    config.headers["token"] = `Bearer ${data?.access_token}`;
-                } else {
-                    dispatch(resetAccount());
-                }
-            }
+    // Simple axios interceptor that only adds the access token
+    axios.interceptors.request.use(async (config) => {
+        // Avoid infinite loop by skipping the refresh request itself
+        if (config.url.includes('/refresh-token')) {
             return config;
-        },
-        (err) => {
-            return Promise.reject(err);
         }
-    );
+        const currentTime = Math.floor(Date.now() / 1000);
+        const accessToken = localStorage.getItem("access_token");
+        const decodedAccessToken = accessToken ? jwtDecode(accessToken) : null;
 
-    const handleGetDetailsAccount = async (id, token) => {
-        try {
-            let storageRefreshToken = localStorage.getItem("refresh_token");
-            const refreshToken = storageRefreshToken;
-            const res = await AccountService.getDetailsAccount(id, token);
+        if (decodedAccessToken?.exp < currentTime) {
+            try {
+                const data = await AccountService.refreshToken({
+                    withCredentials: true
+                });
 
-            if (res?.data) {
-                // Fetch employee details if available
-                let employeeData = null;
-                try {
-                    const employeeRes = await AccountService.getEmployeeByAccountId(id, token);
-                    if (employeeRes?.data) {
-                        employeeData = employeeRes.data;
-                    }
-                } catch (error) {
-                    console.error("Error fetching employee details:", error);
-                }
-
-                dispatch(
-                    updateAccount({
-                        ...res.data,
-                        access_token: token,
-                        refreshToken: refreshToken,
-                        employee: employeeData
-                    })
-                );
+                localStorage.setItem("access_token", data?.access_token);
+                config.headers["token"] = `Bearer ${data?.access_token}`;
+            } catch (error) {
+                dispatch(resetAccount());
+                return Promise.reject(error);
             }
+        } else {
+            config.headers["token"] = `Bearer ${accessToken}`;
+        }
+
+        return config;
+    }, (error) => Promise.reject(error));
+
+
+
+    const handleLogout = async () => {
+        try {
+            const access_token = localStorage.getItem("access_token");
+            if (access_token) {
+                await AccountService.logout(access_token);
+            }
+            dispatch(resetAccount());
+            persistStore(store).flush().then(() => persistStore(store).purge());
+            navigate("/login");
         } catch (error) {
-            console.error("Error fetching user details:", error);
-        } finally {
-            setIsLoading(false);
+            console.error("Logout failed:", error);
+            // Still clear local state even if server request fails
+            dispatch(resetAccount());
+            localStorage.removeItem("access_token");
+            persistStore(store).flush().then(() => persistStore(store).purge());
+            navigate("/login");
         }
     };
 
@@ -170,13 +171,7 @@ const App = () => {
                                                             <Button
                                                                 type="text"
                                                                 style={{ color: "#00363D" }}
-                                                                onClick={() => {
-                                                                    dispatch(resetAccount());
-                                                                    localStorage.removeItem("access_token");
-                                                                    localStorage.removeItem("refresh_token");
-                                                                    persistStore(store).flush().then(() => persistStore(store).purge());
-                                                                    navigate("/login");
-                                                                }}
+                                                                onClick={handleLogout}
                                                             >
                                                                 Logout
                                                             </Button>
@@ -270,13 +265,7 @@ const App = () => {
                                                         <Button
                                                             type="text"
                                                             style={{ color: "#00363D" }}
-                                                            onClick={() => {
-                                                                dispatch(resetAccount());
-                                                                localStorage.removeItem("access_token");
-                                                                localStorage.removeItem("refresh_token");
-                                                                persistStore(store).flush().then(() => persistStore(store).purge());
-                                                                navigate("/login");
-                                                            }}
+                                                            onClick={handleLogout}
                                                         >
                                                             Logout
                                                         </Button>

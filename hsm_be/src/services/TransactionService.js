@@ -12,13 +12,12 @@ const getAllTransactions = async () => {
             .populate({
                 path: "bookings",
                 populate: {
-                    path: "rooms",
-                    model: "Room",  // Explicitly define the model
-                    select: "RoomName", // Only fetch RoomName
+                    path: "rooms", // Correctly referencing 'rooms'
+                    model: "Room",
                 }
             })
             .populate("services") // Populate service details
-            .populate("customers");
+            .populate("customers"); // Populate customer details
 
         return {
             status: "OK",
@@ -42,10 +41,11 @@ const getFullAllTransactions = async () => {
                 path: "bookings",
                 populate: [
                     { path: "customers" }, // Populate customers inside bookings
-                    { path: "rooms" }      // Populate rooms inside bookings
+                    { path: "rooms", select: "RoomName" },      // Populate rooms inside bookings
+
                 ]
             })
-            .populate("services"); // Populate service details
+            .populate("services.serviceId"); // Populate service details
 
         return {
             status: "OK",

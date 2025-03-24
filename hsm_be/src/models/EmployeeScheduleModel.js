@@ -2,35 +2,35 @@ const mongoose = require("mongoose");
 
 const employeeScheduleSchema = new mongoose.Schema(
     {
-        employees: { 
-            type: mongoose.Schema.Types.ObjectId, 
-            ref: "Employee", 
-            required: true 
+        employees: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "employees",
+            required: true
         },
-        hotels: { 
-            type: mongoose.Schema.Types.ObjectId, 
-            ref: "Hotel", 
-            required: true 
+        hotels: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "hotels",
+            required: true
         },
-        employee_types: { 
-            type: mongoose.Schema.Types.ObjectId, 
-            ref: "EmployeeType", 
-            required: true 
+        employee_types: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "employee_types",
+            required: true
         },
-      
+
         schedule: [
             {
-                date: { 
-                    type: String, 
-                    required: true 
+                date: {
+                    type: String,
+                    required: true
                 },
-                start_time: { 
-                    type: String, 
-                    required: true 
+                start_time: {
+                    type: String,
+                    required: true
                 },
-                end_time: { 
-                    type: String, 
-                    required: true 
+                end_time: {
+                    type: String,
+                    required: true
                 }
             }
         ]

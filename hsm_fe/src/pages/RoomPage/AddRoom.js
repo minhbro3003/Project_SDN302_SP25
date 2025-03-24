@@ -325,13 +325,15 @@ const AddRoomForm = ({ initialValues }) => {
             // 📌 Chuẩn hóa roomName: Nếu R1, R2... thì chuyển thành R01, R02...
             const match = roomName.match(/^([A-Za-z]+)(\d+)$/);
             let prefix = roomName;
-            let baseNumber = 0;
+            let baseNumber = 1; // Mặc định số bắt đầu là 1
 
             if (match) {
-                prefix = match[1];
-                baseNumber = parseInt(match[2], 10);
+                prefix = match[1]; // Lấy phần chữ (R)
+                baseNumber = parseInt(match[2], 10); // Lấy số (1 hoặc 10)
+
+                // 📌 Nếu số nhỏ hơn 10, thêm '0' vào trước (R1 → R101)
                 if (baseNumber < 10) {
-                    baseNumber = `0${baseNumber}`; // Nếu R1 → R01
+                    baseNumber = `10${baseNumber}`;
                 }
             }
 
@@ -349,16 +351,17 @@ const AddRoomForm = ({ initialValues }) => {
                 .sort((a, b) => a - b);
 
             let newRooms = [];
-            let numberToUse = existingNumbers.length > 0 ? Math.max(...existingNumbers) + 1 : parseInt(`${baseNumber}01`, 10);
+            let usedNumbers = new Set(existingNumbers);
+            let numberToUse = parseInt(baseNumber, 10); // Chuyển baseNumber về số nguyên
 
             for (let i = 0; i < quantity; i++) {
-                while (existingNumbers.includes(numberToUse)) {
+                // Tìm số phòng trống nhỏ nhất
+                while (usedNumbers.has(numberToUse)) {
                     numberToUse++;
                 }
 
                 let newRoomName = `${prefix}${numberToUse}`;
-                existingNumbers.push(numberToUse);
-                existingNumbers.sort((a, b) => a - b);
+                usedNumbers.add(numberToUse); // Đánh dấu số đã dùng
 
                 let newRoom = {
                     key: newRoomName,
@@ -374,8 +377,6 @@ const AddRoomForm = ({ initialValues }) => {
                         quantity: amenitiesQuantity[amenityId] || 1,
                     })),
                 };
-                console.log("Hotel value from formBulk:", formBulk.getFieldValue("hotel"));
-
 
                 newRooms.push(newRoom);
                 numberToUse++;

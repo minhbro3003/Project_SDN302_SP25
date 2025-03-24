@@ -4,8 +4,8 @@ const employeeSchema = new mongoose.Schema(
     {
         hotels: [{ type: mongoose.Schema.Types.ObjectId, ref: "hotels", required: true }],
         FullName: { type: String, required: true, trim: true },
-        Phone: { 
-            type: String, 
+        Phone: {
+            type: String,
             trim: true,
             validate: {
                 validator: function (v) {
@@ -18,12 +18,12 @@ const employeeSchema = new mongoose.Schema(
         Gender: { type: String, trim: true },
         Image: { type: String, trim: true },
         Address: { type: String, required: true, trim: true },
-        accountId:{
-            type: mongoose.Schema.Types.ObjectId, 
-                        ref: "Account", 
-                        required: true 
+        accountId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Account",
+            required: true
         },
-        permission: {type: mongoose.Schema.Types.ObjectId, ref: "permissions", require: true}
+        permission: { type: mongoose.Schema.Types.ObjectId, ref: "permissions", require: true }
 
     },
     {

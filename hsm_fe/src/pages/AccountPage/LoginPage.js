@@ -1,11 +1,12 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { Card, Form, Input, Button } from "antd";
 import { updateAccount } from "../../redux/accountSlice";
-import { loginAccount } from "../../services/accountService";
+import * as AccountService from "../../services/accountService";
 import "./Login.css";
+import { jwtDecode } from "jwt-decode";
 
 const LoginPage = () => {
     const [formData, setFormData] = useState({
@@ -13,19 +14,54 @@ const LoginPage = () => {
         password: "",
     });
 
-    const [captcha, setCaptcha] = useState(false);
+    const [captcha, setCaptcha] = useState(true);
 
     const formRef = useRef(null);
     const dispatch = useDispatch();
     const navigate = useNavigate();
 
+    useEffect(() => {
+        const checkAuth = async () => {
+            try {
+                const res = await AccountService.silentRefresh();
+                if (res?.status === "OK" && res?.data) {
+                    // Fetch employee details if available
+                    let employeeData = null;
+                    try {
+                        const decoded = jwtDecode(res.token);
+                        const employeeRes = await AccountService.getEmployeeByAccountId(decoded.id, res.token);
+                        if (employeeRes?.data) {
+                            employeeData = employeeRes.data;
+                        }
+                    } catch (error) {
+                        console.error("Error fetching employee details:", error);
+                    }
+                    localStorage.setItem("access_token", res.access_token);
+                    dispatch(
+                        updateAccount({
+                            ...res.data,
+                            access_token: res.access_token,
+                            employee: employeeData
+                        })
+                    );
+                    navigate("/dashboard");
+                }
+
+
+            } catch (error) {
+                console.log("No valid session found, showing login form");
+            }
+        };
+
+        checkAuth();
+    }, [dispatch, navigate]);
+
     const mutation = useMutation({
-        mutationFn: (data) => loginAccount(data),
+        mutationFn: (data) => AccountService.loginAccount(data),
         onSuccess: (data) => {
             if (data.status === "OK") {
                 localStorage.setItem("access_token", data.access_token);
-                localStorage.setItem("refresh_token", data.refresh_token);
-                dispatch(updateAccount({ ...data.user, access_token: data.access_token, refresh_token: data.refresh_token }));
+                dispatch(updateAccount({ ...data.user, access_token: data.access_token }));
                 navigate("/dashboard");
             } else {
                 console.error("Login failed:", data.message);
@@ -92,20 +128,6 @@ const LoginPage = () => {
 
                     <div className="forgot-password">
                         <a href="#">Forgot password?</a>
-                    </div>
-
-                    <div className="captcha">
-                        <div className="captcha_checkbox">
-                            <input type="checkbox" className="captcha_checkbox_input" value={captcha} onChange={(e) => { setCaptcha(e.target.checked) }} />
-                            <span className="captcha_checkbox_span"> I'm not a robot</span></div>
-                        <img
-                            className="img-fluid"
-                            src={require("../../asset/img/recaptcha-icon.png")}
-                            width="60px"
-                            height="60px"
-                            alt=""
-
-                        />
                     </div>
 
                     <Form.Item>

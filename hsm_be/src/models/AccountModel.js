@@ -10,9 +10,10 @@ const accounts = new mongoose.Schema(
             {
                 type: mongoose.Schema.Types.ObjectId,
                 ref: "permissions",
-                // required: true,
+                required: true,
             },
         ],
+        refreshToken: { type: String },
     },
     {
         timestamps: true,

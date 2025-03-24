@@ -121,6 +121,36 @@ const ReservationList = () => {
             ),
         },
         {
+            title: "Room Name",
+            dataIndex: "bookings",
+            key: "RoomName",
+            render: (bookings) => {
+                if (!bookings || bookings.length === 0) return "No Room"; // Nếu không có booking nào
+
+                // Lấy tất cả RoomName từ các bookings
+                const roomNames = bookings.map(booking => booking.rooms?.RoomName || "No Room");
+
+                return roomNames.join(", ");
+            }
+        },
+        {
+            title: "Check In - Check Out",
+            dataIndex: "bookings",
+            key: "CheckInCheckOut",
+            render: (bookings) => {
+                if (!bookings || bookings.length === 0) return "No Data"; // Nếu không có booking nào
+
+                // Lấy tất cả thời gian check-in và check-out
+                const times = bookings.map(booking => {
+                    const checkIn = booking.Time?.Checkin ? new Date(booking.Time.Checkin).toLocaleString() : "N/A";
+                    const checkOut = booking.Time?.Checkout ? new Date(booking.Time.Checkout).toLocaleString() : "N/A";
+                    return `${checkIn} - ${checkOut}`;
+                });
+
+                return times.join(" | "); // Ghép nhiều thời gian với dấu "|"
+            }
+        },
+        {
             title: "Final Price",
             dataIndex: "FinalPrice",
             key: "FinalPrice",

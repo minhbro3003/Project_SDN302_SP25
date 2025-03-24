@@ -71,14 +71,15 @@ export const deleteService = async (id, access_token) => {
         const res = await axiosJWT.delete(
             `${process.env.REACT_APP_API_URL_BACKEND}/services/${id}`,
             {
-                headers: {
-                    token: `Bearer ${access_token}`,
-                },
+                headers: { Authorization: `Bearer ${access_token}` },
             }
         );
         return res.data;
     } catch (error) {
-        console.error("Error in deleteService:", error);
-        return { status: "ERR", message: error.response?.data?.message || "Failed to delete service" };
+        console.error("Error deleting service:", error);
+        return {
+            status: "ERR",
+            message: error.response?.data?.message || "Failed to delete service"
+        };
     }
 };

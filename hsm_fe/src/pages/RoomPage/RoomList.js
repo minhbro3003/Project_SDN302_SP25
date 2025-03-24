@@ -1,8 +1,8 @@
 import React, { useEffect, useRef, useState } from "react";
 import {
-    DeleteOutlined, EditOutlined, MinusOutlined, PlusOutlined, SearchOutlined, UploadOutlined
+    DeleteOutlined, EditOutlined, MinusOutlined, PlusOutlined, SearchOutlined, UploadOutlined, ToolOutlined
 } from "@ant-design/icons";
-import { Form, Input, InputNumber, Select, Button, Upload, Row, Col, Space, Table, notification, } from "antd";
+import { Form, Input, InputNumber, Select, Button, Upload, Row, Col, Space, Table, notification, Spin } from "antd";
 import * as RoomService from "../../services/RoomService";
 import * as HotelService from "../../services/HotelService";
 import * as AmenityService from "../../services/AmenityService";
@@ -11,7 +11,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router";
 import ModalComponent from "../../components/ModalComponent/ModalComponent";
 import DrawerComponent from "../../components/DrawerComponent/DrawerComponent";
-import { ImageUploadSection, MainImagePreview, MainImagePreviewImg, UploadWrapper, StyledRadioButton, } from "./AddRoomStyle";
+import { ImageUploadSection, MainImagePreview, MainImagePreviewImg, UploadWrapper, } from "./AddRoomStyle";
 import { convertPrice, getBase64 } from "../../utils";
 
 const { Option } = Select;
@@ -26,11 +26,13 @@ const RoomList = () => {
     const [rowSelected, setRowSelected] = useState("");
     const navigate = useNavigate();
     const [amenities, setAmenities] = useState([]);
-    const [amenitiesStatus, setAmenitiesStatus] = useState({});
     const [selectedAmenityId, setSelectedAmenityId] = useState(null);
     const [amenitiesQuantity, setAmenitiesQuantity] = useState({});
     const [api, contextHolder] = notification.useNotification();
     const [stateAmenitiesRoom, setStateAmenitiesRoom] = useState([]);
+    const [isAmenitiesDrawerOpen, setIsAmenitiesDrawerOpen] = useState(false);
+    const [amenitiesForm] = Form.useForm();
+    const [loading, setLoading] = useState(false);
 
     const handleSearch = (selectedKeys, confirm, dataIndex) => {
         confirm();
@@ -128,11 +130,13 @@ const RoomList = () => {
                 }}
             />
         ),
-        onFilter: (value, record) =>
-            record[dataIndex]
-                .toString()
-                .toLowerCase()
-                .includes(value.toLowerCase()),
+        onFilter: (value, record) => {
+            const fieldValue = dataIndex
+                .split(".") // Tách trường thành mảng ["hotel", "NameHotel"]
+                .reduce((obj, key) => (obj ? obj[key] : undefined), record); // Lấy giá trị thực tế
+
+            return fieldValue ? fieldValue.toString().toLowerCase().includes(value.toLowerCase()) : false;
+        },
         filterDropdownProps: {
             onOpenChange(open) {
                 if (open) {
@@ -169,20 +173,16 @@ const RoomList = () => {
         return (
             <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
                 <DeleteOutlined
-                    style={{
-                        color: "red",
-                        fontSize: "20px",
-                        cursor: "pointer",
-                    }}
+                    style={{ color: "red", fontSize: "20px", cursor: "pointer" }}
                     onClick={() => setIsModalDelete(true)}
                 />
                 <EditOutlined
-                    style={{
-                        color: "orange",
-                        fontSize: "20px",
-                        cursor: "pointer",
-                    }}
+                    style={{ color: "orange", fontSize: "20px", cursor: "pointer" }}
                     onClick={handleDetailsRoom}
+                />
+                <ToolOutlined
+                    style={{ color: "blue", fontSize: "20px", cursor: "pointer" }}
+                    onClick={() => handleEditAmenities(rowSelected)}
                 />
             </div>
         );
@@ -208,25 +208,34 @@ const RoomList = () => {
             title: "Hotel Name",
             dataIndex: "hotel",
             key: "hotel",
-            width: "17%",
+            width: "15%",
             ...getColumnSearchProps("hotel.NameHotel"),
-            sorter: (a, b) => a.hotel?.NameHotel.length - b.hotel?.NameHotel.length,
+            sorter: (a, b) => (a.hotel?.NameHotel.length || 0) - b.hotel?.NameHotel.length,
             render: (hotel) => hotel?.NameHotel || "No hotel"
         },
         {
             title: "Room Name",
             dataIndex: "RoomName",
             key: "roomName",
-            width: "15%",
+            width: "12%",
             ...getColumnSearchProps("roomName"),
-            sorter: (a, b) => a.RoomName.length - b.RoomName.length,
+            sorter: (a, b) => {
+                const extractNumber = (roomName) => {
+                    const match = roomName.match(/^([A-Za-z]+)(\d+)$/);
+                    return match ? parseInt(match[2], 10) : 0; // Trả về số nếu có, nếu không thì 0
+                };
+
+                return extractNumber(a.RoomName) - extractNumber(b.RoomName);
+            },
+            sortDirections: ["descend", "ascend"],
         },
         {
             title: "Price",
             dataIndex: "Price",
             key: "price",
+            width: "10%",
             render: (Price) => convertPrice(Price),
-            ...getColumnSearchProps("price"),
+            ...getColumnSearchProps("Price"),
             sorter: (a, b) => a.Price - b.Price,
             sortDirections: ["descend", "ascend"],
         },
@@ -234,16 +243,15 @@ const RoomList = () => {
             title: "Status",
             dataIndex: "Status",
             key: "status",
-            // ...getColumnSearchProps("status"),
+            width: "12%",
         },
         {
             title: "Type Rooms",
             dataIndex: "roomtype",
-            width: "16%",
+            width: "15%",
             key: "roomtype",
             ...getColumnSearchProps("roomtype"),
-            sorter: (a, b) => a.roomtype.length - b.roomtype.length,
-            sortDirections: ["descend", "ascend"],
+            sorter: (a, b) => a.roomtype?.TypeName.length - b.roomtype?.TypeName.length,
             render: (roomtype) => roomtype?.TypeName || "No type"
         },
         {
@@ -251,14 +259,62 @@ const RoomList = () => {
             dataIndex: "Floor",
             key: "floor",
             width: "7%",
-            // ...getColumnSearchProps("floor"),
-            // sorter: (a, b) => a.Floor.length - b.Floor.length,
-            // sortDirections: ["descend", "ascend"],
         },
         {
-            title: "Action",
-            dataIndex: "action",
-            render: renderAction,
+            title: "Actions",
+            key: "actions",
+            width: "10%",
+            render: (_, record) => (
+                <Space size="middle">
+                    <EditOutlined
+                        style={{
+                            color: "orange",
+                            fontSize: "20px",
+                            cursor: "pointer",
+                            backgroundColor: "#fff3e0",
+                            padding: "8px",
+                            borderRadius: "4px"
+                        }}
+                        onClick={() => {
+                            setRowSelected(record._id);
+                            handleDetailsRoom();
+                        }}
+                    />
+                    <DeleteOutlined
+                        style={{
+                            color: "red",
+                            fontSize: "20px",
+                            cursor: "pointer",
+                            backgroundColor: "#ffe0e0",
+                            padding: "8px",
+                            borderRadius: "4px"
+                        }}
+                        onClick={() => {
+                            setRowSelected(record._id);
+                            setIsModalDelete(true);
+                        }}
+                    />
+                </Space>
+            ),
+        },
+        {
+            title: "Room Amenities",
+            key: "amenities",
+            width: "12%",
+            render: (_, record) => (
+                <Button
+                    icon={<ToolOutlined />}
+                    onClick={() => handleEditAmenities(record._id)}
+                    type="primary"
+                    ghost
+                    style={{
+                        backgroundColor: "#e6f4ff",
+                        borderColor: "#1890ff"
+                    }}
+                >
+                    Edit Amenities
+                </Button>
+            ),
         },
     ];
 
@@ -313,9 +369,13 @@ const RoomList = () => {
 
     //✅ Lấy danh sách Rooms
     const getAllRooms = async () => {
-        const res = await RoomService.getAllRoom();
-        // console.log("data rooms: ", res);
-        return res;
+        setLoading(true); // Bật loading
+        try {
+            const res = await RoomService.getAllRoom();
+            return res;
+        } finally {
+            setLoading(false); // Tắt loading khi xong
+        }
     };
     const queryRoom = useQuery({
         queryKey: ["rooms"],
@@ -346,36 +406,14 @@ const RoomList = () => {
     console.log("stateAmenities", stateAmenitiesRoom);
     //fetch room amenities by room id
     const fetchGetRoomAmenities = async (roomId) => {
-        if (!roomId) return;
+        console.log('Fetching amenities for room:', roomId); // Debug log
         try {
-            const res = await RoomAmenityService.getAmenitiesByRoomId(roomId);
-            if (res?.data) {
-                console.log("Amenities Data from API:", res.data); // Debug API response
-
-                // Lưu danh sách amenities vào stateAmenitiesRoom
-                setStateAmenitiesRoom(res.data);
-
-                // Lấy danh sách ID amenities để cập nhật stateRoom
-                setStateRoom((prev) => ({
-                    ...prev,
-                    amenities: res.data.map((item) => item._id),
-                }));
-
-                // Cập nhật số lượng cho từng tiện ích
-                const quantityMap = {};
-                res.data.forEach((item) => {
-                    quantityMap[item._id] = item.quantity;
-                });
-                setAmenitiesQuantity(quantityMap);
-
-                // Cập nhật form Ant Design
-                form.setFieldsValue({
-                    amenities: res.data.map((item) => item._id),
-                    status: res.data[0]?.status || "", // Lấy trạng thái đầu tiên nếu có
-                });
-            }
+            const response = await RoomAmenityService.getAmenitiesByRoomId(roomId);
+            console.log('Raw API response:', response); // Debug log
+            return response;
         } catch (error) {
-            console.error("Failed to fetch Room Amenities:", error);
+            console.error('Error in fetchGetRoomAmenities:', error);
+            throw error;
         }
     };
 
@@ -465,7 +503,6 @@ const RoomList = () => {
             Image: stateRoom.Image,
             roomtype: stateRoom.roomtype || "",
             hotel: stateRoom.hotel || "",
-            room_amenities: stateRoom.room_amenities,
         };
 
         console.log("onUpdateHotel", updateData);
@@ -514,6 +551,69 @@ const RoomList = () => {
         );
     };
 
+    const handleEditAmenities = async (roomId) => {
+        if (!roomId) return;
+        console.log('Editing amenities for room:', roomId);
+        setRowSelected(roomId);
+        // Clear previous selections
+        setStateAmenitiesRoom([]);
+        setAmenitiesQuantity({});
+        setSelectedAmenityId(null);
+
+        try {
+            const response = await fetchGetRoomAmenities(roomId);
+            console.log('Fetched room amenities response:', response);
+            if (response?.data) {
+                setStateAmenitiesRoom(response.data);
+                // Initialize quantities for existing amenities
+                const quantities = {};
+                response.data.forEach(amenity => {
+                    quantities[amenity._id] = amenity.quantity;
+                });
+                setAmenitiesQuantity(quantities);
+            }
+            setIsAmenitiesDrawerOpen(true);
+        } catch (error) {
+            console.error('Error fetching room amenities:', error);
+            api.error({
+                message: "Error",
+                description: "Failed to fetch room amenities"
+            });
+        }
+    };
+
+    const handleUpdateAmenities = async () => {
+        try {
+            const updatedAmenities = stateAmenitiesRoom.map(amenity => ({
+                amenityId: amenity._id,
+                quantity: amenitiesQuantity[amenity._id] || 1,
+                status: amenity.status || "Functioning"
+            }));
+
+            // Call your API to update amenities
+            const response = await RoomAmenityService.updateRoomAmenities(rowSelected, updatedAmenities);
+
+            if (response.status === "OK") {
+                api.success({
+                    message: "Success",
+                    description: "Room amenities updated successfully",
+                });
+                setIsAmenitiesDrawerOpen(false);
+                fetchGetRoomAmenities(rowSelected);
+            } else {
+                api.error({
+                    message: "Error",
+                    description: "Failed to update room amenities",
+                });
+            }
+        } catch (error) {
+            api.error({
+                message: "Error",
+                description: "An error occurred while updating room amenities",
+            });
+        }
+    };
+
     return (
         <>
             {contextHolder}
@@ -530,19 +630,22 @@ const RoomList = () => {
                 </div>
             </Button>
 
-            <Table columns={columns} dataSource={dataTable}
-                onRow={(record, rowIndex) => {
-                    return {
-                        onClick: (event) => {
-                            console.log("Record Selected:", record);
-                            setRowSelected(record._id);
-                        }
-                    };
-                }}
-            />
+            <Spin spinning={loading}>
+                <Table columns={columns} dataSource={dataTable}
+                    loading={isLoadingRoom}
+                    onRow={(record, rowIndex) => {
+                        return {
+                            onClick: (event) => {
+                                console.log("Record Selected:", record);
+                                setRowSelected(record._id);
+                            }
+                        };
+                    }}
+                />
+            </Spin>
 
             <DrawerComponent
-                title="Update Hotel"
+                title="Update Room"
                 isOpen={isOpenDrawer}
                 onClose={() => setIsOpenDrawer(false)}
                 width="80%"
@@ -635,92 +738,6 @@ const RoomList = () => {
                                 </Col>
                             </Row>
 
-
-                            <Row gutter={16} style={{ backgroundColor: "#EEEEEE", borderRadius: 8, marginBottom: 20 }}>
-                                <Col span={5}>
-                                    <Form.Item label="Quantity Amenities">
-                                        <Space>
-                                            <Button
-                                                icon={<MinusOutlined />}
-                                                disabled={!selectedAmenityId || (amenitiesQuantity[selectedAmenityId] || 1) <= 1}
-                                                onClick={() => {
-                                                    if (!selectedAmenityId) return;
-                                                    const newValue = Math.max(1, (amenitiesQuantity[selectedAmenityId] || 1) - 1);
-                                                    handleQuantityChange(selectedAmenityId, newValue);
-                                                }}
-                                            />
-                                            <Input
-                                                min={1}
-                                                max={100}
-                                                value={selectedAmenityId ? amenitiesQuantity[selectedAmenityId] || 1 : ""}
-                                                style={{ width: 40, textAlign: "center" }}
-                                                onChange={(e) => {
-                                                    if (!selectedAmenityId) return;
-                                                    const newValue = Number(e.target.value) || 1;
-                                                    handleQuantityChange(selectedAmenityId, newValue);
-                                                }}
-                                            />
-                                            <Button
-                                                icon={<PlusOutlined />}
-                                                onClick={() => {
-                                                    if (!selectedAmenityId) return;
-                                                    const newValue = Math.min(100, (amenitiesQuantity[selectedAmenityId] || 1) + 1);
-                                                    handleQuantityChange(selectedAmenityId, newValue);
-                                                }}
-                                            />
-                                        </Space>
-                                    </Form.Item>
-                                </Col>
-                                <Col span={19}>
-                                    <Form.Item
-                                        label="Room Amenities"
-                                        name="amenities"
-                                    // rules={[{ required: true, message: "Please select room amenities" }]}
-                                    >
-                                        <Select
-                                            mode="multiple"
-                                            placeholder="Select amenities"
-                                            value={stateAmenitiesRoom.map((item) => item._id)} // Dùng _id để bind value
-                                            onChange={(selectedValues) => {
-                                                setStateRoom({ ...stateRoom, amenities: selectedValues });
-
-                                                // Gán số lượng mặc định là 1 nếu amenity chưa có số lượng
-                                                setAmenitiesQuantity((prev) => {
-                                                    const updatedQuantities = { ...prev };
-                                                    selectedValues.forEach((amenityId) => {
-                                                        if (!updatedQuantities[amenityId]) {
-                                                            updatedQuantities[amenityId] = 1;
-                                                        }
-                                                    });
-                                                    return updatedQuantities;
-                                                });
-
-                                                setSelectedAmenityId(selectedValues[selectedValues.length - 1] || null);
-                                            }}
-                                        >
-                                            {stateAmenitiesRoom.map((amenity) => {
-                                                const quantity = amenitiesQuantity[amenity._id] || 1;
-                                                const status = amenity.status;
-                                                return (
-                                                    <Option key={amenity._id} value={amenity._id}>
-                                                        {`${amenity.AmenitiesName} (${quantity}): ${status}`}  {/* Hiển thị tên + số lượng */}
-                                                    </Option>
-                                                );
-                                            })}
-                                        </Select>
-
-                                    </Form.Item>
-                                </Col>
-                                <Col span={6} style={{ marginTop: "-15px" }}>
-                                    <Form.Item label="Status" name="status">
-                                        <Input name="status" placeholder="Enter status"
-                                            value={stateAmenitiesRoom.length > 0 ? stateAmenitiesRoom.status : ""}
-                                            onChange={(e) => handleOnChange(e.target.value, "status")}
-                                        />
-                                    </Form.Item>
-                                </Col>
-                            </Row>
-
                             <Form.Item label="Room Description" name="Description">
                                 <Input.TextArea name="Description" rows={3} placeholder="Enter room description"
                                     value={stateRoom.Description} onChange={handleOnChange}
@@ -735,6 +752,142 @@ const RoomList = () => {
                         </Col>
                     </Row>
                 </Form>
+            </DrawerComponent>
+
+            <DrawerComponent
+                title="Edit Room Amenities"
+                isOpen={isAmenitiesDrawerOpen}
+                onClose={() => {
+                    setIsAmenitiesDrawerOpen(false);
+                    // Clear selections when closing
+                    setStateAmenitiesRoom([]);
+                    setAmenitiesQuantity({});
+                    setSelectedAmenityId(null);
+                }}
+                width="600px"
+            >
+                <div style={{ backgroundColor: "#f5f5f5", padding: "20px", borderRadius: "8px" }}>
+                    <Form form={amenitiesForm} layout="vertical">
+                        <div style={{ marginBottom: 16 }}>
+                            <h3>Current Room Amenities</h3>
+                            <Table
+                                dataSource={stateAmenitiesRoom}
+                                columns={[
+                                    {
+                                        title: "Amenity",
+                                        dataIndex: "AmenitiesName",
+                                        key: "AmenitiesName",
+                                    },
+                                    {
+                                        title: "Quantity",
+                                        key: "quantity",
+                                        render: (_, record) => (
+                                            <Space>
+                                                <Button
+                                                    icon={<MinusOutlined />}
+                                                    onClick={() => {
+                                                        const currentQty = amenitiesQuantity[record._id] || 1;
+                                                        if (currentQty > 1) {
+                                                            handleQuantityChange(record._id, currentQty - 1);
+                                                        }
+                                                    }}
+                                                />
+                                                <InputNumber
+                                                    min={1}
+                                                    value={amenitiesQuantity[record._id] || 1}
+                                                    onChange={(value) => handleQuantityChange(record._id, value)}
+                                                    style={{ width: 60 }}
+                                                />
+                                                <Button
+                                                    icon={<PlusOutlined />}
+                                                    onClick={() => {
+                                                        const currentQty = amenitiesQuantity[record._id] || 1;
+                                                        handleQuantityChange(record._id, currentQty + 1);
+                                                    }}
+                                                />
+                                            </Space>
+                                        ),
+                                    },
+                                    {
+                                        title: "Status",
+                                        key: "status",
+                                        render: (_, record) => (
+                                            <Select
+                                                value={record.status || "Functioning"}
+                                                style={{ width: 120 }}
+                                                onChange={(value) => {
+                                                    const updatedAmenities = stateAmenitiesRoom.map(amenity =>
+                                                        amenity._id === record._id ? { ...amenity, status: value } : amenity
+                                                    );
+                                                    setStateAmenitiesRoom(updatedAmenities);
+                                                }}
+                                            >
+                                                <Select.Option value="Functioning">Functioning</Select.Option>
+                                                <Select.Option value="Broken">Broken</Select.Option>
+                                                <Select.Option value="Missing">Missing</Select.Option>
+                                                <Select.Option value="Other">Other</Select.Option>
+                                            </Select>
+                                        ),
+                                    },
+                                ]}
+                                pagination={false}
+                            />
+                        </div>
+
+                        <div style={{
+                            marginTop: 16,
+                            backgroundColor: "#fff",
+                            padding: "15px",
+                            borderRadius: "6px",
+                            boxShadow: "0 1px 3px rgba(0,0,0,0.1)"
+                        }}>
+                            <h3>Add New Amenities</h3>
+                            <Select
+                                mode="multiple"
+                                style={{ width: '100%' }}
+                                placeholder="Select amenities to add"
+                                value={[]} // Always empty to prevent selection persistence
+                                onChange={(selectedValues) => {
+                                    const newAmenities = amenities
+                                        .filter(a => selectedValues.includes(a._id))
+                                        .filter(a => !stateAmenitiesRoom.some(existing => existing._id === a._id))
+                                        .map(a => ({
+                                            ...a,
+                                            status: "Functioning"
+                                        }));
+
+                                    setStateAmenitiesRoom([...stateAmenitiesRoom, ...newAmenities]);
+                                }}
+                            >
+                                {amenities
+                                    .filter(a => !stateAmenitiesRoom.some(existing => existing._id === a._id))
+                                    .map(amenity => (
+                                        <Select.Option key={amenity._id} value={amenity._id}>
+                                            {amenity.AmenitiesName}
+                                        </Select.Option>
+                                    ))
+                                }
+                            </Select>
+                        </div>
+
+                        <div style={{ marginTop: 16, textAlign: 'right' }}>
+                            <Space>
+                                <Button onClick={() => {
+                                    setIsAmenitiesDrawerOpen(false);
+                                    // Clear selections when canceling
+                                    setStateAmenitiesRoom([]);
+                                    setAmenitiesQuantity({});
+                                    setSelectedAmenityId(null);
+                                }}>
+                                    Cancel
+                                </Button>
+                                <Button type="primary" onClick={handleUpdateAmenities}>
+                                    Save Changes
+                                </Button>
+                            </Space>
+                        </div>
+                    </Form>
+                </div>
             </DrawerComponent>
 
             <ModalComponent

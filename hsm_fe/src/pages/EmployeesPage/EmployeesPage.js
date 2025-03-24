@@ -21,9 +21,10 @@ const EmployeesPage = () => {
     axios
       .get(`${API_URL}/employee/list-employees`)
       .then((response) => {
-        const dataWithKeys = response.data.map(emp => ({
+        console.log("API Response:", response.data); // Kiểm tra dữ liệu từ API
+        const dataWithKeys = response.data.map((emp, index) => ({
           ...emp,
-          key: emp._id
+          key: index, // Thêm key duy nhất dựa trên index
         }));
         setEmployees(dataWithKeys);
       })
@@ -31,6 +32,7 @@ const EmployeesPage = () => {
         console.error("Error fetching employees:", error);
       });
   }, []);
+
 
   const handleSearch = (selectedKeys, confirm, dataIndex) => {
     confirm();
@@ -147,13 +149,6 @@ const EmployeesPage = () => {
             cursor: "pointer",
           }}
         />
-        <EditOutlined
-          style={{
-            color: "orange",
-            fontSize: "20px",
-            cursor: "pointer",
-          }}
-        />
       </div>
     );
   };
@@ -170,6 +165,17 @@ const EmployeesPage = () => {
       key: "fullname",
       ...getColumnSearchProps("fullname"),
       sorter: (a, b) => a.fullname.length - b.fullname.length,
+      render: (text, record) => (
+        <span
+          style={{ color: "blue", cursor: "pointer", }}
+          onClick={(e) => {
+            e.stopPropagation(); // Ngăn chặn event click lan ra hàng
+            navigate(`/employee-detail/${record._id}`);
+          }}
+        >
+          {text}
+        </span>
+      ),
     },
     {
       title: "Email",
@@ -206,13 +212,16 @@ const EmployeesPage = () => {
 
   return (
     <div style={{ padding: "20px" }}>
-      <Table 
-        columns={columns} 
+      <Table
+        columns={columns}
         dataSource={employees}
-        onRow={(record) => ({
-          onClick: () => navigate(`/employee-detail/${record._id}`),
-          style: { cursor: 'pointer' }
-        })}
+      // onRow={(record) => ({
+      //   onClick: () => {
+      //     navigate(`/employee-detail/${record._id}`);
+      //   },
+      //   style: { cursor: 'pointer' },
+      // })}
+
       />
     </div>
   );

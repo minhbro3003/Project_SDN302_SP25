@@ -1,4 +1,5 @@
 import { Radio } from "antd";
+import { Button } from "bootstrap/dist/js/bootstrap.bundle.min";
 import styled from "styled-components";
 
 export const RoomFormContainer = styled.div`
@@ -109,4 +110,19 @@ export const StyledRadioButton = styled(Radio.Button)`
     border-color: ${({ value }) =>
         value === "single" ? "#2E5077" : "#4DA1A9"} !important;
   }
+`;
+
+export const StyledButton = styled.button`
+    background-color: rgb(121, 215, 190);
+    border: 1px solid rgb(121, 215, 190);
+    color: black;
+    font-size: 16px;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: 0.3s ease-in-out;
+
+    &:hover {
+        background-color: rgb(100, 200, 180);
+        border-color: rgb(100, 200, 180);
+    }
 `;

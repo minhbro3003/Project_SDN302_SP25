@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-
+const Room = require("../models/RoomModel");
 const bookingSchema = new mongoose.Schema(
     {
         customers: { type: mongoose.Schema.Types.ObjectId, ref: "Customer", required: true },

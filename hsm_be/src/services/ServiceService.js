@@ -58,6 +58,13 @@ const createService = async (newService) => {
             };
         }
 
+        if (!ServiceName || !Price) {
+            return {
+                status: "ERR",
+                message: "Service name and price are required",
+            }
+        }
+
         const service = new Service({
             ServiceName,
             Price,

@@ -8,7 +8,6 @@ const initialState = {
     permissions: [],
     isDeleted: false,
     access_token: "",
-    refreshToken: "",
     employee: {
         id: "",
         FullName: "",
@@ -35,7 +34,6 @@ export const accountSlice = createSlice({
                 permissionDetails = [],
                 IsDelete = false,
                 access_token = "",
-                refreshToken = "",
                 employee = null
             } = action.payload;
 
@@ -46,7 +44,6 @@ export const accountSlice = createSlice({
             state.permissions = permissionDetails.map(p => p.PermissionName);
             state.isDeleted = IsDelete;
             state.access_token = access_token;
-            state.refreshToken = refreshToken;
 
             if (employee) {
                 state.employee = {

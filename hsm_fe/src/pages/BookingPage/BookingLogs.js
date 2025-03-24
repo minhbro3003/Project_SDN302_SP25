@@ -120,8 +120,8 @@ const BookingLogs = () => {
             key: 'contact',
             render: (_, record) => (
                 <Space direction="vertical" size="small">
-                    <div>{record.customers.phone}</div>
-                    <div>{record.customers.cccd}</div>
+                    <div>{record.customers?.phone || "deleted customer"}</div>
+                    <div>{record.customers?.cccd || "deleted customer"}</div>
                 </Space>
             ),
         }

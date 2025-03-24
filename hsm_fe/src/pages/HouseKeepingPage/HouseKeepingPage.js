@@ -4,13 +4,17 @@ import { ClearOutlined, MoreOutlined } from "@ant-design/icons";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import {
-  getAllRoom,
+  getRoomsByAccount,
   updateHousekeepingTask,
   getHousekeepingTasks,
 } from "../../services/HouseKeepingService";
 import axios from "axios";
+import { useSelector } from "react-redux";
+import TestNotification from "../HouseKeepingPage/TestNotification";
 
 const Housekeeping = () => {
+  const isRehydrated = useSelector((state) => state._persist?.rehydrated);
+  const account = useSelector((state) => state.account);
   const [rooms, setRooms] = useState([]);
   const [selectedRoom, setSelectedRoom] = useState(null);
   const [isModalVisible, setIsModalVisible] = useState(false);
@@ -18,30 +22,26 @@ const Housekeeping = () => {
   const [currentEmployeeId, setCurrentEmployeeId] = useState(null);
 
   useEffect(() => {
-    fetchRooms();
-    fetchTasks();
-    getCurrentEmployeeId(); // Lấy ID nhân viên hiện tại
-  }, []);
+    if (!isRehydrated) return; // Nếu Redux chưa rehydrate, không fetch dữ liệu
 
-  // Lấy ID nhân viên hiện tại từ localStorage
-  const getCurrentEmployeeId = () => {
-    try {
-      const persistedData = localStorage.getItem("persist:root");
-      if (!persistedData) {
-        return null;
-      }
-
-      const parsedData = JSON.parse(persistedData);
-      const accountData = parsedData.account ? JSON.parse(parsedData.account) : null;
-      const employeeId = accountData ? accountData.id : null;
-      
-      setCurrentEmployeeId(employeeId);
-      return employeeId;
-    } catch (error) {
-      console.error("Lỗi khi lấy ID nhân viên:", error);
-      return null;
+    if (!account || !account.id) {
+      console.error("❌ Không tìm thấy accountId");
+      return;
     }
-  };
+
+    setCurrentEmployeeId(account.id);
+    fetchRooms(account.id);
+    fetchTasks();
+
+    // Thiết lập polling mỗi 5 giây
+    const interval = setInterval(() => {
+      fetchRooms(account.id);
+      fetchTasks();
+    }, 100); // 5000ms = 5 giây, có thể điều chỉnh
+
+    // Cleanup khi component unmount
+    return () => clearInterval(interval);
+  }, [isRehydrated, account]);
 
   const fetchTasks = async () => {
     try {
@@ -53,17 +53,31 @@ const Housekeeping = () => {
     }
   };
 
-  const fetchRooms = async () => {
+  const fetchRooms = async (employeeId) => {
     try {
-      const response = await getAllRoom();
-      const roomNames = response.data.map((room) => ({
-        id: room.id,
-        name: room.RoomName,
-        status: room.Status,
-      }));
-      setRooms(roomNames);
+      if (!employeeId) {
+        console.error("❌ Không tìm thấy accountId");
+        return;
+      }
+      const response = await getRoomsByAccount(employeeId);
+
+      console.log("📌 API Response getRoomsByAccount:", response);
+
+      if (response.success && Array.isArray(response.data)) {
+        const roomNames = response.data.flatMap((hotel) =>
+          hotel.rooms.map((room) => ({
+            id: room.id,
+            name: room.name,
+            status: room.status,
+          }))
+        );
+        console.log("📌 Danh sách phòng sau khi xử lý:", roomNames);
+        setRooms(roomNames);
+      } else {
+        console.error("❌ API không trả về dữ liệu hợp lệ");
+      }
     } catch (error) {
-      message.error("Failed to fetch rooms");
+      console.error("❌ Lỗi khi lấy danh sách phòng:", error);
     }
   };
 
@@ -115,7 +129,7 @@ const Housekeeping = () => {
         toast.error("Không tìm thấy ID nhân viên. Hãy đăng nhập lại.", { autoClose: 3000 });
         return;
       }
-      
+
       const response = await axios.post(
         `${process.env.REACT_APP_API_URL_BACKEND}/housekeeping/create`,
         {
@@ -138,8 +152,8 @@ const Housekeeping = () => {
 
         toast.success("Registration successful", { autoClose: 3000 });
       }
-      await fetchTasks();
-      await fetchRooms();
+      // await fetchTasks();
+      // await fetchRooms();
     } catch (error) {
       console.error("Lỗi khi tạo housekeeping task:", error);
       // ⚠️ Hiển thị cảnh báo khi nhân viên đã có task
@@ -204,20 +218,20 @@ const Housekeeping = () => {
         await updateHousekeepingTask(housekeepingTask._id, "Cancelled", note);
         toast.warning("Room cleaning task canceled", { autoClose: 3000 });
       }
-      
+
       setRooms((prevRooms) =>
         prevRooms.map((room) =>
           room.id === selectedRoom.id
             ? {
-                ...room,
-                status:
-                  key === "cleaned" ? "Available" : "Available - Need Cleaning",
-              }
+              ...room,
+              status:
+                key === "cleaned" ? "Available" : "Available - Need Cleaning",
+            }
             : room
         )
       );
 
-      await fetchTasks();
+      // await fetchTasks();
     } catch (error) {
       console.error("❌ Error updating room status:", error);
       message.error("Failed to update room status");
@@ -228,15 +242,15 @@ const Housekeeping = () => {
 
   const handleMoreClick = (room, e) => {
     e.stopPropagation();
-    
+
     // Kiểm tra quyền truy cập
     const hasPermission = checkAssignmentPermission(room.id);
-    
+
     if (!hasPermission) {
       toast.error("Bạn không phải là nhân viên được giao nhiệm vụ dọn phòng này!", { autoClose: 3000 });
       return;
     }
-    
+
     setSelectedRoom(room);
   };
 
@@ -267,7 +281,7 @@ const Housekeeping = () => {
           const cleaningTask = tasks.find(
             (task) => task.room._id === room.id && task.status === "In Progress"
           );
-          
+
           // Kiểm tra quyền truy cập
           const hasPermission = cleaningTask && cleaningTask.assignedTo._id === currentEmployeeId;
 
@@ -316,9 +330,9 @@ const Housekeeping = () => {
 
                   {/* Hiển thị dropdown chỉ khi có quyền truy cập */}
                   {selectedRoom && selectedRoom.id === room.id && hasPermission && (
-                    <Dropdown 
-                      overlay={menu} 
-                      trigger={["click"]} 
+                    <Dropdown
+                      overlay={menu}
+                      trigger={["click"]}
                       visible={selectedRoom && selectedRoom.id === room.id}
                       onVisibleChange={(visible) => !visible && setSelectedRoom(null)}
                     >
@@ -365,6 +379,7 @@ const Housekeeping = () => {
           <li style={{ color: "#00CC00" }}> Available - Cleaning</li>
         </ul>
       </div>
+      <TestNotification />
     </div>
   );
 };
