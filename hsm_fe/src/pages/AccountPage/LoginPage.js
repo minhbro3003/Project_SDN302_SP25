@@ -7,6 +7,7 @@ import { updateAccount } from "../../redux/accountSlice";
 import * as AccountService from "../../services/accountService";
 import "./Login.css";
 import { jwtDecode } from "jwt-decode";
+import background from "../../asset/img/backgroud.png";
 
 const LoginPage = () => {
     const [formData, setFormData] = useState({
@@ -85,15 +86,37 @@ const LoginPage = () => {
     };
 
     return (
-        <div className="login-page__container">
+        <div className="login-page__container"
+            style={{
+                backgroundImage: `url(${background})`,
+                backgroundSize: "cover",
+                backgroundPosition: "center",
+                minHeight: "100vh",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center"
+            }}>
 
             <Card
                 title={<>
-                    <h2 className="title">Welcome to PHM System</h2>
+                    <h2 className="title">Welcome to HMS System</h2>
                     <p className="subtitle">Login to continue</p>
                 </>
                 }
-                style={{ width: 600, margin: "auto", marginTop: "15%", padding: "20px", borderRadius: "28px" }}
+                style={{
+                    width: "500px",
+                    position: "absolute",
+                    top: "50%",
+                    left: "50%",
+                    transform: "translate(-50%, -50%)",
+                    padding: "24px",
+                    borderRadius: "16px",
+                    backdropFilter: "blur(10px)",
+                    background: "rgba(255, 255, 255, 0.8)",
+                    boxShadow: "0 10px 30px rgba(0, 0, 0, 0.2)",
+                    border: "1px solid rgba(255, 255, 255, 0.3)",
+                }}
+
             >
                 <Form ref={formRef} layout="vertical" onFinish={handleSubmit}>
                     <Form.Item
@@ -132,6 +155,7 @@ const LoginPage = () => {
 
                     <Form.Item>
                         <Button
+                            style={{ backgroundColor: "rgb(121, 215, 190)", marginTop: "10px" }}
                             type="primary"
                             htmlType="submit"
                             loading={mutation.isLoading}

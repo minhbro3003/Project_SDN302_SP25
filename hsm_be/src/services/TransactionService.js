@@ -4,6 +4,7 @@ const Customer = require("../models/CustomerModel");
 const Service = require("../models/ServiceModel");
 const Room = require("../models/RoomModel");
 const mongoose = require("mongoose");
+const moment = require("moment");
 const { createPaymentLinkAD } = require("../utils");
 // Get all transactions //Used to display partial information about transaction - I don't recommend getting the full spaghetti just for the all
 const getAllTransactions = async () => {
@@ -253,14 +254,21 @@ const createBookingAndTransaction = async (bookingData, transactionData) => {
                 throw new Error(`Room ${roomId} not found`);
             }
 
+            // Add 7 hours for Vietnam timezone
+            const checkinDate = moment(checkin).add(7, 'hours');
+            const checkoutDate = moment(checkout).add(7, 'hours');
+
+            // Calculate number of nights
+            const nights = Math.floor(moment.duration(checkoutDate.diff(checkinDate)).asDays());
+
             const booking = new Booking({
                 customers: existingCustomer._id,
                 rooms: roomId, // Single room per booking
                 Time: {
-                    Checkin: new Date(checkin),
-                    Checkout: new Date(checkout),
+                    Checkin: checkinDate.toDate(),
+                    Checkout: checkoutDate.toDate(),
                 },
-                SumPrice: room.Price, // Use the room's price
+                SumPrice: room.Price * nights, // Multiply room price by number of nights
                 Status: Status || "Pending",
                 hotel: room.hotel // Link to the hotel
             });

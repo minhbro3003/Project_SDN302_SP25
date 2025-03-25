@@ -32,7 +32,7 @@ const ReservationPage = () => {
     const [paymentType, setPaymentType] = useState(""); // For Partial Pay / Full Pay
     const [checkingAvailability, setCheckingAvailability] = useState(false);
     const [showRoomTables, setShowRoomTables] = useState(false);
-    const totalRoomPrice = selectedRooms.reduce((total, room) => total + room.Price, 0);
+    const totalRoomPrice = selectedRooms.reduce((total, room) => total + room.totalPrice, 0);
     const totalServicePrice = selectedServices.reduce((total, service) => total + service.totalPrice, 0);
     const finalPrice = totalRoomPrice + totalServicePrice;
     const account = useSelector((state) => state.account);
@@ -182,7 +182,18 @@ const ReservationPage = () => {
             return;
         }
 
-        const updatedRoom = { ...room, checkin: dates[0], checkout: dates[1] };
+        // Keep dates in local timezone for display
+        const nights = Math.floor(moment.duration(dates[1].diff(dates[0])).asDays());
+
+        const updatedRoom = {
+            ...room,
+            // Store the dates exactly as selected in the date picker
+            checkin: dates[0].format("YYYY-MM-DD HH:mm:ss"),
+            checkout: dates[1].format("YYYY-MM-DD HH:mm:ss"),
+            nights: nights,
+            totalPrice: room.Price * nights
+        };
+
         setSelectedRooms([...selectedRooms, updatedRoom]);
         setAvailableRooms(availableRooms.filter((r) => r._id !== room._id));
     };
@@ -315,7 +326,23 @@ const ReservationPage = () => {
     const selectedColumns = [
         { title: "Room Name", dataIndex: "RoomName", key: "RoomName" },
         { title: "Description", dataIndex: "Description", key: "Description" },
-        { title: "Price", dataIndex: "Price", key: "Price" },
+        {
+            title: "Price/Night",
+            dataIndex: "Price",
+            key: "Price",
+            render: (text) => `${text} VND`
+        },
+        {
+            title: "Nights",
+            dataIndex: "nights",
+            key: "nights"
+        },
+        {
+            title: "Total Price",
+            dataIndex: "totalPrice",
+            key: "totalPrice",
+            render: (text) => `${text} VND`
+        },
         {
             title: "Status",
             dataIndex: "Status",
@@ -420,105 +447,6 @@ const ReservationPage = () => {
         },
     ];
 
-    // const handleSubmit = async () => {
-    //     if (!form.getFieldValue("full_name") || !form.getFieldValue("phone") || !form.getFieldValue("cccd")) {
-    //         api.error({
-    //             message: "Missing Information",
-    //             description: "Please fill in all customer information fields.",
-    //         });
-    //         return;
-    //     }
-
-    //     if (selectedRooms.length === 0) {
-    //         api.error({
-    //             message: "No Rooms Selected",
-    //             description: "Please select at least one room before booking.",
-    //         });
-    //         return;
-    //     }
-
-    //     if (!dates[0] || !dates[1]) {
-    //         api.error({
-    //             message: "Missing Dates",
-    //             description: "Please select check-in and check-out dates.",
-    //         });
-    //         return;
-    //     }
-
-    //     if (!paymentMethod) {
-    //         api.error({
-    //             message: "Missing Payment Method",
-    //             description: "Please select a payment method.",
-    //         });
-    //         return;
-    //     }
-
-    //     if (paymentMethod === "Credit Card" && !paymentType) {
-    //         api.error({
-    //             message: "Missing Payment Type",
-    //             description: "Please select a payment type for credit card payment.",
-    //         });
-    //         return;
-    //     }
-
-    //     setLoading(true);
-
-    //     // Prepare booking data
-    //     const bookingData = {
-    //         customer: {
-    //             full_name: form.getFieldValue("full_name"),
-    //             phone: form.getFieldValue("phone"),
-    //             cccd: form.getFieldValue("cccd"),
-    //         },
-    //         rooms: selectedRooms.map(room => room._id),  // Pass only room IDs
-    //         services: selectedServices.map(service => ({
-    //             serviceId: service.serviceId,
-    //             quantity: service.quantity,
-    //         })),
-    //         checkin: dates[0],
-    //         checkout: dates[1],
-    //         paymentMethod: paymentMethod,
-    //         SumPrice: selectedRooms.reduce((total, room) => total + room.Price, 0), // Add the total price of selected rooms
-    //         Status: "Pending", // Add status
-    //     };
-
-    //     // Prepare transaction data
-    //     const transactionData = {
-    //         services: selectedServices.map(service => ({
-    //             serviceId: service.serviceId,
-    //             quantity: service.quantity,
-    //         })),
-    //         FinalPrice: bookingData.SumPrice + selectedServices.reduce((total, service) => total + service.totalPrice, 0), // Add total service price
-    //         PaidAmount: 0, // Or use any value based on payment method
-    //         PaymentMethod: paymentMethod,
-    //         paymentType: paymentType,
-    //         PaymentReference: paymentLink,
-    //         CreatedBy: account.fullName, // Or replace with logged-in user information
-    //     };
-
-    //     try {
-    //         const result = await createTransaction(bookingData, transactionData);
-    //         if (result.status === "OK") {
-    //             api.success({
-    //                 message: "Booking Successful",
-    //                 description: "Your booking has been created successfully.",
-    //             });
-    //             navigate("/reservationlist");
-    //         } else {
-    //             api.error({
-    //                 message: "Booking Failed",
-    //                 description: result.message,
-    //             });
-    //         }
-    //     } catch (error) {
-    //         api.error({
-    //             message: "Error",
-    //             description: "An error occurred while creating the booking and transaction.",
-    //         });
-    //     }
-
-    //     setLoading(false);
-    // };
     const handleSubmit = async () => {
         if (!form.getFieldValue("full_name") || !form.getFieldValue("phone") || !form.getFieldValue("cccd")) {
             api.error({
@@ -562,7 +490,7 @@ const ReservationPage = () => {
 
         setLoading(true);
 
-        // Chuẩn bị dữ liệu đặt phòng
+        // Keep the exact dates selected by user
         const bookingData = {
             customer: {
                 full_name: form.getFieldValue("full_name"),
@@ -574,10 +502,11 @@ const ReservationPage = () => {
                 serviceId: service.serviceId,
                 quantity: service.quantity,
             })),
-            checkin: dates[0],
-            checkout: dates[1],
+            // Send the dates exactly as they were selected
+            checkin: dates[0].format("YYYY-MM-DD HH:mm:ss"),
+            checkout: dates[1].format("YYYY-MM-DD HH:mm:ss"),
             paymentMethod: paymentMethod,
-            SumPrice: selectedRooms.reduce((total, room) => total + room.Price, 0),
+            SumPrice: selectedRooms.reduce((total, room) => total + room.totalPrice, 0),
             Status: "Pending",
         };
 
@@ -604,13 +533,6 @@ const ReservationPage = () => {
                 });
 
                 // Gửi thông báo đến Admin qua Socket.io
-                socket.emit("new_booking", {
-                    sender: bookingData.customer.full_name || "Hệ thống",
-                    message: `Đã có một booking mới! Khách: ${bookingData.customer.full_name || "Không xác định"} 
-                        đã đặt phòng ${selectedRooms.map(room => room.RoomName).join(", ") || "Không xác định"} 
-                        từ ngày ${bookingData.checkin || "N/A"} đến ngày ${bookingData.checkout || "N/A"}.`,
-                    createdAt: new Date().toISOString()
-                });
 
                 // Cập nhật danh sách đặt phòng
                 // fetchBookings();
@@ -766,13 +688,13 @@ const ReservationPage = () => {
                 </Row>
 
                 <Card title="Total Summary" bordered={false} style={{ width: "100%", textAlign: "center" }}>
-                    <Statistic title="Room Price" value={totalRoomPrice} prefix="$" />
-                    <Statistic title="Service Price" value={totalServicePrice} prefix="$" />
+                    <Statistic title="Room Price" value={totalRoomPrice} suffix="đ" />
+                    <Statistic title="Service Price" value={totalServicePrice} suffix="đ" />
                     <Statistic
                         title="Final Price"
                         value={finalPrice}
-                        prefix="$"
                         valueStyle={{ color: "#3f8600", fontWeight: "bold" }}
+                        suffix="đ"
                     />
                 </Card>
 

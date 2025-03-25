@@ -20,7 +20,7 @@ const AddHotel = () => {
     Introduce: "",
     LocationHotel: "",
     image: "",
-    Active: false,
+    Active: true,
   });
 
   const handleOnChangeImageDetails = async ({ fileList }) => {
@@ -42,7 +42,7 @@ const AddHotel = () => {
       Introduce: values.introduction || "",
       LocationHotel: values.location,
       image: stateHotel.image || values.image,
-      Active: values.Active || false,
+      Active: values.Active || true,
     };
 
     // console.log("📤 Dữ liệu gửi lên BE:", formData);
@@ -53,7 +53,7 @@ const AddHotel = () => {
       if (response.status === "OK") {
         api.success({ message: "Hotel created successfully!" });
         form.resetFields();
-        setStateHotel(prev => ({ ...prev, image: "" }));
+        setStateHotel(prev => ({ ...prev, image: "", }));
         setTimeout(() => navigate("/hotel/hotel-list"), 2000);
       } else {
         api.error({ message: response.message || "Failed to create hotel." });
@@ -119,7 +119,7 @@ const AddHotel = () => {
               </Col>
               <Col span={12}>
                 <Form.Item name="Active" label="Status" valuePropName="checked" style={{ minHeight: 32 }}>
-                  <Switch />
+                  <Switch defaultChecked={true} />
                 </Form.Item>
               </Col>
             </Row>

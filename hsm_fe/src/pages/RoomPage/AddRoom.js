@@ -9,6 +9,9 @@ import * as AmenityService from "../../services/AmenityService";
 import * as RoomAmenityService from "../../services/RoomAmenitiesService";
 import { convertPrice, getBase64, renderOptions } from "../../utils";
 import ModalComponent from "../../components/ModalComponent/ModalComponent";
+import { useNavigate } from "react-router-dom";
+import { Tooltip, Typography } from "antd";
+import { InfoCircleOutlined } from "@ant-design/icons"
 
 const { Option } = Select;
 
@@ -26,7 +29,7 @@ const AddRoomForm = ({ initialValues }) => {
     const [amenitiesQuantity, setAmenitiesQuantity] = useState({});
     const [selectedAmenityId, setSelectedAmenityId] = useState(null);
     const [currentForm, setCurrentForm] = useState("single"); // "single" hoặc "bulk"
-
+    const navigate = useNavigate();
 
     const [stateRoom, setStateRoom] = useState({
         roomName: "", price: "", roomType: [], floor: "", hotel: [], image: "", description: "", quantity: "",
@@ -92,16 +95,17 @@ const AddRoomForm = ({ initialValues }) => {
         try {
             let hotelId = form.getFieldValue("hotel");
             if (!hotelId) {
-                hotelId = stateRoom.hotel; // Lấy từ stateRoom nếu formBulk chưa có
+                hotelId = stateRoom.hotel;
             }
 
-            if (!hotelId) {
-                api.error({ message: "⚠ Please select a hotel!" });
+            if (!hotelId || hotelId.length === 0) {
+                api.error({ message: "Please select a hotel!" });
                 return;
             }
+
             const roomName = stateRoom.roomName;
             setCurrentForm("single");
-            // Kiểm tra xem phòng có tồn tại trên cùng một tầng không
+
             const isRoomExist = existingRooms.some(
                 (room) => room.RoomName === roomName
             );
@@ -114,7 +118,6 @@ const AddRoomForm = ({ initialValues }) => {
                 return;
             }
 
-            // Nếu không trùng, tiến hành tạo phòng
             const roomParams = {
                 RoomName: roomName,
                 Price: Number(stateRoom.price),
@@ -124,9 +127,8 @@ const AddRoomForm = ({ initialValues }) => {
                 Image: stateRoom.image,
                 Description: stateRoom.description,
             };
+
             console.log("roomParams:", roomParams);
-
-
             const roomResponse = await mutationCreate.mutateAsync(roomParams);
 
             if (roomResponse?.status !== "OK") {
@@ -178,6 +180,14 @@ const AddRoomForm = ({ initialValues }) => {
                     description: "Room was added, but no amenities were linked.",
                 });
             }
+
+            setRooms([]);
+            form.resetFields();
+
+            setTimeout(() => {
+                navigate("/rooms/room-list");
+            }, 3000);
+
         } catch (error) {
             console.error("Error in handleFinish:", error);
             api.error({
@@ -300,48 +310,41 @@ const AddRoomForm = ({ initialValues }) => {
 
     const handleBulkAdd = () => {
         setCurrentForm("bulk");
+
         setTimeout(() => {
-            let hotelId = formBulk.getFieldValue("hotel");
-            if (!hotelId) {
-                hotelId = stateRoom.hotel; // Lấy từ stateRoom nếu formBulk chưa có
+            let hotelId = formBulk.getFieldValue("hotel") || stateRoom.hotel;
+
+            if (Array.isArray(hotelId)) {
+                hotelId = hotelId.length > 0 ? hotelId[0] : null;
             }
 
             if (!hotelId) {
-                api.error({ message: "⚠ Please select a hotel!" });
+                api.error({ message: "Please select a hotel!" });
                 return;
             }
 
-            const roomName = formBulk.getFieldValue("roomName").trim();
-            // const floor = formBulk.getFieldValue("floor");
-
+            const roomName = formBulk.getFieldValue("roomName")?.trim();
             if (!roomName) {
-                api.error({ message: "⚠ Room name is required!" });
+                api.error({ message: "Room name is required!" });
                 return;
             }
 
             const quantity = formBulk.getFieldValue("quantity") || 1;
             const selectedAmenities = [...new Set(formBulk.getFieldValue("amenities") || [])];
 
-            // 📌 Chuẩn hóa roomName: Nếu R1, R2... thì chuyển thành R01, R02...
             const match = roomName.match(/^([A-Za-z]+)(\d+)$/);
             let prefix = roomName;
             let baseNumber = 1; // Mặc định số bắt đầu là 1
 
             if (match) {
-                prefix = match[1]; // Lấy phần chữ (R)
-                baseNumber = parseInt(match[2], 10); // Lấy số (1 hoặc 10)
-
-                // 📌 Nếu số nhỏ hơn 10, thêm '0' vào trước (R1 → R101)
+                prefix = match[1];
+                baseNumber = parseInt(match[2], 10);
                 if (baseNumber < 10) {
                     baseNumber = `10${baseNumber}`;
                 }
             }
 
-            // 📌 Lấy danh sách số phòng trên tầng hiện tại (bao gồm cả những phòng đã queue)
-            const roomsOnSameFloor = [...existingRooms, ...rooms]
-                // .filter(room => room.Floor === floor)
-                .map(room => room.RoomName);
-
+            const roomsOnSameFloor = [...existingRooms, ...rooms].map(room => room.RoomName);
             let existingNumbers = roomsOnSameFloor
                 .map(name => {
                     const match = name.match(new RegExp(`^${prefix}(\\d+)$`));
@@ -352,16 +355,15 @@ const AddRoomForm = ({ initialValues }) => {
 
             let newRooms = [];
             let usedNumbers = new Set(existingNumbers);
-            let numberToUse = parseInt(baseNumber, 10); // Chuyển baseNumber về số nguyên
+            let numberToUse = parseInt(baseNumber, 10);
 
             for (let i = 0; i < quantity; i++) {
-                // Tìm số phòng trống nhỏ nhất
                 while (usedNumbers.has(numberToUse)) {
                     numberToUse++;
                 }
 
                 let newRoomName = `${prefix}${numberToUse}`;
-                usedNumbers.add(numberToUse); // Đánh dấu số đã dùng
+                usedNumbers.add(numberToUse);
 
                 let newRoom = {
                     key: newRoomName,
@@ -369,7 +371,7 @@ const AddRoomForm = ({ initialValues }) => {
                     Price: formBulk.getFieldValue("Price"),
                     RoomType: formBulk.getFieldValue("roomtype"),
                     Floor: formBulk.getFieldValue("floor"),
-                    Hotel: formBulk.getFieldValue("hotel"),
+                    Hotel: hotelId,  // 💡 Sử dụng `hotelId` đã kiểm tra
                     Description: formBulk.getFieldValue("description"),
                     Image: imageList.length > 0 ? imageList[0].url : "",
                     roomAmenities: selectedAmenities.map(amenityId => ({
@@ -383,14 +385,14 @@ const AddRoomForm = ({ initialValues }) => {
             }
 
             if (newRooms.length === 0) {
-                api.error({ message: "⚠ No valid rooms to add!" });
+                api.error({ message: "No valid rooms to add!" });
                 return;
             }
 
             console.log("🚀 New rooms added:", newRooms);
-            setRooms(prevRooms => [...prevRooms, ...newRooms]); // Cập nhật danh sách phòng queue
-            api.success({ message: `✅ ${newRooms.length} rooms added successfully!` });
-        }, 1500);
+            setRooms(prevRooms => [...prevRooms, ...newRooms]);
+            api.success({ message: `${newRooms.length} rooms added successfully!` });
+        }, 500); // ⏳ Giảm delay xuống 500ms thay vì 1500ms
     };
 
     const handleSubmitBulk = async () => {
@@ -460,6 +462,11 @@ const AddRoomForm = ({ initialValues }) => {
 
             setRooms([]);
             formBulk.resetFields();
+
+            setTimeout(() => {
+                navigate("/rooms/room-list");
+            }, 3000);
+
         } catch (error) {
             console.error("❌ Error creating multiple rooms:", error);
             api.error({ message: "⚠ Failed to add multiple rooms!" });
@@ -478,9 +485,9 @@ const AddRoomForm = ({ initialValues }) => {
                                 handleOnChangeSelect("hotel", value);
 
                                 if (currentForm === "bulk") {
-                                    form.setFieldsValue({ hotel: value });
-                                } else {
                                     formBulk.setFieldsValue({ hotel: value });
+                                } else {
+                                    form.setFieldsValue({ hotel: value });
                                 }
                             }}
                             placeholder="Select Hotel"
@@ -489,9 +496,9 @@ const AddRoomForm = ({ initialValues }) => {
                                 <Option key={h._id} value={h._id}>{h.NameHotel}</Option>
                             ))}
                         </Select>
-                        {mutationCreate.data?.status === "ERR" && (
+                        {/* {mutationCreate.data?.status === "ERR" && (
                             <span style={{ color: "red" }}>*{mutationCreate.data?.message}</span>
-                        )}
+                        )} */}
                     </Form.Item>
                 </Col>
                 <Col span={7}>
@@ -537,9 +544,9 @@ const AddRoomForm = ({ initialValues }) => {
                                     <Col span={12}>
                                         <Form.Item label="Room Name" name="roomName" rules={[{ required: true, message: "Please enter room name" }]}>
                                             <Input value={stateRoom.roomName} name="roomName" onChange={handleOnChange} placeholder="Enter room name" />
-                                            {mutationCreate.data?.status === "ERR" && (
+                                            {/* {mutationCreate.data?.status === "ERR" && (
                                                 <span style={{ color: "red" }}>*{mutationCreate.data?.message}</span>
-                                            )}
+                                            )} */}
                                         </Form.Item>
                                     </Col>
                                     <Col span={12}>
@@ -689,8 +696,28 @@ const AddRoomForm = ({ initialValues }) => {
                             <Form form={formBulk} layout="vertical" initialValues={initialValues} onFinish={handleSubmitBulk} >
                                 <Row gutter={16}>
                                     <Col span={12}>
-                                        <Form.Item label="Room Name" name="roomName" rules={[{ required: true, message: "Please enter room name" }]}>
-                                            <Input value={stateRoom.roomName} name="roomName" onChange={handleOnChange} placeholder="Enter room name" />
+                                        {/* <Form.Item label="Room Name" name="roomName" rules={[{ required: true, message: "Please enter room name" }]}>
+                                            <Input value={stateRoom.roomName} name="roomName" onChange={handleOnChange} placeholder="Enter room name (e.g., R1, B2, D3)" />
+                                        </Form.Item> */}
+                                        <Form.Item
+                                            label={
+                                                <span style={{ fontWeight: 600, color: "#1890ff" }}>
+                                                    Room Name
+                                                    <Tooltip title="Enter a room code in the format: Letter + Number (e.g., R1, B2, D3)">
+                                                        <InfoCircleOutlined style={{ marginLeft: 8, color: "#1890ff" }} />
+                                                    </Tooltip>
+                                                </span>
+                                            }
+                                            name="roomName"
+                                            rules={[{ required: true, message: "Please enter room name" }]}
+                                        >
+                                            <Input
+                                                value={stateRoom.roomName}
+                                                name="roomName"
+                                                onChange={handleOnChange}
+                                                placeholder="Enter room code (e.g., R1, B2, D3)"
+
+                                            />
                                         </Form.Item>
                                     </Col>
                                     <Col span={12}>

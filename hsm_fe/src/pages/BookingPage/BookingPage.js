@@ -378,17 +378,17 @@ const BookingPage = () => {
                     <Col span={24}>
                       <Text strong>Guest Name:</Text>
                       <br />
-                      {selectedBooking.customers.full_name}
+                      {selectedBooking?.customers?.full_name}
                     </Col>
                     <Col span={12}>
                       <Text strong>Phone:</Text>
                       <br />
-                      {selectedBooking.customers.phone}
+                      {selectedBooking?.customers?.phone}
                     </Col>
                     <Col span={12}>
                       <Text strong>CCCD:</Text>
                       <br />
-                      {selectedBooking.customers.cccd}
+                      {selectedBooking?.customers?.cccd}
                     </Col>
                   </Row>
                 </Col>

@@ -114,7 +114,7 @@ const Housekeeping = () => {
     const persistedData = localStorage.getItem("persist:root");
     if (!persistedData) {
       console.error("Không tìm thấy dữ liệu tài khoản. Hãy đăng nhập lại.");
-      toast.error("Không tìm thấy dữ liệu tài khoản. Hãy đăng nhập lại.", { autoClose: 3000 });
+      toast.error("Account data not found.Please log in again.", { autoClose: 3000 });
       return;
     }
 
@@ -193,13 +193,13 @@ const Housekeeping = () => {
       );
 
       if (!housekeepingTask) {
-        toast.error("Không tìm thấy công việc dọn phòng.", { autoClose: 3000 });
+        toast.error("Cleaning task not found.", { autoClose: 3000 });
         return;
       }
 
       // Kiểm tra quyền truy cập
       if (housekeepingTask.assignedTo._id !== currentEmployeeId) {
-        toast.error("Bạn không phải là nhân viên được giao nhiệm vụ dọn phòng này!", { autoClose: 3000 });
+        toast.error("You are not the staff assigned to clean this room!", { autoClose: 3000 });
         return;
       }
 

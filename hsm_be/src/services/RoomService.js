@@ -90,12 +90,12 @@ const createRoomService = async (newRoom) => {
         const checkRoomName = await Rooms.findOne({
             RoomName: { $regex: `^${RoomName.trim()}$`, $options: "i" },
         });
-        if (checkRoomName) {
-            return {
-                status: "ERR",
-                message: "The room name already exists",
-            };
-        }
+        // if (checkRoomName) {
+        //     return {
+        //         status: "ERR",
+        //         message: "The room name already exists",
+        //     };
+        // }
         //create room
         const newedRoomData = new Rooms({
             RoomName, Price, Status, Floor, Active, hotel,
