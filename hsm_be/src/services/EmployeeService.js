@@ -188,30 +188,72 @@ const updateEmployeeWithSchedule = async (req) => {
     }
 };
 
+// const getListEmployees = async () => {
+
+//     const employees = await Employee.find().populate("hotels").populate({
+//         path: "accountId", // Lấy thông tin tài khoản
+//         populate: {
+//             path: "permissions", // Lấy thông tin quyền
+//             model: "permissions",
+//         },
+//     }); // Load thông tin khách sạn từ bảng hotels
+
+//     return employees.map(emp => ({
+//         _id: emp._id,
+//         fullname: emp.FullName,
+//         email: emp.Email,
+//         phone: emp.Phone,
+
+//         position: emp.accountId && emp.accountId.permissions.length > 0
+//             ? emp.accountId.permissions.map(p => `${p.PermissionName}`).join(", ")
+//             : "No Position Assigned",
+
+//         area: emp.hotels.length > 0
+//             ? `${emp.hotels[0].NameHotel} - ${emp.hotels[0].LocationHotel}`
+//             : "No Hotel Assigned"
+//     }));
+// };
+
 const getListEmployees = async () => {
+    const employees = await Employee.find()
+        .populate("hotels")
+        .populate({
+            path: "accountId",
+            populate: {
+                path: "permissions",
+                model: "permissions",
+            },
+        });
 
-    const employees = await Employee.find().populate("hotels").populate({
-        path: "accountId", // Lấy thông tin tài khoản
-        populate: {
-            path: "permissions", // Lấy thông tin quyền
-            model: "permissions",
-        },
-    }); // Load thông tin khách sạn từ bảng hotels
-
-    return employees.map(emp => ({
-        _id: emp._id,
-        fullname: emp.FullName,
-        email: emp.Email,
-        phone: emp.Phone,
-
-        position: emp.accountId && emp.accountId.permissions.length > 0
-            ? emp.accountId.permissions.map(p => `${p.PermissionName}`).join(", ")
-            : "No Position Assigned",
-
-        area: emp.hotels.length > 0
-            ? `${emp.hotels[0].NameHotel} - ${emp.hotels[0].LocationHotel}`
-            : "No Hotel Assigned"
-    }));
+    return employees
+        .filter((emp) => {
+            // Kiểm tra nếu không có accountId hoặc không có permissions, giữ nhân viên này
+            if (!emp.accountId || !emp.accountId.permissions) {
+                return true;
+            }
+            // Kiểm tra xem nhân viên có quyền "Admin" hay không
+            const hasAdminPermission = emp.accountId.permissions.some(
+                (permission) => permission.PermissionName === "Admin"
+            );
+            // Nếu có quyền "Admin", loại bỏ nhân viên này (return false)
+            // Nếu không có quyền "Admin", giữ nhân viên này (return true)
+            return !hasAdminPermission;
+        })
+        .map((emp) => ({
+            _id: emp._id,
+            fullname: emp.FullName,
+            email: emp.Email,
+            phone: emp.Phone,
+            position:
+                emp.accountId && emp.accountId.permissions.length > 0
+                    ? emp.accountId.permissions.map((p) => `${p.PermissionName}`).join(", ")
+                    : "No Position Assigned",
+            area:
+                emp.hotels.length > 0
+                    ? `${emp.hotels[0].NameHotel} - ${emp.hotels[0].LocationHotel}`
+                    : "No Hotel Assigned",
+            isBlocked: emp.accountId ? emp.accountId.IsDelete : false,
+        }));
 };
 
 module.exports = {

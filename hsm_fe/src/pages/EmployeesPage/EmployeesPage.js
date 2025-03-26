@@ -203,11 +203,11 @@ const EmployeesPage = () => {
       ...getColumnSearchProps("area"),
       sorter: (a, b) => a.area.length - b.area.length,
     },
-    {
-      title: "Action",
-      key: "action",
-      render: renderAction,
-    },
+    // {
+    //   title: "Action",
+    //   key: "action",
+    //   render: renderAction,
+    // },
   ];
 
   return (

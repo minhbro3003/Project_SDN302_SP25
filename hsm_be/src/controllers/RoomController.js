@@ -102,13 +102,21 @@ const getRoomByRoomId = async (req, res) => {
 //create a room
 const createRooms = async (req, res) => {
     try {
-        // const {
-        //     RoomName, Price, Status, Floor, hotel,
-        //     roomtype, room_amenities, Description, Image
-        // } = req.body;
+        const {
+            RoomName, Price, Status, Floor, hotel,
+            roomtype, room_amenities, Description, Image
+        } = req.body;
         // console.log("req.body", req.body);
         const requiredFields = ["RoomName", "Price", "Floor", "hotel"];
         const missingFields = requiredFields.filter(field => !req.body[field]);
+
+        if (
+            !RoomName || !Price || !Floor || !hotel
+        ) {
+            return res
+                .status(200)
+                .json({ status: "ERR", message: "The input is required." });
+        }
 
         if (missingFields.length > 0) {
             return res.status(400).json({

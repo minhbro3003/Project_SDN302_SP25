@@ -9,7 +9,7 @@ import ProfilePage from "../pages/ProfilePage/ProfilePage";
 import RevenuePage from "../pages/RevenuePage/RevenuePage";
 import AddRoom from "../pages/RoomPage/AddRoom";
 import RoomDashboard from "../pages/RoomPage/RoomDashboard";
-import { SettingOutlined, AppstoreAddOutlined, HomeOutlined, BarChartOutlined, LineChartOutlined, PlusCircleOutlined, TableOutlined, BorderOuterOutlined, ProfileOutlined, BankOutlined } from '@ant-design/icons';
+import { SettingOutlined, AppstoreAddOutlined, HomeOutlined, BarChartOutlined, LineChartOutlined, PlusCircleOutlined, TableOutlined, BorderOuterOutlined, ProfileOutlined, BankOutlined, CalendarOutlined, DesktopOutlined, WifiOutlined, DollarCircleOutlined, OrderedListOutlined } from '@ant-design/icons';
 import RoomList from "../pages/RoomPage/RoomList";
 import EmployeesPage from "../pages/EmployeesPage/EmployeesPage";
 import EmployeeDetail from "../pages/EmployeesPage/EmployeeDetail/EmployeeDetail";
@@ -124,7 +124,7 @@ export const routes = [
         name: "Booking",
         isShowHeader: true,
         permissions: ["Admin", "Receptionist", "Hotel-Admin"],
-        icon: <BankOutlined />,
+        icon: <CalendarOutlined />,
         children: [
             {
                 path: "/booking/booking-calendar",
@@ -157,20 +157,20 @@ export const routes = [
         name: "Reservation",
         isShowHeader: true,
         permissions: ["Admin", "Receptionist", "Hotel-Admin"],
-        icon: <BarChartOutlined />,
+        icon: <DollarCircleOutlined />,
         children: [{
             path: "/createreservation",
             name: "Create Reservation",
             page: ReservationPage,
             isShowHeader: true,
-            icon: <HomeOutlined />,
+            icon: <OrderedListOutlined />,
             permissions: ["Admin", "Receptionist", "Hotel-Admin"],
         }, {
             path: "/reservationlist",
             name: "Reservation History",
             page: ReservationList,
             isShowHeader: true,
-            icon: <HomeOutlined />,
+            icon: <TableOutlined />,
             permissions: ["Admin", "Receptionist", "Hotel-Admin"],
         }
         ]
@@ -237,7 +237,7 @@ export const routes = [
         name: "Amenities",
         page: AmenityListPage,
         isShowHeader: true,
-        icon: <TableOutlined />,
+        icon: <WifiOutlined />,
         permissions: ["Admin"], // Only Admin can access
     },
     {
@@ -245,7 +245,7 @@ export const routes = [
         name: "Service",
         page: ServicePage,
         isShowHeader: true,
-        icon: <HomeOutlined />,
+        icon: <DesktopOutlined />,
         permissions: ["Admin"],
     },
     {
