@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react";
-import { Calendar, Badge, DatePicker, Row, Col, Select, Card, Tooltip, Modal, Button, Spin } from "antd";
+import React, { useState, useEffect, useMemo } from "react";
+import { Calendar, Badge, DatePicker, Row, Col, Select, Card, Tooltip, Modal, Button, Spin, Form, Statistic } from "antd";
 import { useQuery } from "@tanstack/react-query";
 import moment from "moment";
 import * as RoomDashboardService from "../../services/RoomDashboardService";
@@ -26,13 +26,25 @@ const RoomDashboard = () => {
     const userHotel = account.employee?.hotels?.[0] || null;
 
     const [selectedHotel, setSelectedHotel] = useState(null);
-    const [dateRange, setDateRange] = useState([moment(), moment().add(7, 'days')]);
+    const [dateRange, setDateRange] = useState([
+        moment().startOf('day'),
+        moment().add(7, 'days').startOf('day')
+    ]);
     const [roomsData, setRoomsData] = useState([]);
+    const [dates, setDates] = useState([null, null]);
     const [loading, setLoading] = useState(false);
     const [selectedRoom, setSelectedRoom] = useState(null);
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [filterFloor, setFilterFloor] = useState('all');
     const [filterType, setFilterType] = useState('all');
+    const [showRoomTables, setShowRoomTables] = useState(false);
+    const [stats, setStats] = useState({
+        total: 0,
+        available: 0,
+        occupied: 0,
+        maintenance: 0,
+        cleaning: 0
+    });
 
     // Fetch hotels for admin
     const { data: hotels = [] } = useQuery({
@@ -41,18 +53,18 @@ const RoomDashboard = () => {
         enabled: isAdmin,
     });
 
-    // Stats calculation
-    const stats = {
-        total: roomsData.length,
-        available: roomsData.filter(room => room.status === "Available").length,
-        occupied: roomsData.filter(room => room.status === "Occupied").length,
-        maintenance: roomsData.filter(room => room.status === "Maintenance").length,
-        cleaning: roomsData.filter(room => room.status === "Cleaning").length,
-    };
+    // Get unique floors and room types for filters - with null checks
+    const floors = useMemo(() => {
+        return roomsData && roomsData.length > 0
+            ? [...new Set(roomsData.map(room => room?.Floor))].sort((a, b) => a - b)
+            : [];
+    }, [roomsData]);
 
-    // Get unique floors and room types for filters
-    const floors = [...new Set(roomsData.map(room => room.Floor))].sort((a, b) => a - b);
-    const roomTypes = [...new Set(roomsData.map(room => room.roomtype?.TypeName))];
+    const roomTypes = useMemo(() => {
+        return roomsData && roomsData.length > 0
+            ? [...new Set(roomsData.map(room => room?.roomtype?.TypeName))]
+            : [];
+    }, [roomsData]);
 
     useEffect(() => {
         if (!isAdmin && userHotel) {
@@ -70,17 +82,38 @@ const RoomDashboard = () => {
                 dateRange[0].format('YYYY-MM-DD'),
                 dateRange[1].format('YYYY-MM-DD')
             );
-            setRoomsData(response.data);
+
+            if (response?.status === "OK" && response?.data) {
+                setRoomsData(response.data.rooms || []);
+                setStats(response.data.stats || {
+                    total: 0,
+                    available: 0,
+                    occupied: 0,
+                    maintenance: 0,
+                    cleaning: 0
+                });
+                console.log("Stats received:", response.data.stats); // Debug log
+            }
         } catch (error) {
             console.error("Error fetching room data:", error);
+            setRoomsData([]);
+            setStats({
+                total: 0,
+                available: 0,
+                occupied: 0,
+                maintenance: 0,
+                cleaning: 0
+            });
         } finally {
             setLoading(false);
         }
     };
 
     useEffect(() => {
-        fetchRoomData();
-    }, [selectedHotel, dateRange]);
+        if (selectedHotel && dateRange[0] && dateRange[1]) {
+            fetchRoomData();
+        }
+    }, [selectedHotel, dateRange[0], dateRange[1]]);
 
     const handleRoomClick = async (room) => {
         setSelectedRoom(room);
@@ -97,11 +130,16 @@ const RoomDashboard = () => {
         }
     };
 
-    const filteredRooms = roomsData.filter(room => {
-        const floorMatch = filterFloor === 'all' || room.Floor.toString() === filterFloor;
-        const typeMatch = filterType === 'all' || room.roomtype?.TypeName === filterType;
-        return floorMatch && typeMatch;
-    });
+    // Filter rooms with null checks
+    const filteredRooms = useMemo(() => {
+        if (!roomsData) return [];
+
+        return roomsData.filter(room => {
+            const floorMatch = filterFloor === 'all' || room?.Floor?.toString() === filterFloor;
+            const typeMatch = filterType === 'all' || room?.roomtype?.TypeName === filterType;
+            return floorMatch && typeMatch;
+        });
+    }, [roomsData, filterFloor, filterType]);
 
     const getStatusColor = (status) => {
         const colors = {
@@ -113,6 +151,43 @@ const RoomDashboard = () => {
         return colors[status] || '#d9d9d9';
     };
 
+    const disabledTime = (current) => {
+        if (current && current.isSame(moment(), 'day')) {
+            const currentHour = moment().hour();
+            const currentMinute = moment().minute();
+
+            return {
+                disabledHours: () => Array.from({ length: currentHour }, (_, i) => i),
+                disabledMinutes: (selectedHour) =>
+                    selectedHour === currentHour
+                        ? Array.from({ length: currentMinute }, (_, i) => i)
+                        : []
+            };
+        }
+        return {};
+    };
+
+    const handleDateChange = (value) => {
+        if (value && value[0] && value[1]) {
+            // Update both date states
+            setDates(value);
+            setDateRange([value[0], value[1]]);  // This will trigger the useEffect and fetchRoomData
+        } else {
+            setDates(null);
+            setDateRange([null, null]);
+        }
+        setShowRoomTables(false);
+    };
+
+    // Add this function to handle hotel selection
+    const handleHotelChange = (hotelId) => {
+        setSelectedHotel(hotelId);
+        // If dates are already selected, trigger the fetch
+        if (dateRange[0] && dateRange[1]) {
+            fetchRoomData();
+        }
+    };
+
     return (
         <RoomDashboardContainer>
             <Row gutter={[24, 24]}>
@@ -120,19 +195,49 @@ const RoomDashboard = () => {
                 <Col span={24}>
                     <Row gutter={16}>
                         <Col span={4}>
-                            <StatsCard title="Total Rooms" value={stats.total} />
+                            <Card>
+                                <Statistic
+                                    title="Total Rooms"
+                                    value={stats.total || 0}
+                                    valueStyle={{ color: '#1890ff' }}
+                                />
+                            </Card>
                         </Col>
                         <Col span={4}>
-                            <StatsCard title="Available" value={stats.available} color="#52c41a" />
+                            <Card>
+                                <Statistic
+                                    title="Available"
+                                    value={stats.available || 0}
+                                    valueStyle={{ color: '#52c41a' }}
+                                />
+                            </Card>
                         </Col>
                         <Col span={4}>
-                            <StatsCard title="Occupied" value={stats.occupied} color="#f5222d" />
+                            <Card>
+                                <Statistic
+                                    title="Occupied"
+                                    value={stats.occupied || 0}
+                                    valueStyle={{ color: '#f5222d' }}
+                                />
+                            </Card>
                         </Col>
                         <Col span={4}>
-                            <StatsCard title="Maintenance" value={stats.maintenance} color="#faad14" />
+                            <Card>
+                                <Statistic
+                                    title="Maintenance"
+                                    value={stats.maintenance || 0}
+                                    valueStyle={{ color: '#faad14' }}
+                                />
+                            </Card>
                         </Col>
                         <Col span={4}>
-                            <StatsCard title="Cleaning" value={stats.cleaning} color="#1890ff" />
+                            <Card>
+                                <Statistic
+                                    title="Cleaning"
+                                    value={stats.cleaning || 0}
+                                    valueStyle={{ color: '#1890ff' }}
+                                />
+                            </Card>
                         </Col>
                     </Row>
                 </Col>
@@ -146,7 +251,7 @@ const RoomDashboard = () => {
                                     <Select
                                         style={{ width: '100%' }}
                                         placeholder="Select Hotel"
-                                        onChange={setSelectedHotel}
+                                        onChange={handleHotelChange}
                                         value={selectedHotel}
                                     >
                                         {hotels?.data?.map(hotel => (
@@ -158,11 +263,24 @@ const RoomDashboard = () => {
                                 </Col>
                             )}
                             <Col span={6}>
-                                <RangePicker
-                                    value={dateRange}
-                                    onChange={setDateRange}
-                                    style={{ width: '100%' }}
-                                />
+                                <Form.Item label="Date Range">
+                                    <RangePicker
+                                        format="YYYY-MM-DD"
+                                        value={dates}
+                                        showTime={{
+                                            format: 'HH:mm',
+                                            minuteStep: 15,
+                                            defaultValue: [
+                                                moment().add(15 - (moment().minute() % 15), 'minutes'),
+                                                moment().add(1, 'day').startOf('day').add(12, 'hours')
+                                            ]
+                                        }}
+                                        onChange={handleDateChange}
+                                        disabledDate={(current) => current && current < moment().startOf("day")}
+                                        disabledTime={disabledTime}
+                                        placeholder={['Check-in date & time', 'Check-out date & time']}
+                                    />
+                                </Form.Item>
                             </Col>
                             <Col span={4}>
                                 <Select
