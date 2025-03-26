@@ -183,7 +183,7 @@ const ReservationPage = () => {
         }
 
         // Keep dates in local timezone for display
-        const nights = Math.floor(moment.duration(dates[1].diff(dates[0])).asDays());
+        const nights = Math.ceil(moment.duration(dates[1].diff(dates[0])).asDays());
 
         const updatedRoom = {
             ...room,

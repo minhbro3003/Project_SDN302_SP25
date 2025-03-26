@@ -90,31 +90,33 @@ const App = () => {
     }, [account?.id, dispatch, navigate]);
 
     // Simple axios interceptor that only adds the access token
-    axios.interceptors.request.use(async (config) => {
-        // Avoid infinite loop by skipping the refresh request itself
+    axios.interceptors.request.use((config) => {
         if (config.url.includes('/refresh-token')) {
             return config;
         }
+
         const currentTime = Math.floor(Date.now() / 1000);
         const accessToken = localStorage.getItem("access_token");
         const decodedAccessToken = accessToken ? jwtDecode(accessToken) : null;
 
-        if (decodedAccessToken?.exp < currentTime) {
-            try {
-                const data = await AccountService.refreshToken({
-                    withCredentials: true
-                });
+        if (!accessToken || decodedAccessToken?.exp < currentTime) {
+            return AccountService.refreshToken({ withCredentials: true })
+                .then((response) => {
+                    localStorage.setItem("access_token", response?.access_token);
+                    config.headers["token"] = `Bearer ${response?.access_token}`;
+                    return config;
+                })
+                .catch((error) => {
+                    if (error.response?.status === 403) {
+                        console.error("Refresh token expired or invalid.");
+                        handleLogout();
+                    }
 
-                localStorage.setItem("access_token", data?.access_token);
-                config.headers["token"] = `Bearer ${data?.access_token}`;
-            } catch (error) {
-                dispatch(resetAccount());
-                return Promise.reject(error);
-            }
-        } else {
-            config.headers["token"] = `Bearer ${accessToken}`;
+                    return Promise.reject(error);
+                });
         }
 
+        config.headers["token"] = `Bearer ${accessToken}`;
         return config;
     }, (error) => Promise.reject(error));
 
