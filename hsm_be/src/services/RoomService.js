@@ -343,6 +343,120 @@ const getAllRoomByHotelIdService = (hotelId) => {
     });
 };
 
+// Add this function to get comprehensive room data for dashboard
+const getRoomDashboardDataService = async (hotelId, startDate, endDate) => {
+    try {
+        // Get all rooms for the hotel with populated room type
+        const rooms = await Rooms.find({
+            hotel: hotelId,
+            IsDelete: false
+        }).populate('roomtype')
+            .populate('hotel', 'CodeHotel NameHotel');
+
+        // Get all bookings for the date range
+        const bookings = await Booking.find({
+            'Time.Checkin': { $lte: new Date(endDate) },
+            'Time.Checkout': { $gte: new Date(startDate) },
+            Status: { $ne: 'Cancelled' }
+        }).populate('customers')
+            .populate('rooms');
+
+        // Map rooms with their current status and booking information
+        const roomsWithStatus = rooms.map(room => {
+            const roomBookings = bookings.filter(booking =>
+                booking.rooms._id.toString() === room._id.toString()
+            );
+
+            // Determine occupancy status
+            const now = new Date();
+            const isCurrentlyOccupied = roomBookings.some(booking => {
+                const checkIn = new Date(booking.Time.Checkin);
+                const checkOut = new Date(booking.Time.Checkout);
+                return now >= checkIn && now <= checkOut;
+            });
+
+            // Combine cleaning status with occupancy status
+            let displayStatus = room.Status; // Original cleaning status
+            if (isCurrentlyOccupied) {
+                displayStatus = "Occupied";
+            }
+
+            return {
+                _id: room._id,
+                RoomName: room.RoomName,
+                Price: room.Price,
+                Floor: room.Floor,
+                cleaningStatus: room.Status, // Original status (cleaning related)
+                status: displayStatus, // Combined status for display
+                Description: room.Description,
+                roomtype: room.roomtype,
+                bookings: roomBookings.map(booking => ({
+                    checkIn: booking.Time.Checkin,
+                    checkOut: booking.Time.Checkout,
+                    guestName: booking.customers?.full_name || 'N/A',
+                    status: booking.Status
+                }))
+            };
+        });
+
+        // Calculate statistics
+        const stats = {
+            total: roomsWithStatus.length,
+            available: roomsWithStatus.filter(r => r.status === "Available").length,
+            occupied: roomsWithStatus.filter(r => r.status === "Occupied").length,
+            maintenance: roomsWithStatus.filter(r => r.status === "Available - Need Cleaning").length,
+            cleaning: roomsWithStatus.filter(r => r.status === "Available - Cleaning").length
+        };
+
+        return {
+            status: "OK",
+            message: "Room dashboard data retrieved successfully",
+            data: {
+                rooms: roomsWithStatus,
+                stats: stats
+            }
+        };
+    } catch (error) {
+        console.error("Error in getRoomDashboardDataService:", error);
+        return {
+            status: "ERR",
+            message: "Failed to retrieve room dashboard data",
+            error: error.message
+        };
+    }
+};
+
+// Add this function to get detailed booking status for a specific room
+const getRoomBookingStatusService = async (roomId, startDate, endDate) => {
+    try {
+        const bookings = await Booking.find({
+            rooms: roomId,
+            'Time.Checkin': { $lte: new Date(endDate) },
+            'Time.Checkout': { $gte: new Date(startDate) },
+            Status: { $ne: 'Cancelled' }
+        }).populate('customers');
+
+        const bookingStatus = bookings.map(booking => ({
+            checkIn: booking.Time.Checkin,
+            checkOut: booking.Time.Checkout,
+            guestName: booking.customers?.full_name || 'N/A',
+            status: booking.Status
+        }));
+
+        return {
+            status: "OK",
+            message: "Room booking status retrieved successfully",
+            data: bookingStatus
+        };
+    } catch (error) {
+        console.error("Error in getRoomBookingStatusService:", error);
+        return {
+            status: "ERR",
+            message: "Failed to retrieve room booking status",
+            error: error.message
+        };
+    }
+};
 
 module.exports = {
     getAllRoomsService,
@@ -355,5 +469,7 @@ module.exports = {
     getRoomsByHotelService,
     getRoomsByAccount,
     getAllTypeRoomService,
-    getAllRoomByHotelIdService
+    getAllRoomByHotelIdService,
+    getRoomDashboardDataService,
+    getRoomBookingStatusService
 };

@@ -228,4 +228,9 @@ router.delete("/:id", roomsController.deleteRoom);
 router.get("/:id", roomsController.getRoomByRoomId);
 
 router.get("/account/:accountId", roomsController.getRoomsByAccountController);
+
+// Add these new routes
+router.get("/dashboard/data", roomsController.getRoomDashboardData);
+router.get("/dashboard/:roomId/status", roomsController.getRoomBookingStatus);
+
 module.exports = router;

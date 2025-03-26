@@ -287,6 +287,55 @@ const getAllRoomByHotelId = async (req, res) => {
         });
     }
 };
+
+// Add these new controller functions
+const getRoomDashboardData = async (req, res) => {
+    try {
+        const { hotelId, startDate, endDate } = req.query;
+
+        if (!hotelId || !startDate || !endDate) {
+            return res.status(400).json({
+                status: "ERR",
+                message: "Hotel ID, start date, and end date are required"
+            });
+        }
+
+        const result = await RoomService.getRoomDashboardDataService(hotelId, startDate, endDate);
+        return res.status(200).json(result);
+    } catch (error) {
+        console.error("Error in getRoomDashboardData:", error);
+        return res.status(500).json({
+            status: "ERR",
+            message: "Failed to get room dashboard data",
+            error: error.message
+        });
+    }
+};
+
+const getRoomBookingStatus = async (req, res) => {
+    try {
+        const { roomId } = req.params;
+        const { startDate, endDate } = req.query;
+
+        if (!roomId || !startDate || !endDate) {
+            return res.status(400).json({
+                status: "ERR",
+                message: "Room ID, start date, and end date are required"
+            });
+        }
+
+        const result = await RoomService.getRoomBookingStatusService(roomId, startDate, endDate);
+        return res.status(200).json(result);
+    } catch (error) {
+        console.error("Error in getRoomBookingStatus:", error);
+        return res.status(500).json({
+            status: "ERR",
+            message: "Failed to get room booking status",
+            error: error.message
+        });
+    }
+};
+
 module.exports = {
     getAllRooms,
     createRooms,
@@ -299,5 +348,7 @@ module.exports = {
     checkRoomAvailability,
     getRoomsByAccountController,
     getAllTypeRooms,
-    getAllRoomByHotelId
+    getAllRoomByHotelId,
+    getRoomDashboardData,
+    getRoomBookingStatus
 };

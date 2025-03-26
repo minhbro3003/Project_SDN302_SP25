@@ -158,14 +158,6 @@ const VerificationPage = () => {
                                 <Text type="danger">{verificationStatus.message}</Text>
                             </Space>
                         }
-                        extra={[
-                            <Button type="primary" key="retry" onClick={() => window.location.reload()}>
-                                Retry Verification
-                            </Button>,
-                            <Button key="support" onClick={() => window.location.href = "/"}>
-                                Return to Home
-                            </Button>
-                        ]}
                     />
                 );
             default:

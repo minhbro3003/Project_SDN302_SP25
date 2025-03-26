@@ -199,6 +199,7 @@ const refreshToken = async (req, res) => {
 
         if (!user || user.refreshToken !== refreshToken) {
             console.log("Token mismatch or user not found");
+            console.log(user + "||||||||" + refreshToken);
             return res.status(403).json({
                 status: "ERR",
                 message: "Invalid refresh token"
