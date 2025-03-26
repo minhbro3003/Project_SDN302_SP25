@@ -254,13 +254,13 @@ const ReservationList = () => {
             const remainingAmount = selectedTransaction.FinalPrice - selectedTransaction.PaidAmount;
 
             // Get client IP address
-            const ipResponse = await axios.get('https://api.ipify.org?format=json');
-            const ipAddr = ipResponse.data.ip;
+
+            const ipAddr = "http://localhost:3000";
 
             const response = await axios.post(`${API_URL}/transactions/create_payment_url`, {
                 amount: remainingAmount,
                 description: `Payment for transaction ${selectedTransaction._id}`,
-                ipAddr: ipAddr,
+                ipAddr: "http://localhost:3000",
                 transactionId: selectedTransaction._id
             });
 
